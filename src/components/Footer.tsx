@@ -1,0 +1,23 @@
+import { Link } from 'react-router-dom';
+
+export default function Footer() {
+  return (
+    <footer className="bg-surface-container-low border-t border-outline-variant w-full mt-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto gap-gutter">
+        <div className="flex flex-col gap-unit-sm">
+          <span className="text-headline-sm font-headline-md font-bold text-primary">CLEARPATH MEDIA</span>
+          <p className="font-body-md text-body-md text-on-surface-variant max-w-sm">
+            © 2024 Clearpath Media. Explaining power, policy, and society.
+          </p>
+        </div>
+        <nav className="flex flex-wrap gap-unit-md md:gap-unit-lg opacity-80 hover:opacity-100 transition-opacity">
+          <Link to="#" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Newsletter</Link>
+          <Link to="#" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">YouTube</Link>
+          <Link to="#" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Podcasts</Link>
+          <Link to="#" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Contact</Link>
+          <Link to="#" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Editorial Policy</Link>
+        </nav>
+      </div>
+    </footer>
+  );
+}

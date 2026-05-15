@@ -1,0 +1,6 @@
+{
+  "name": "Hello Clearpath App",
+  "description": "A simple React app that says Hello Clearpath.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
