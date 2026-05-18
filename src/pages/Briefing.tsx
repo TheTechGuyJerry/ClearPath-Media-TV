@@ -18,16 +18,16 @@ export default function Briefing() {
             </div>
             
             <div className="relative aspect-video w-full mb-unit-lg overflow-hidden rounded-lg group">
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM" 
-                alt="Latest Briefing" 
-                className="w-full h-full object-cover" 
-              />
-              <div className="absolute inset-0 bg-primary/20 flex items-center justify-center cursor-pointer group-hover:bg-primary/30 transition-all">
-                <div className="bg-primary text-white w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
-                  <Play className="w-10 h-10 fill-current ml-1" />
-                </div>
-              </div>
+              <iframe 
+                width="100%" 
+                height="100%" 
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" 
+                title="Daily Brief with Annabel" 
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              ></iframe>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-unit-lg">
@@ -47,11 +47,23 @@ export default function Briefing() {
           </section>
 
           <section>
-            <div className="flex items-center justify-between mb-unit-lg">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-unit-lg gap-unit-md">
               <h2 className="font-headline-md text-headline-md text-primary">Briefing Archive</h2>
-              <button className="flex items-center gap-unit-xs font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
-                VIEW ALL <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-unit-sm w-full md:w-auto">
+                <div className="relative w-full sm:w-auto">
+                  <input type="text" placeholder="Search briefings..." className="w-full sm:w-64 px-4 py-2.5 border border-outline focus:border-primary focus:ring-0 rounded-sm text-body-md bg-transparent" />
+                </div>
+                <div className="flex gap-unit-sm w-full sm:w-auto">
+                  <select className="flex-1 sm:flex-none px-4 py-2.5 border border-outline focus:border-primary focus:ring-0 rounded-sm text-body-md bg-transparent focus:outline-none">
+                    <option value="">All Topics</option>
+                    <option value="policy">Policy</option>
+                    <option value="economy">Economy</option>
+                    <option value="tech">Tech</option>
+                    <option value="trade">Trade</option>
+                  </select>
+                  <input type="date" className="flex-1 sm:flex-none px-4 py-2.5 border border-outline focus:border-primary focus:ring-0 rounded-sm text-body-md bg-transparent focus:outline-none text-on-surface-variant" />
+                </div>
+              </div>
             </div>
             
             <div className="space-y-unit-md">
@@ -67,11 +79,14 @@ export default function Briefing() {
                   <div className="flex-grow">
                     <h4 className="font-headline-md text-headline-md !text-lg text-on-surface group-hover:text-primary transition-colors mb-unit-xs">{item.title}</h4>
                     <p className="font-body-md text-body-md text-on-surface-variant mb-unit-sm">{item.desc}</p>
-                    <div className="flex gap-unit-xs">
+                    <div className="flex gap-unit-xs mb-unit-md">
                       {item.tags.map(tag => (
                         <span key={tag} className="bg-surface-container-highest px-unit-sm py-unit-xs text-[10px] font-bold uppercase rounded-sm tracking-widest text-on-surface-variant">{tag}</span>
                       ))}
                     </div>
+                    <button className="flex items-center gap-unit-xs font-label-md text-label-md text-primary uppercase hover:underline">
+                      Watch Episode <Play className="w-3 h-3 ml-1 fill-current" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -127,8 +142,8 @@ export default function Briefing() {
           <h2 className="font-headline-lg text-headline-lg mb-unit-md">Subscribe to the Daily Brief</h2>
           <p className="font-body-md text-body-md text-white/80 mb-unit-lg">Receive the daily executive summary and watch links directly in your inbox at 7:00 AM WAT every weekday morning.</p>
           <form className="flex flex-col sm:flex-row gap-unit-sm items-stretch">
-            <input type="email" placeholder="Email address" className="flex-grow bg-white/10 border border-white/20 text-white placeholder-white/50 px-unit-md py-unit-md rounded-sm focus:outline-none focus:border-white/60 focus:ring-0" />
-            <button type="submit" className="bg-white text-primary px-unit-xl py-unit-md font-label-md text-label-md hover:bg-surface-bright transition-all shrink-0">JOIN 12,000+ PROS</button>
+            <input type="email" placeholder="Email address" className="flex-grow bg-white/10 border border-white/20 text-white placeholder-white/50 px-6 py-3 rounded-sm focus:outline-none focus:border-white/60 focus:ring-0" />
+            <button type="submit" className="bg-white text-primary px-8 py-3 font-label-md text-label-md rounded-sm hover:bg-surface-bright transition-all shrink-0">JOIN 12,000+ PROS</button>
           </form>
           <p className="mt-unit-md text-[10px] uppercase tracking-widest opacity-60">NO SPAM. JUST THE BRIEFING. UNSUBSCRIBE ANYTIME.</p>
         </div>

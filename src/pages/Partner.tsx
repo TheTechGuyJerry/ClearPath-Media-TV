@@ -49,26 +49,26 @@ export default function Partner() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-unit-md">
               <div>
                 <label className="block font-label-sm text-label-sm text-on-surface-variant mb-unit-xs" htmlFor="name">Full Name</label>
-                <input type="text" id="name" placeholder="e.g. Jane Doe" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2" />
+                <input type="text" id="name" placeholder="e.g. Jane Doe" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-4 py-2.5 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2" />
               </div>
               <div>
                 <label className="block font-label-sm text-label-sm text-on-surface-variant mb-unit-xs" htmlFor="email">Work Email</label>
-                <input type="email" id="email" placeholder="jane@organization.com" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2" />
+                <input type="email" id="email" placeholder="jane@organization.com" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-4 py-2.5 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-unit-md">
               <div>
                 <label className="block font-label-sm text-label-sm text-on-surface-variant mb-unit-xs" htmlFor="organisation">Organisation</label>
-                <input type="text" id="organisation" placeholder="Organisation Name" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2" />
+                <input type="text" id="organisation" placeholder="Organisation Name" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-4 py-2.5 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2" />
               </div>
               <div>
                 <label className="block font-label-sm text-label-sm text-on-surface-variant mb-unit-xs" htmlFor="role">Job Title / Role</label>
-                <input type="text" id="role" placeholder="e.g. Director of Communications" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2" />
+                <input type="text" id="role" placeholder="e.g. Director of Communications" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-4 py-2.5 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2" />
               </div>
             </div>
             <div>
               <label className="block font-label-sm text-label-sm text-on-surface-variant mb-unit-xs" htmlFor="interest">Partnership Interest</label>
-              <select id="interest" defaultValue="" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2">
+              <select id="interest" defaultValue="" className="w-full bg-surface-container-lowest border border-outline-variant rounded px-4 py-2.5 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2">
                 <option value="" disabled>Select an option</option>
                 <option value="programme">Programme Sponsorship</option>
                 <option value="vertical">Explanatory Verticals</option>
@@ -79,10 +79,10 @@ export default function Partner() {
             </div>
             <div>
               <label className="block font-label-sm text-label-sm text-on-surface-variant mb-unit-xs" htmlFor="message">Additional Information (Optional)</label>
-              <textarea id="message" rows={4} placeholder="Tell us briefly about your goals..." className="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2"></textarea>
+              <textarea id="message" rows={4} placeholder="Tell us briefly about your goals..." className="w-full bg-surface-container-lowest border border-outline-variant rounded px-4 py-2.5 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-0 focus:border-b-2"></textarea>
             </div>
             <div className="text-right pt-unit-sm">
-              <button type="submit" className="bg-primary text-white font-label-md text-label-md px-unit-lg py-3 rounded hover:bg-primary-container transition-colors tracking-wide uppercase">Submit Inquiry</button>
+              <button type="submit" className="w-full md:w-auto bg-primary text-white font-label-md text-label-md px-8 py-3 rounded hover:bg-primary-container transition-colors tracking-wide uppercase">Submit Inquiry</button>
             </div>
           </form>
         </section>

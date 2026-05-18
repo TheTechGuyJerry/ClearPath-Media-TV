@@ -13,7 +13,7 @@ export default function Insights() {
             </p>
           </div>
           <div className="md:col-span-4 flex md:justify-end pb-unit-xs">
-            <button className="bg-primary text-white px-unit-lg py-unit-md font-label-md text-label-md flex items-center gap-unit-xs hover:bg-primary-fixed-variant transition-colors rounded-sm uppercase">
+            <button className="bg-primary text-white px-unit-lg py-unit-md font-label-md text-label-md flex items-center gap-unit-xs hover:bg-primary-container transition-colors rounded-sm uppercase">
               SUBSCRIBE TO SERIES
             </button>
           </div>
@@ -41,6 +41,26 @@ export default function Insights() {
       </section>
 
       <section className="px-margin-desktop max-w-container-max mx-auto py-unit-xl">
+        <div className="mb-unit-xl">
+          <h2 className="font-label-md text-label-md uppercase tracking-widest text-primary mb-unit-md border-b border-outline-variant pb-unit-xs">Featured Insight</h2>
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+            <iframe 
+              width="100%" 
+              height="100%" 
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" 
+              title="Clearpath Insights Featured" 
+              frameBorder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowFullScreen
+              className="absolute inset-0 w-full h-full"
+            ></iframe>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between mb-unit-lg border-b border-outline-variant pb-unit-sm">
+          <h2 className="font-headline-md text-headline-md text-primary">All Explainers</h2>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-gutter gap-y-unit-xl">
           {[
             { tag: 'Economy', title: 'The Debt Ceiling Paradox', desc: 'Understanding why the legal limit on national borrowing remains a central point of political friction every fiscal year.', host: 'Amara Okafor', time: '1:45', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAeVLfCZOkjr_JQENUSHEqAjqhImldkoM6cBFtd6kJTkVvkqB1Wimrga4uO8bi_9o4q2GmcCqB1tZpqAGmQIDwPAH8F1lATsZJfeSCzrP22T0Mv2CtXzMkU1DGrd-n6wkR98R2pOU2-Bb8CoSuXOnxE-hNYap6qMwXPYvq3mXGh3sJTwEcq8rY7kMo7yUwcqwWZwNzxRmrh1F0qf5DlX7GX2ydgVgid5wF-DMmmYl5Ww1R3BtPERjhBA8yz74JaCGuiCimtXXaGFjk' },
@@ -64,7 +84,7 @@ export default function Insights() {
                 <div className="flex items-center gap-unit-sm mb-unit-xs">
                   <span className="bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm px-unit-sm py-[2px] rounded-lg">{item.tag}</span>
                 </div>
-                <h3 className="font-headline-md text-headline-md text-primary leading-tight group-hover:text-on-primary-fixed-variant transition-colors">{item.title}</h3>
+                <h3 className="font-headline-md text-headline-md text-primary leading-tight group-hover:text-primary-container transition-colors">{item.title}</h3>
                 <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2">{item.desc}</p>
                 <div className="mt-unit-sm flex items-center justify-between">
                   <div className="flex items-center gap-unit-sm">
@@ -92,8 +112,8 @@ export default function Insights() {
           <h2 className="font-headline-md text-headline-md text-primary mb-unit-sm">Never miss an insight.</h2>
           <p className="font-body-md text-body-md text-on-surface-variant mb-unit-lg max-w-[500px] mx-auto">Get our weekly explainer briefing directly in your inbox every Monday morning.</p>
           <form className="flex flex-col md:flex-row gap-unit-sm max-w-md mx-auto">
-            <input type="email" placeholder="Enter your email" className="flex-grow px-unit-md py-unit-md border border-outline-variant bg-background focus:outline-none focus:border-b-2 focus:border-primary transition-all" />
-            <button className="bg-primary text-white px-unit-xl py-unit-md font-label-md text-label-md uppercase tracking-wide">Subscribe</button>
+            <input type="email" placeholder="Enter your email" className="flex-grow px-unit-md py-3 border border-outline-variant bg-background focus:outline-none focus:border-b-2 focus:border-primary transition-all rounded-sm" />
+            <button className="bg-primary text-white px-unit-lg py-3 font-label-md text-label-md uppercase tracking-wide rounded-sm hover:bg-primary-container transition-colors">Subscribe</button>
           </form>
         </div>
       </section>

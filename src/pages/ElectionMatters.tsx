@@ -25,9 +25,21 @@ export default function ElectionMatters() {
           <div className="lg:col-span-8">
             <div className="mb-unit-xl">
               <h2 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-unit-lg border-b border-outline-variant pb-unit-xs inline-block">About The Series</h2>
-              <p className="font-body-md text-body-md text-on-surface-variant max-w-[720px]">
+              <p className="font-body-md text-body-md text-on-surface-variant max-w-[720px] mb-unit-lg">
                 A democracy integrity series explaining electoral systems, processes, and reforms calmly and non-partisanly. We dive into the mechanics of governance to empower citizens with the knowledge required to navigate and improve democratic institutions across the continent.
               </p>
+              <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" 
+                  title="Election Matters Featured" 
+                  frameBorder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                ></iframe>
+              </div>
             </div>
 
             <div>

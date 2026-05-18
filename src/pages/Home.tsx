@@ -4,43 +4,35 @@ import { Link } from 'react-router-dom';
 export default function Home() {
   return (
     <div className="w-full flex-grow flex flex-col">
-      <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl md:py-24 max-w-container-max mx-auto border-b border-outline-variant">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
-          <div className="lg:col-span-5 flex flex-col gap-unit-md">
-            <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-display-lg md:text-display-lg text-primary max-w-xl">
+      <section className="relative w-full min-h-[80vh] flex items-center border-b border-outline-variant overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <iframe 
+            src="https://www.youtube.com/embed/3H95x0BV9nA?autoplay=1&mute=1&controls=0&loop=1&playlist=3H95x0BV9nA&start=0&end=15&playsinline=1&rel=0&modestbranding=1&disablekb=1" 
+            title="Background Video"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] opacity-90"
+            frameBorder="0"
+            allow="autoplay; encrypted-media"
+          ></iframe>
+        </div>
+
+        <div className="relative w-full px-margin-mobile md:px-margin-desktop py-unit-xl md:py-24 max-w-container-max mx-auto z-10">
+          <div className="max-w-3xl flex flex-col gap-unit-md">
+            <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-display-lg md:text-display-lg text-white">
               Clear context for public life.
             </h1>
-            <p className="font-body-lg text-body-lg text-on-surface-variant max-w-md mt-unit-sm">
+            <p className="font-body-lg text-body-lg text-white/90 max-w-2xl mt-unit-sm">
               Clearpath Media is a public-intellectual platform explaining power, policy, elections, and society in Africa — calmly, clearly, and with evidence.
             </p>
-            <p className="font-body-md text-body-md text-on-surface-variant max-w-md mt-2">
+            <p className="font-body-md text-body-md text-white/80 max-w-2xl mt-2">
               We produce briefings, explainers, and long-form conversations for people who want understanding, not noise.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-unit-md mt-unit-lg">
-              <button className="w-full sm:w-auto bg-primary text-white font-label-md text-label-md px-6 py-3 rounded hover:bg-primary-fixed-variant transition-colors">
+              <Link to="/programmes" className="w-full sm:w-auto bg-white text-primary font-label-md text-label-md px-6 py-3 rounded hover:bg-surface-bright transition-colors text-center">
                 Watch the latest
-              </button>
-              <button className="w-full sm:w-auto border border-outline text-on-surface font-label-md text-label-md px-6 py-3 rounded hover:bg-surface-container transition-colors">
+              </Link>
+              <Link to="/briefing" className="w-full sm:w-auto border border-white/50 text-white font-label-md text-label-md px-6 py-3 rounded hover:bg-white/10 transition-colors text-center">
                 Get the Daily Brief
-              </button>
-            </div>
-          </div>
-          <div className="lg:col-span-7 mt-unit-xl lg:mt-0">
-            <div className="aspect-[16/9] bg-surface-container-high rounded-xl border border-outline-variant relative overflow-hidden group cursor-pointer">
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjOjy5opH1OpGXsYnUzXqH-fQCC5f1fD1FOuZmQqVFTnQwJ3KDhj4pVMjqLKTE3L8089S-tjHPeZEUnfEVp5UeNybcdzqdD9RG3DmstL7KK6yy6yErEQ4emPDXpp46cswfWApsDrNvaxrvGa9nlVm413lLgPKA1vs3clXBOzdN9dnYQPlQ6rQ7N5plTKyH33Jd2zolBDxyJx327umDiSZFhlS8Bysvv1R5AV2ESBCrhCaigPR3xNW3C4YlG-2lwG1uzPxJ7bWtzH0"
-                alt="Studio" 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
-              />
-              <div className="absolute inset-0 bg-primary/10 group-hover:bg-transparent transition-colors duration-300"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                  <Play className="w-8 h-8 fill-current ml-1" />
-                </div>
-              </div>
-            </div>
-            <div className="mt-unit-sm flex justify-between items-start">
-              <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Featured Media</p>
+              </Link>
             </div>
           </div>
         </div>
@@ -55,24 +47,25 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter items-start">
           <div className="flex flex-col gap-unit-md">
-            <div className="aspect-[16/9] bg-surface-container-high rounded-xl border border-outline-variant relative overflow-hidden group cursor-pointer">
-              <div className="absolute inset-0 flex items-center justify-center bg-surface-variant text-on-surface-variant font-label-md">
-                [YouTube Video Embed Placeholder]
-              </div>
-              <div className="absolute inset-0 bg-primary/10 group-hover:bg-transparent transition-colors duration-300 pointer-events-none"></div>
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                  <Play className="w-8 h-8 fill-current ml-1" />
-                </div>
-              </div>
+            <div className="aspect-video bg-surface-container-high rounded-xl border border-outline-variant relative overflow-hidden group">
+              <iframe 
+                width="100%" 
+                height="100%" 
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" 
+                title="Today's Briefing" 
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              ></iframe>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-unit-md mt-unit-sm">
-              <button className="w-full sm:w-auto bg-primary text-white font-label-md text-label-md px-6 py-3 rounded hover:bg-on-primary-fixed-variant transition-colors">
+              <button className="w-full sm:w-auto bg-primary text-white font-label-md text-label-md px-6 py-3 rounded hover:bg-primary-container transition-colors">
                 Watch today's brief
               </button>
-              <button className="w-full sm:w-auto border border-outline text-on-surface font-label-md text-label-md px-6 py-3 rounded hover:bg-surface-container transition-colors">
+              <Link to="/briefing" className="w-full sm:w-auto border border-outline text-on-surface font-label-md text-label-md px-6 py-3 rounded hover:bg-surface-container transition-colors text-center">
                 View all briefings
-              </button>
+              </Link>
             </div>
           </div>
           <div className="flex flex-col gap-unit-md">
@@ -136,18 +129,18 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unit-md">
           {[
-            { title: 'Three Things with Osita', subtitle: 'Weekly Analysis', desc: 'Deep dives into three critical issues shaping the week, offering clarity and context.' },
-            { title: 'Daily Brief with Annabel', subtitle: 'Daily Overview', desc: 'A concise, structured explanation of what matters today and why it matters.' },
-            { title: 'Clearpath Insights', subtitle: 'Periodic Research', desc: 'Comprehensive research papers and data-driven analysis on key policy areas.' },
-            { title: 'Nigeria & Neighbours', subtitle: 'Monthly Feature', desc: 'Exploring regional dynamics, economic ties, and diplomatic relations in West Africa.' },
-            { title: 'Election Matters', subtitle: 'Seasonal Series', desc: 'Evidence-led coverage and contextual analysis of electoral processes and outcomes.' },
-            { title: 'Mekaria Series', subtitle: 'Long-form Conversation', desc: 'In-depth discussions with thinkers, policymakers, and leaders shaping society.' }
+            { title: 'Three Things with Osita', subtitle: 'Weekly Analysis', desc: 'Deep dives into three critical issues shaping the week, offering clarity and context.', link: '/programmes/three-things' },
+            { title: 'Daily Brief with Annabel', subtitle: 'Daily Overview', desc: 'A concise, structured explanation of what matters today and why it matters.', link: '/briefing' },
+            { title: 'Clearpath Insights', subtitle: 'Periodic Research', desc: 'Comprehensive research papers and data-driven analysis on key policy areas.', link: '/explainers/insights' },
+            { title: 'Nigeria & Neighbours', subtitle: 'Monthly Feature', desc: 'Exploring regional dynamics, economic ties, and diplomatic relations in West Africa.', link: '/programmes/regional' },
+            { title: 'Election Matters', subtitle: 'Seasonal Series', desc: 'Evidence-led coverage and contextual analysis of electoral processes and outcomes.', link: '/programmes/election-matters' },
+            { title: 'Mekaria Series', subtitle: 'Long-form Conversation', desc: 'In-depth discussions with thinkers, policymakers, and leaders shaping society.', link: '/programmes/mekaria-series' }
           ].map(prog => (
             <div key={prog.title} className="bg-surface border border-outline-variant rounded p-unit-lg flex flex-col">
               <h3 className="font-headline-md text-headline-md text-primary mb-unit-xs">{prog.title}</h3>
               <span className="font-label-sm text-on-surface-variant mb-unit-sm block">{prog.subtitle}</span>
               <p className="font-body-md text-on-surface-variant flex-grow mb-unit-md">{prog.desc}</p>
-              <button className="text-primary font-label-md border border-primary px-4 py-2 rounded self-start hover:bg-primary/5 transition-colors">View Library</button>
+              <Link to={prog.link} className="text-primary font-label-md border border-primary px-4 py-2 rounded self-start hover:bg-primary/5 transition-colors">View Library</Link>
             </div>
           ))}
         </div>
@@ -171,7 +164,7 @@ export default function Home() {
                 <span key={tag} className="px-3 py-1 bg-surface-container-high rounded-full text-label-sm">{tag}</span>
               ))}
             </div>
-            <Link to="/explainers" className="bg-primary text-white font-label-md px-6 py-3 rounded hover:bg-primary-fixed-variant transition-colors mt-auto">Explore</Link>
+            <Link to="/explainers" className="bg-primary text-white font-label-md px-6 py-3 rounded hover:bg-primary-container transition-colors mt-auto">Explore</Link>
           </div>
           <div className="bg-surface border border-outline-variant rounded p-unit-xl flex flex-col items-center text-center">
             <h3 className="font-headline-md text-headline-md text-primary mb-unit-sm">Explaining Africa</h3>
@@ -181,7 +174,7 @@ export default function Home() {
                 <span key={tag} className="px-3 py-1 bg-surface-container-high rounded-full text-label-sm">{tag}</span>
               ))}
             </div>
-            <Link to="/explainers" className="bg-primary text-white font-label-md px-6 py-3 rounded hover:bg-primary-fixed-variant transition-colors mt-auto">Explore</Link>
+            <Link to="/explainers" className="bg-primary text-white font-label-md px-6 py-3 rounded hover:bg-primary-container transition-colors mt-auto">Explore</Link>
           </div>
         </div>
       </section>
@@ -210,7 +203,7 @@ export default function Home() {
         <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-unit-lg">
           Clearpath works with institutions that value trust, clarity, and public understanding.
         </p>
-        <Link to="/partner" className="inline-block bg-primary text-white font-label-md text-label-md px-8 py-4 rounded hover:bg-primary-fixed-variant transition-colors text-lg">
+        <Link to="/partner" className="inline-block bg-primary text-white font-label-md text-label-md px-8 py-4 rounded hover:bg-primary-container transition-colors text-lg">
           Partner with Clearpath
         </Link>
       </section>

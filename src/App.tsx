@@ -16,6 +16,7 @@ import ElectionMatters from './pages/ElectionMatters';
 import ThreeThings from './pages/ThreeThings';
 import Insights from './pages/Insights';
 import Regional from './pages/Regional';
+import MekariaSeries from './pages/MekariaSeries';
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/programmes/election-matters" element={<ElectionMatters />} />
             <Route path="/programmes/three-things" element={<ThreeThings />} />
             <Route path="/programmes/regional" element={<Regional />} />
+            <Route path="/programmes/mekaria-series" element={<MekariaSeries />} />
             <Route path="/briefing" element={<Briefing />} />
             <Route path="/explainers" element={<Explainers />} />
             <Route path="/explainers/insights" element={<Insights />} />

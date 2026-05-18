@@ -12,7 +12,7 @@ export default function Regional() {
             <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">Expert-led analysis of West Africa’s political economy, security, and regional dynamics.</p>
           </div>
           <div className="flex flex-wrap gap-unit-sm">
-            <button className="bg-primary text-on-primary px-unit-lg py-unit-sm font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors rounded-sm tracking-wide">Subscribe to Series</button>
+            <button className="bg-primary text-on-primary px-unit-lg py-unit-sm font-label-md text-label-md hover:bg-primary-container transition-colors rounded-sm tracking-wide">Subscribe to Series</button>
             <button className="border border-outline text-primary px-unit-lg py-unit-sm font-label-md text-label-md hover:bg-surface-container-low transition-colors rounded-sm tracking-wide">Share</button>
           </div>
         </div>
@@ -21,23 +21,18 @@ export default function Regional() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto pb-unit-xl">
         <div className="lg:col-span-8 space-y-unit-xl">
           <section>
-            <div className="relative group cursor-pointer overflow-hidden rounded-lg">
-              <div className="aspect-[16/9] w-full bg-surface-container-highest relative">
-                <img 
-                  className="w-full h-full object-cover grayscale-[0.5] group-hover:scale-105 transition-transform duration-700" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCekczUBLCFB6lq5I2gvlelgOGUlV_PjHErwqwwMcbyquNLM3p2s3hLsEpXrbqkRoYQBYhcGd9W0Gv42Z-tw-fcs1D-3Pnkb-aqVlij1KZAXXZLK19n0OUxLDza_wwK1O0u4weRrbSyMJWpXqleBJJvnd2yQ9j8HM7If_hNItWtAsdE-Yb73QpBmhWz185CLsHeF-foKoFWQOBb9ZEdxcJWQz8BKTCZpVmMZgdYHIpuOaX59WMxlkYdcG-qxL6v9y0jaGF22k3Wbk" 
-                  alt="West African Port" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent flex items-end p-unit-lg">
-                  <div className="max-w-2xl">
-                    <div className="flex items-center gap-unit-sm text-on-primary mb-unit-sm">
-                      <Play className="w-5 h-5 fill-current" />
-                      <span className="font-label-sm text-label-sm uppercase tracking-wider">Featured Video Analysis</span>
-                    </div>
-                    <h2 className="font-headline-md text-headline-md text-on-primary mb-unit-sm">The ECOWAS Pivot: Redefining Regional Security Architectures</h2>
-                    <p className="text-on-primary/80 font-body-md text-body-md line-clamp-2">A deep dive into how shifting political alliances in the Sahel are forcing a fundamental rethink of trade and defense pacts across West Africa.</p>
-                  </div>
-                </div>
+            <div className="relative overflow-hidden rounded-lg">
+              <div className="aspect-video w-full bg-surface-container-highest relative">
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" 
+                  title="Nigeria & Neighbours Featured" 
+                  frameBorder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                ></iframe>
               </div>
             </div>
           </section>
@@ -91,7 +86,9 @@ export default function Regional() {
                           <p className="text-on-surface-variant opacity-70">{item.date}</p>
                         </div>
                       </div>
-                      <ArrowRight className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <button className="flex items-center gap-unit-xs font-label-md text-label-md text-primary uppercase group-hover:underline">
+                        Watch Episode <Play className="w-3 h-3 ml-1 fill-current" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -129,8 +126,8 @@ export default function Regional() {
             <h4 className="font-headline-md text-headline-md mb-unit-sm text-white">Briefing Notes</h4>
             <p className="font-body-md text-body-md text-on-primary/80 mb-unit-lg leading-relaxed">Get the executive summary of every Nigeria & Neighbours episode delivered directly to your inbox before it airs.</p>
             <div className="space-y-unit-sm">
-              <input type="email" placeholder="Email address" className="w-full bg-white/10 border border-white/20 px-unit-md py-unit-sm text-on-primary placeholder:text-on-primary/40 focus:outline-none focus:border-white/50 rounded-sm" />
-              <button className="w-full bg-white text-primary font-label-md text-label-md py-unit-sm hover:bg-surface-bright transition-colors rounded-sm uppercase tracking-wide">Join the Network</button>
+              <input type="email" placeholder="Email address" className="w-full bg-white/10 border border-white/20 px-unit-md py-3 text-on-primary placeholder:text-on-primary/40 focus:outline-none focus:border-white/50 rounded-sm" />
+              <button className="w-full bg-white text-primary font-label-md text-label-md py-3 hover:bg-surface-bright transition-colors rounded-sm uppercase tracking-wide">Join the Network</button>
             </div>
           </div>
 

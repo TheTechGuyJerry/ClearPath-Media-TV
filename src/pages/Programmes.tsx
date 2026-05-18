@@ -51,6 +51,16 @@ const programmesData = [
     img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBTFpfSZaJTgSWr90PENCkNKkxbwHIPO0OmFx4ixOb1ZH0QIicQXdmyljT6ATj5Ex_ezlkLUaPYaMxqBImwXQh8awDSGmFgs7Or3ImAj_9hKaHqXGMgcwzfSpVSnpMhbT8UFiGCemcd_9-G_yFeQrB2bWilSQkJ7IoDokDV6Nbw-PKrXpOAXlecaJIaKsZIISY2boe3c-l7DfVLnS3-ZlPZAPrM9UtISdm-dkUrZfUVV1Ske-MtAEwCww-vEz0ixhOcyDqOW12Ty7E',
     meta: { Cadence: 'Seasonal', Format: 'Deep-Dive Series', Audience: 'Civil Society, Voters' },
     link: '/programmes/election-matters', linkText: "Access Election Hub"
+  },
+  {
+    id: 'mekaria',
+    tag: 'Leadership',
+    title: 'Mekaria Series',
+    desc: 'Conversations exploring the intersection of culture, leadership, and public service.',
+    about: 'In-depth interviews and discussions focused on the cultural frameworks that guide effective leadership in complex environments.',
+    img: 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?q=80&w=1200&auto=format&fit=crop',
+    meta: { Cadence: 'Monthly', Format: 'Video Conversation', Audience: 'General Public, Practitioners' },
+    link: '/programmes/mekaria-series', linkText: "Browse Series"
   }
 ];
 
@@ -110,7 +120,7 @@ export default function Programmes() {
                       </div>
                     ))}
                   </div>
-                  <Link to={prog.link} className="mt-8 w-full bg-primary text-white font-label-md py-4 rounded-DEFAULT hover:bg-primary-container transition-colors block text-center uppercase tracking-wide">
+                  <Link to={prog.link} className="mt-8 w-full bg-primary text-white font-label-md py-4 rounded-DEFAULT hover:bg-primary-fixed-variant transition-colors block text-center uppercase tracking-wide">
                     {prog.linkText}
                   </Link>
                   <button className="mt-4 w-full border border-primary text-primary font-label-md py-4 rounded-DEFAULT hover:bg-surface-container-high transition-colors uppercase tracking-wider">
