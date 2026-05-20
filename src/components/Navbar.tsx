@@ -20,10 +20,10 @@ export default function Navbar() {
   return (
     <>
       <header className="bg-background border-b border-outline-variant w-full z-50 sticky top-0">
-        <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto h-20">
+        <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop mx-auto h-20 md:h-24">
           <div className="flex items-center gap-gutter h-full">
-            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center">
-              <img src="/logo.png" alt="Clearpath Media" className="h-10 w-auto" />
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center h-full py-2">
+              <img src="/logo.png" alt="Clearpath Media" className="h-[80px] md:h-[110px] w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left" />
             </Link>
             <div className="hidden lg:flex items-center gap-unit-lg h-full pt-1">
               <Link to="/" className={getLinkClass('/')}>Home</Link>
