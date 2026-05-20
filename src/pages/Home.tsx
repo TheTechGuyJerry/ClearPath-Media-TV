@@ -7,7 +7,7 @@ export default function Home() {
       <section className="relative w-full min-h-[80vh] flex items-center border-b border-outline-variant overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <iframe 
-            src="https://www.youtube.com/embed/3H95x0BV9nA?autoplay=1&mute=1&controls=0&loop=1&playlist=3H95x0BV9nA&start=0&end=15&playsinline=1&rel=0&modestbranding=1&disablekb=1" 
+            src="https://www.youtube.com/embed/3H95x0BV9nA?autoplay=1&mute=1&controls=0&loop=1&playlist=3H95x0BV9nA&start=13&end=21&playsinline=1&rel=0&modestbranding=1&disablekb=1" 
             title="Background Video"
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] opacity-90"
             frameBorder="0"
