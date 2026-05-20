@@ -58,7 +58,7 @@ export default function JoinModal({ isOpen, onClose }: JoinModalProps) {
             <div className="mt-unit-md space-y-unit-sm">
               <h4 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-unit-xs">Choose your briefings</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-unit-sm gap-x-gutter">
-                {['Three Things with Osita', 'Daily Brief with Annabel', 'Clearpath Insights', 'Nigeria & Neighbours', 'Election Matters', 'Mekaria Series'].map(briefing => (
+                {['Osita Insights', 'Daily Brief with Annabel', 'Clearpath Insights', 'Nigeria & Neighbours', 'Election Matters', 'Mekaria Series'].map(briefing => (
                   <label key={briefing} className="flex items-center gap-2 cursor-pointer group">
                     <input type="checkbox" defaultChecked={briefing.includes('Osita') || briefing.includes('Annabel')} className="w-4 h-4 rounded-sm border-outline text-primary focus:ring-0 cursor-pointer" />
                     <span className="font-label-sm text-label-sm text-on-surface-variant group-hover:text-primary transition-colors">{briefing}</span>
@@ -95,6 +95,23 @@ export default function JoinModal({ isOpen, onClose }: JoinModalProps) {
               </button>
             </form>
           </section>
+
+          <div className="flex flex-wrap items-center justify-between gap-unit-sm mt-6 pt-4 border-t border-outline-variant text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
+            <div className="flex items-center gap-4">
+              <a href="https://www.youtube.com/@ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
+                🎬 <span className="underline decoration-primary/30 hover:decoration-primary">YouTube</span>
+              </a>
+              <a href="https://www.youtube.com/@ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
+                🎙 <span className="underline decoration-primary/30 hover:decoration-primary">Podcasts</span>
+              </a>
+              <a href="https://x.com/ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary transition-colors">
+                🪟 <span className="underline decoration-primary/30 hover:decoration-primary">Twitter</span>
+              </a>
+            </div>
+            <div className="text-outline font-bold text-[10px] tracking-widest">
+              CLEARPATH EDITORIAL GROUP
+            </div>
+          </div>
         </div>
       </div>
     </div>

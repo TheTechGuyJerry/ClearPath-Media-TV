@@ -1,11 +1,26 @@
-import { Play } from 'lucide-react';
+import { Play, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import JoinModal from '../components/JoinModal';
 
-const programmesData = [
+interface ProgrammeItem {
+  id: string;
+  tag: string;
+  title: string;
+  desc: string;
+  about: string;
+  img: string;
+  meta: Record<string, string>;
+  link: string;
+  linkText: string;
+  comingSoon?: boolean;
+}
+
+const programmesData: ProgrammeItem[] = [
   {
     id: 'three-things',
     tag: 'Conversations',
-    title: 'Three Things with Osita',
+    title: 'Osita Insights',
     desc: 'A structured conversation with leaders and thinkers on judgment, responsibility, and national choices.',
     about: 'Each episode, Osita Chidoka invites a prominent leader to discuss three specific events or decisions that defined their public service and the lessons they offer for future generations.',
     img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0',
@@ -30,7 +45,8 @@ const programmesData = [
     about: 'Designed for quick consumption, these visualizations break down legislative frameworks and market mechanics into their core elements.',
     img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAeVLfCZOkjr_JQENUSHEqAjqhImldkoM6cBFtd6kJTkVvkqB1Wimrga4uO8bi_9o4q2GmcCqB1tZpqAGmQIDwPAH8F1lATsZJfeSCzrP22T0Mv2CtXzMkU1DGrd-n6wkR98R2pOU2-Bb8CoSuXOnxE-hNYap6qMwXPYvq3mXGh3sJTwEcq8rY7kMo7yUwcqwWZwNzxRmrh1F0qf5DlX7GX2ydgVgid5wF-DMmmYl5Ww1R3BtPERjhBA8yz74JaCGuiCimtXXaGFjk',
     meta: { Cadence: 'Ongoing', Format: '60–120s Explainers', Audience: 'General Public, Students' },
-    link: '/explainers/insights', linkText: "Explore Explainers"
+    link: '#', linkText: "Notify Me",
+    comingSoon: true
   },
   {
     id: 'regional',
@@ -40,7 +56,8 @@ const programmesData = [
     about: 'A deep dive into cross-border trade, ECOWAS policy, and the shared challenges of the Sahel and West African corridor.',
     img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDCekczUBLCFB6lq5I2gvlelgOGUlV_PjHErwqwwMcbyquNLM3p2s3hLsEpXrbqkRoYQBYhcGd9W0Gv42Z-tw-fcs1D-3Pnkb-aqVlij1KZAXXZLK19n0OUxLDza_wwK1O0u4weRrbSyMJWpXqleBJJvnd2yQ9j8HM7If_hNItWtAsdE-Yb73QpBmhWz185CLsHeF-foKoFWQOBb9ZEdxcJWQz8BKTCZpVmMZgdYHIpuOaX59WMxlkYdcG-qxL6v9y0jaGF22k3Wbk',
     meta: { Cadence: 'Weekly / Bi-weekly', Format: 'Expert Analysis', Audience: 'Diplomats, Regional Trade' },
-    link: '/programmes/regional', linkText: "View Regional Analysis"
+    link: '#', linkText: "Notify Me",
+    comingSoon: true
   },
   {
     id: 'elections',
@@ -50,7 +67,8 @@ const programmesData = [
     about: 'Moving beyond horse-race politics to focus on the institutional integrity of the electoral process and democratic consolidation.',
     img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBTFpfSZaJTgSWr90PENCkNKkxbwHIPO0OmFx4ixOb1ZH0QIicQXdmyljT6ATj5Ex_ezlkLUaPYaMxqBImwXQh8awDSGmFgs7Or3ImAj_9hKaHqXGMgcwzfSpVSnpMhbT8UFiGCemcd_9-G_yFeQrB2bWilSQkJ7IoDokDV6Nbw-PKrXpOAXlecaJIaKsZIISY2boe3c-l7DfVLnS3-ZlPZAPrM9UtISdm-dkUrZfUVV1Ske-MtAEwCww-vEz0ixhOcyDqOW12Ty7E',
     meta: { Cadence: 'Seasonal', Format: 'Deep-Dive Series', Audience: 'Civil Society, Voters' },
-    link: '/programmes/election-matters', linkText: "Access Election Hub"
+    link: '#', linkText: "Notify Me",
+    comingSoon: true
   },
   {
     id: 'mekaria',
@@ -60,11 +78,14 @@ const programmesData = [
     about: 'In-depth interviews and discussions focused on the cultural frameworks that guide effective leadership in complex environments.',
     img: 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?q=80&w=1200&auto=format&fit=crop',
     meta: { Cadence: 'Monthly', Format: 'Video Conversation', Audience: 'General Public, Practitioners' },
-    link: '/programmes/mekaria-series', linkText: "Browse Series"
+    link: '#', linkText: "Notify Me",
+    comingSoon: true
   }
 ];
 
 export default function Programmes() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="w-full">
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-unit-xl">
@@ -90,23 +111,45 @@ export default function Programmes() {
 
       <div className="space-y-unit-xl pb-unit-xl">
         {programmesData.map(prog => (
-          <section key={prog.id} className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-b border-outline-variant pb-unit-xl">
+          <section key={prog.id} className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-b border-outline-variant pb-unit-xl last:border-0">
             <div className="grid lg:grid-cols-12 gap-gutter mb-unit-lg">
               <div className="lg:col-span-8">
-                <div className="mb-unit-md">
+                <div className="mb-unit-md relative">
+                  {prog.comingSoon && (
+                    <span className="absolute top-0 right-0 bg-secondary/10 text-secondary text-[11px] font-bold px-3 py-1 rounded-sm uppercase tracking-wider">
+                      Coming Soon
+                    </span>
+                  )}
                   <span className="text-label-sm font-label-md uppercase tracking-wider text-primary mb-2 block">{prog.tag}</span>
                   <h2 className="font-display-lg text-headline-lg text-primary mb-unit-sm">{prog.title}</h2>
                   <p className="font-body-lg text-body-lg text-on-surface-variant mb-unit-md">{prog.desc}</p>
                 </div>
-                <div className="aspect-[16/9] bg-surface-container-highest flex items-center justify-center rounded-DEFAULT overflow-hidden relative group cursor-pointer border border-outline-variant mt-12">
-                  <div className="absolute -top-10 left-0 text-label-sm font-label-md uppercase tracking-widest text-on-surface-variant">Latest Episode</div>
-                  <img src={prog.img} alt={prog.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
-                      <Play className="w-10 h-10 fill-current ml-1" />
+
+                {prog.comingSoon ? (
+                  <div 
+                    onClick={() => setIsModalOpen(true)}
+                    className="aspect-[16/9] bg-surface-container-high flex flex-col items-center justify-center rounded-DEFAULT overflow-hidden relative group cursor-pointer border border-outline-variant mt-12 bg-gradient-to-b from-surface-container-low to-surface-container-high"
+                  >
+                    <img src={prog.img} alt={prog.title} className="w-full h-full object-cover opacity-30 grayscale group-hover:scale-105 transition-transform duration-700" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white p-6 text-center">
+                      <div className="w-16 h-16 bg-white/10 backdrop-blur text-white rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-xl">
+                        <Bell className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <span className="font-display-sm text-lg uppercase tracking-[0.2em] font-medium">Coming Soon</span>
+                      <p className="text-xs text-white/80 mt-2 max-w-sm">This programme is currently in pre-production. Tap to subscribe and get notified on launch.</p>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="aspect-[16/9] bg-surface-container-highest flex items-center justify-center rounded-DEFAULT overflow-hidden relative group cursor-pointer border border-outline-variant mt-12">
+                    <div className="absolute -top-10 left-0 text-label-sm font-label-md uppercase tracking-widest text-on-surface-variant">Latest Episode</div>
+                    <img src={prog.img} alt={prog.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
+                        <Play className="w-10 h-10 fill-current ml-1" />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="lg:col-span-4 flex flex-col justify-center">
                 <div className="bg-surface-container-low p-unit-lg rounded-DEFAULT border border-outline-variant">
@@ -120,18 +163,33 @@ export default function Programmes() {
                       </div>
                     ))}
                   </div>
-                  <Link to={prog.link} className="mt-8 w-full bg-primary text-white font-label-md py-4 rounded-DEFAULT hover:bg-primary-fixed-variant transition-colors block text-center uppercase tracking-wide">
-                    {prog.linkText}
-                  </Link>
-                  <button className="mt-4 w-full border border-primary text-primary font-label-md py-4 rounded-DEFAULT hover:bg-surface-container-high transition-colors uppercase tracking-wider">
-                    View Library
-                  </button>
+
+                  {prog.comingSoon ? (
+                    <button 
+                      onClick={() => setIsModalOpen(true)}
+                      className="mt-8 w-full bg-secondary text-white font-label-md py-4 rounded-DEFAULT hover:bg-secondary/90 transition-colors block text-center uppercase tracking-wide text-xs font-bold shadow-sm"
+                    >
+                      Notify Me
+                    </button>
+                  ) : (
+                    <Link to={prog.link} className="mt-8 w-full bg-primary text-white font-label-md py-4 rounded-DEFAULT hover:bg-primary-fixed-variant transition-colors block text-center uppercase tracking-wide text-xs font-bold shadow-sm">
+                      {prog.linkText}
+                    </Link>
+                  )}
+
+                  {!prog.comingSoon && (
+                    <button className="mt-4 w-full border border-primary text-primary font-label-md py-4 rounded-DEFAULT hover:bg-surface-container-high transition-colors uppercase tracking-wider text-xs font-bold">
+                      View Library
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           </section>
         ))}
       </div>
+      
+      <JoinModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }

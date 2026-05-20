@@ -14,8 +14,8 @@ export default function Footer() {
         </div>
         <nav className="flex flex-wrap gap-unit-md md:gap-unit-lg py-unit-sm opacity-80 hover:opacity-100 transition-opacity">
           <Link to="/" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Newsletter</Link>
-          <a href="#" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">YouTube</a>
-          <a href="#" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Podcasts</a>
+          <a href="https://www.youtube.com/@ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">YouTube</a>
+          <a href="https://www.youtube.com/@ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Podcasts</a>
           <Link to="/partner" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Contact</Link>
           <Link to="/about" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Editorial Policy</Link>
         </nav>

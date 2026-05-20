@@ -21,7 +21,7 @@ export default function Briefing() {
               <iframe 
                 width="100%" 
                 height="100%" 
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" 
+                src="https://www.youtube.com/embed/3H95x0BV9nA?rel=0" 
                 title="Daily Brief with Annabel" 
                 frameBorder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 

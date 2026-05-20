@@ -51,7 +51,7 @@ export default function Home() {
               <iframe 
                 width="100%" 
                 height="100%" 
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" 
+                src="https://www.youtube.com/embed/3H95x0BV9nA?rel=0" 
                 title="Today's Briefing" 
                 frameBorder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -127,20 +127,16 @@ export default function Home() {
             Clearpath publishes a limited set of programmes, each designed to serve a specific institutional purpose.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unit-md">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-unit-md max-w-4xl">
           {[
-            { title: 'Three Things with Osita', subtitle: 'Weekly Analysis', desc: 'Deep dives into three critical issues shaping the week, offering clarity and context.', link: '/programmes/three-things' },
-            { title: 'Daily Brief with Annabel', subtitle: 'Daily Overview', desc: 'A concise, structured explanation of what matters today and why it matters.', link: '/briefing' },
-            { title: 'Clearpath Insights', subtitle: 'Periodic Research', desc: 'Comprehensive research papers and data-driven analysis on key policy areas.', link: '/explainers/insights' },
-            { title: 'Nigeria & Neighbours', subtitle: 'Monthly Feature', desc: 'Exploring regional dynamics, economic ties, and diplomatic relations in West Africa.', link: '/programmes/regional' },
-            { title: 'Election Matters', subtitle: 'Seasonal Series', desc: 'Evidence-led coverage and contextual analysis of electoral processes and outcomes.', link: '/programmes/election-matters' },
-            { title: 'Mekaria Series', subtitle: 'Long-form Conversation', desc: 'In-depth discussions with thinkers, policymakers, and leaders shaping society.', link: '/programmes/mekaria-series' }
+            { title: 'Osita Insights', subtitle: 'Weekly Analysis', desc: 'A structured conversation with leaders and thinkers on judgment, responsibility, and national choices.', link: '/programmes/three-things' },
+            { title: 'Daily Brief with Annabel', subtitle: 'Daily Overview', desc: 'A weekday briefing that helps professionals interpret events without chasing headlines.', link: '/briefing' }
           ].map(prog => (
             <div key={prog.title} className="bg-surface border border-outline-variant rounded p-unit-lg flex flex-col">
               <h3 className="font-headline-md text-headline-md text-primary mb-unit-xs">{prog.title}</h3>
               <span className="font-label-sm text-on-surface-variant mb-unit-sm block">{prog.subtitle}</span>
               <p className="font-body-md text-on-surface-variant flex-grow mb-unit-md">{prog.desc}</p>
-              <Link to={prog.link} className="text-primary font-label-md border border-primary px-4 py-2 rounded self-start hover:bg-primary/5 transition-colors">View Library</Link>
+              <Link to={prog.link} className="text-primary font-label-md border border-primary px-4 py-2 rounded self-start hover:bg-primary/5 transition-colors uppercase tracking-wider text-xs font-bold">View Library</Link>
             </div>
           ))}
         </div>

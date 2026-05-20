@@ -2,5 +2,5 @@
   "name": "Clearpath Media TV",
   "description": "Explaining power, policy, and society.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

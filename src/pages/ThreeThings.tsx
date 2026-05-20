@@ -7,7 +7,7 @@ export default function ThreeThings() {
       <header className="mb-unit-xl border-b border-outline-variant pb-unit-lg px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto pt-unit-xl">
         <div className="max-w-[800px]">
           <span className="font-label-sm text-label-sm uppercase tracking-widest text-primary mb-unit-sm block">Program Series</span>
-          <h1 className="font-display-lg text-display-lg text-primary mb-unit-sm">Three Things with Osita</h1>
+          <h1 className="font-display-lg text-display-lg text-primary mb-unit-sm">Osita Insights</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[720px]">
             A structured conversation with leaders and thinkers on judgment, responsibility, and national choices.
           </p>
@@ -20,8 +20,8 @@ export default function ThreeThings() {
             <iframe 
               width="100%" 
               height="100%" 
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" 
-              title="Three Things with Osita" 
+              src="https://www.youtube.com/embed/3H95x0BV9nA?rel=0" 
+              title="Osita Insights" 
               frameBorder="0" 
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
               allowFullScreen
@@ -34,7 +34,7 @@ export default function ThreeThings() {
           <div className="p-unit-lg bg-surface-container-low border border-outline-variant rounded">
             <h3 className="font-headline-md text-[20px] text-primary mb-unit-sm">About the Program</h3>
             <p className="font-body-md text-body-md text-on-surface-variant mb-unit-md leading-relaxed">
-              Three Things with Osita is built on the premise that clarity comes from focus. In each session, we strip away the noise of the news cycle to focus on the underlying architecture of leadership. We explore the consequences of choice and the weight of public responsibility in an era of rapid change.
+              Osita Insights is built on the premise that clarity comes from focus. In each session, we strip away the noise of the news cycle to focus on the underlying architecture of leadership. We explore the consequences of choice and the weight of public responsibility in an era of rapid change.
             </p>
             <div className="space-y-unit-sm pt-unit-md border-t border-outline-variant">
               <div className="flex justify-between items-center">

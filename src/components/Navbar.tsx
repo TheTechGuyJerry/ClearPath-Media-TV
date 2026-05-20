@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Search, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import JoinModal from './JoinModal';
 
 export default function Navbar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const getLinkClass = (path: string, isMobile: boolean = false) => {
     const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
@@ -18,31 +20,46 @@ export default function Navbar() {
   return (
     <>
       <header className="bg-background border-b border-outline-variant w-full z-50 sticky top-0">
-        <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop mx-auto h-20 md:h-24">
-          <div className="flex items-center gap-gutter h-full">
+        <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop mx-auto h-20 md:h-24 relative">
+          
+          {/* Left: Logo container to prevent touching/overlapping */}
+          <div className="flex-shrink-0 w-44 md:w-56 h-full flex items-center z-10">
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center h-full py-2">
               <img src="/logo.png" alt="Clearpath Media" className="h-[80px] md:h-[110px] w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left" />
             </Link>
-            <div className="hidden lg:flex items-center gap-unit-lg h-full pt-1">
-              <Link to="/" className={getLinkClass('/')}>Home</Link>
-              <Link to="/programmes" className={getLinkClass('/programmes')}>Programmes</Link>
-              <Link to="/briefing" className={getLinkClass('/briefing')}>Briefing</Link>
-              <Link to="/explainers" className={getLinkClass('/explainers')}>Explainers</Link>
-              <Link to="/about" className={getLinkClass('/about')}>About</Link>
-              <Link to="/partner" className={getLinkClass('/partner')}>Partner With Us</Link>
-            </div>
           </div>
-          <div className="flex items-center gap-unit-md mt-1">
+
+          {/* Center: Centralized menu links - detached from logo */}
+          <div className="hidden lg:flex items-center justify-center gap-unit-md h-full pt-1 absolute left-1/2 -translate-x-1/2">
+            <Link to="/" className={getLinkClass('/')}>Home</Link>
+            <Link to="/programmes" className={getLinkClass('/programmes')}>Programmes</Link>
+            <Link to="/briefing" className={getLinkClass('/briefing')}>Briefing</Link>
+            <Link to="/explainers" className={getLinkClass('/explainers')}>Explainers</Link>
+            <Link to="/about" className={getLinkClass('/about')}>About</Link>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-unit-md mt-1 flex-shrink-0 z-10">
             <button className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-full transition-all scale-95 duration-150 ease-in-out">
               <Search className="w-5 h-5" />
             </button>
+            
             <Link 
               to="/partner"
-              className="hidden lg:inline-flex bg-primary text-white font-label-sm px-5 py-2.5 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-all text-xs font-bold items-center justify-center h-10"
+              className="hidden lg:inline-flex border border-primary text-primary hover:bg-primary/5 font-label-sm px-4 py-2 rounded-sm uppercase tracking-wider transition-all text-xs font-bold items-center justify-center h-10"
               id="desktop-partner-button"
             >
               Partner with us
             </Link>
+
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="hidden lg:inline-flex bg-primary text-white font-label-sm px-5 py-2.5 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-all text-xs font-bold items-center justify-center h-10 shadow-sm"
+              id="desktop-subscribe-button"
+            >
+              Subscribe
+            </button>
+
             <button 
               className="lg:hidden p-2 text-on-surface-variant hover:text-primary"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -51,21 +68,33 @@ export default function Navbar() {
             </button>
           </div>
         </nav>
+
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-outline-variant absolute top-full left-0 w-full bg-background shadow-lg pb-4">
+          <div className="lg:hidden border-t border-outline-variant absolute top-full left-0 w-full bg-background shadow-lg pb-6">
             <div className="flex flex-col py-2">
               <Link to="/" className={getLinkClass('/', true)} onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
               <Link to="/programmes" className={getLinkClass('/programmes', true)} onClick={() => setIsMobileMenuOpen(false)}>Programmes</Link>
               <Link to="/briefing" className={getLinkClass('/briefing', true)} onClick={() => setIsMobileMenuOpen(false)}>Briefing</Link>
               <Link to="/explainers" className={getLinkClass('/explainers', true)} onClick={() => setIsMobileMenuOpen(false)}>Explainers</Link>
               <Link to="/about" className={getLinkClass('/about', true)} onClick={() => setIsMobileMenuOpen(false)}>About</Link>
-              <Link to="/partner" className={getLinkClass('/partner', true)} onClick={() => setIsMobileMenuOpen(false)}>Partner With Us</Link>
             </div>
-            <div className="px-4 pt-2 border-t border-outline-variant">
+            
+            <div className="px-4 pt-4 border-t border-outline-variant space-y-2.5">
+              <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsModalOpen(true);
+                }}
+                className="w-full bg-primary text-white font-label-sm px-4 py-3 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-colors block text-center font-bold text-xs font-label-sm shadow-sm"
+                id="mobile-subscribe-button"
+              >
+                Subscribe
+              </button>
+              
               <Link 
                 to="/partner"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full bg-primary text-white font-label-sm px-4 py-3 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-colors mt-2 text-center block font-bold text-xs font-label-sm"
+                className="w-full border border-primary text-primary font-label-sm px-4 py-3 rounded-sm uppercase tracking-wider hover:bg-primary/5 transition-colors text-center block font-bold text-xs font-label-sm"
                 id="mobile-partner-button"
               >
                 Partner with us
@@ -74,6 +103,8 @@ export default function Navbar() {
           </div>
         )}
       </header>
+      
+      <JoinModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }
