@@ -1,11 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Search, Menu, X } from 'lucide-react';
 import { useState } from 'react';
-import JoinModal from './JoinModal';
 
 export default function Navbar() {
   const location = useLocation();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const getLinkClass = (path: string, isMobile: boolean = false) => {
@@ -34,16 +32,17 @@ export default function Navbar() {
               <Link to="/partner" className={getLinkClass('/partner')}>Partner With Us</Link>
             </div>
           </div>
-          <div className="flex items-center gap-unit-md">
+          <div className="flex items-center gap-unit-md mt-1">
             <button className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-full transition-all scale-95 duration-150 ease-in-out">
               <Search className="w-5 h-5" />
             </button>
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="hidden lg:flex bg-primary text-white font-label-sm px-4 py-2 rounded-sm uppercase tracking-wide hover:bg-primary-container transition-colors"
+            <Link 
+              to="/partner"
+              className="hidden lg:inline-flex bg-primary text-white font-label-sm px-5 py-2.5 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-all text-xs font-bold items-center justify-center h-10"
+              id="desktop-partner-button"
             >
-              Subscribe
-            </button>
+              Partner with us
+            </Link>
             <button 
               className="lg:hidden p-2 text-on-surface-variant hover:text-primary"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -63,21 +62,18 @@ export default function Navbar() {
               <Link to="/partner" className={getLinkClass('/partner', true)} onClick={() => setIsMobileMenuOpen(false)}>Partner With Us</Link>
             </div>
             <div className="px-4 pt-2 border-t border-outline-variant">
-              <button 
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  setIsModalOpen(true);
-                }}
-                className="w-full bg-primary text-white font-label-sm px-4 py-3 rounded-sm uppercase tracking-wide hover:bg-primary-container transition-colors mt-2"
+              <Link 
+                to="/partner"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full bg-primary text-white font-label-sm px-4 py-3 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-colors mt-2 text-center block font-bold text-xs font-label-sm"
+                id="mobile-partner-button"
               >
-                Subscribe
-              </button>
+                Partner with us
+              </Link>
             </div>
           </div>
         )}
       </header>
-
-      <JoinModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }

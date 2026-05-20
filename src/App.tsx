@@ -6,6 +6,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import SubscribeHover from './components/SubscribeHover';
 import Home from './pages/Home';
 import Programmes from './pages/Programmes';
 import Briefing from './pages/Briefing';
@@ -39,6 +40,7 @@ export default function App() {
           </Routes>
         </main>
         <Footer />
+        <SubscribeHover />
       </div>
     </Router>
   );
