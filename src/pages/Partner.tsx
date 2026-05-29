@@ -1,5 +1,5 @@
 import { Megaphone, FileText, BookOpen, MessageSquare, CheckCircle2 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 

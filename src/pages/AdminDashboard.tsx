@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   collection, 
   getDocs, 
@@ -25,6 +25,7 @@ import {
   OperationType, 
   handleFirestoreError 
 } from '../lib/firebase';
+import firebaseConfig from '../../firebase-applet-config.json';
 import { 
   Programme, 
   Episode, 
@@ -265,7 +266,7 @@ export default function AdminDashboard() {
       ];
 
       for (const ep of sampleEpisodes) {
-        await setDoc(doc(doc(db, 'episodes', ep.id)), ep);
+        await setDoc(doc(db, 'episodes', ep.id), ep);
       }
 
       // 3. Seed default posts (briefing/explainer)

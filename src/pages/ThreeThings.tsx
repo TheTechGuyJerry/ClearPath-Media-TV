@@ -32,7 +32,7 @@ export default function ThreeThings() {
         );
         const snap = await getDocs(q);
         if (!snap.empty) {
-          const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Episode));
           setEpisodes(list);
           if (list[0]?.videoId) {
             setActiveVideoId(list[0].videoId);
