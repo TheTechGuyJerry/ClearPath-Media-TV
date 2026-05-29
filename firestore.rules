@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Global safety net catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Standard primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() && request.auth.token.email == 'jerryagbedun@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Validation Helpers ---
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() <= 128 &&
+        data.email is string && data.email.size() <= 256 &&
+        data.role == 'admin';
+    }
+
+    function isValidProgramme(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.tag is string && data.tag.size() <= 128 &&
+        data.title is string && data.title.size() <= 256 &&
+        data.desc is string && data.desc.size() <= 500 &&
+        data.about is string && data.about.size() <= 2000 &&
+        data.img is string && data.img.size() <= 1000 &&
+        data.link is string && data.link.size() <= 500 &&
+        data.linkText is string && data.linkText.size() <= 128;
+    }
+
+    function isValidEpisode(data) {
+      return data.programmeId is string && data.programmeId.size() <= 128 &&
+        data.title is string && data.title.size() <= 256 &&
+        data.youtubeUrl is string && data.youtubeUrl.size() <= 1000 &&
+        data.videoId is string && data.videoId.size() <= 128 &&
+        data.publishStatus in ['published', 'draft'];
+    }
+
+    function isValidPost(data) {
+      return data.category in ['Briefing', 'Explainer'] &&
+        data.title is string && data.title.size() <= 256 &&
+        data.publishStatus in ['published', 'draft'];
+    }
+
+    function isValidTopic(data) {
+      return data.slug is string && data.slug.size() <= 128 &&
+        data.name is string && data.name.size() <= 128;
+    }
+
+    function isValidPage(data) {
+      return data.slug is string && data.slug.size() <= 128 &&
+        data.title is string && data.title.size() <= 256 &&
+        data.content is string && data.content.size() <= 50000;
+    }
+
+    function isValidSiteSettings(data) {
+      return data.heroVideoId is string && data.heroVideoId.size() <= 128;
+    }
+
+    function isValidPartnerRequest(data) {
+      return data.name is string && data.name.size() <= 256 &&
+        data.email is string && data.email.size() <= 256 &&
+        data.message is string && data.message.size() <= 5000;
+    }
+
+    function isValidNewsletterSubscriber(data) {
+      return data.email is string && data.email.size() <= 256;
+    }
+
+    // --- Collections Configurations ---
+
+    // 1. Users Collection
+    match /users/{userId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 2. Programmes Collection
+    match /programmes/{programmeId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidProgramme(incoming());
+    }
+
+    // 3. Episodes Collection
+    match /episodes/{episodeId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidEpisode(incoming());
+    }
+
+    // 4. Posts Collection
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidPost(incoming());
+    }
+
+    // 5. Topics Collection
+    match /topics/{topicId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidTopic(incoming());
+    }
+
+    // 6. Pages Collection
+    match /pages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidPage(incoming());
+    }
+
+    // 7. SiteSettings Collection
+    match /siteSettings/{settingsId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidSiteSettings(incoming());
+    }
+
+    // 8. PartnerRequests Collection
+    match /partnerRequests/{requestId} {
+      allow create: if isValidPartnerRequest(incoming());
+      allow read, update, delete: if isAdmin();
+    }
+
+    // 9. NewsletterSubscribers Collection
+    match /newsletterSubscribers/{subscriberId} {
+      allow create: if isValidNewsletterSubscriber(incoming());
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

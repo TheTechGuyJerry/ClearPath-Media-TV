@@ -1,0 +1,154 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "An admin user who has access to the CMS dashboard.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique Firebase Auth identifier." },
+        "email": { "type": "string", "format": "email", "description": "The user's registered email address." },
+        "name": { "type": "string", "description": "The custom name of the administrator." },
+        "role": { "type": "string", "enum": ["admin"], "description": "The role of the user (must be admin)." },
+        "createdAt": { "type": "string", "description": "Creation timestamp." }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "programme": {
+      "title": "Programme",
+      "description": "A structured media category published by Clearpath.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique slug ID (e.g., three-things)." },
+        "tag": { "type": "string", "description": "Audience tag, e.g., Conversations." },
+        "title": { "type": "string", "description": "The title of the programme." },
+        "desc": { "type": "string", "description": "Short summary description." },
+        "about": { "type": "string", "description": "Detailed about text." },
+        "img": { "type": "string", "description": "The poster or hero image URL." },
+        "meta": {
+          "type": "object",
+          "description": "Custom key-value metadata, e.g., Cadence, Format, Audience."
+        },
+        "link": { "type": "string", "description": "Navigation link on the client." },
+        "linkText": { "type": "string", "description": "Navigation button text." },
+        "comingSoon": { "type": "boolean", "description": "Whether the programme is in pre-production." },
+        "order": { "type": "integer", "description": "Display order rank." }
+      },
+      "required": ["id", "tag", "title", "desc", "about", "img", "meta", "link", "linkText"]
+    },
+    "episode": {
+      "title": "Episode",
+      "description": "A single video or audio episode under a specific Programme.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique episode identifier." },
+        "programmeId": { "type": "string", "description": "The associated programme ID." },
+        "title": { "type": "string", "description": "The episode title." },
+        "desc": { "type": "string", "description": "Brief summary of what happened." },
+        "youtubeUrl": { "type": "string", "description": "The full YouTube play link." },
+        "videoId": { "type": "string", "description": "The YouTube unique 11-char ID." },
+        "thumbnail": { "type": "string", "description": "Calculated or custom thumbnail image URL." },
+        "publishStatus": { "type": "string", "enum": ["published", "draft"] },
+        "publishedAt": { "type": "string", "description": "Date or ISO string representing publication." },
+        "duration": { "type": "string", "description": "Audio or video length." },
+        "order": { "type": "integer", "description": "Sort priority rank." },
+         "whatHappened": { "type": "string", "description": "distilled bullet description" },
+         "whyItMatters": { "type": "string", "description": "distilled bullet description" },
+         "whatToWatchNext": { "type": "string", "description": "distilled bullet description" }
+      },
+      "required": ["programmeId", "title", "youtubeUrl", "videoId", "publishStatus"]
+    },
+    "post": {
+      "title": "Post",
+      "description": "Briefing posts and Explainers matching the category structure.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Post slug or unique ID." },
+        "category": { "type": "string", "enum": ["Briefing", "Explainer"], "description": "Post category type." },
+        "title": { "type": "string", "description": "Post headline title." },
+        "desc": { "type": "string", "description": "Short teaser description text." },
+        "content": { "type": "string", "description": "Full Markdown/HTML write-up content." },
+        "youtubeUrl": { "type": "string", "description": "Associated YouTube video URL if any." },
+        "videoId": { "type": "string", "description": "Associated YouTube 11-char ID." },
+        "thumbnail": { "type": "string", "description": "Thumbnail image URL." },
+        "publishStatus": { "type": "string", "enum": ["published", "draft"] },
+        "publishedAt": { "type": "string", "description": "Publish timestamp or ISO date." },
+        "tags": { "type": "array", "description": "List of string topics/tags." },
+        "whatHappened": { "type": "string", "description": "distilled details if briefing" },
+        "whyItMatters": { "type": "string", "description": "distilled details if briefing" },
+        "whatToWatchNext": { "type": "string", "description": "distilled details if briefing" }
+      },
+      "required": ["category", "title", "publishStatus", "publishedAt"]
+    },
+    "topic": {
+      "title": "Topic",
+      "description": "Categorisation topics for filtering the briefings/explainers.",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "description": "Topic URL-friendly slug." },
+        "name": { "type": "string", "description": "Topic human-readable name." }
+      },
+      "required": ["slug", "name"]
+    },
+    "page": {
+      "title": "Page",
+      "description": "Dynamic web page metadata and content customisations.",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "description": "Page path slug, e.g. about." },
+        "title": { "type": "string", "description": "Page view title." },
+        "content": { "type": "string", "description": "Markdown text content." },
+        "updatedBy": { "type": "string", "description": "UID of editing administrator." },
+        "updatedAt": { "type": "string", "description": "Last edit timestamp." }
+      },
+      "required": ["slug", "title", "content"]
+    },
+    "siteSettings": {
+      "title": "SiteSettings",
+      "description": "Global settings such as hero loop playback parameters.",
+      "type": "object",
+      "properties": {
+        "heroVideoUrl": { "type": "string", "description": "The full play URL of background loop." },
+        "heroVideoId": { "type": "string", "description": "YouTube 11-char ID of background loop." },
+        "heroStart": { "type": "integer", "description": "Repeat loop start frame second." },
+        "heroEnd": { "type": "integer", "description": "Repeat loop end frame second." },
+        "latestBriefingId": { "type": "string", "description": "Current active highlighted Briefing ID." },
+        "featuredExplainerId": { "type": "string", "description": "Current active highlighted Explainer ID." }
+      },
+      "required": ["heroVideoId", "heroStart", "heroEnd"]
+    },
+    "partnerRequest": {
+      "title": "PartnerRequest",
+      "description": "Institution submissions for cooperation.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Submitter full name." },
+        "organization": { "type": "string", "description": "Submitter's enterprise." },
+        "email": { "type": "string", "format": "email", "description": "Sender contact." },
+        "message": { "type": "string", "description": "Custom cover letter or request text." },
+        "createdAt": { "type": "string", "description": "Submission time." }
+      },
+      "required": ["name", "email", "message", "createdAt"]
+    },
+    "newsletterSubscriber": {
+      "title": "NewsletterSubscriber",
+      "description": "Registered subscriber emails.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "subscribedAt": { "type": "string" }
+      },
+      "required": ["email", "subscribedAt"]
+    }
+  },
+  "firestore": {
+    "users": { "schema": "user", "description": "Admin accounts." },
+    "programmes": { "schema": "programme", "description": "The collection of Cleapath public programmes." },
+    "episodes": { "schema": "episode", "description": "Under-the-hood lists of episodes." },
+    "posts": { "schema": "post", "description": "CMS briefs and explainers." },
+    "topics": { "schema": "topic", "description": "Filter labels." },
+    "pages": { "schema": "page", "description": "Customizable content bodies for page layouts." },
+    "siteSettings": { "schema": "siteSettings", "description": "Homepage video timings & other setups." },
+    "partnerRequests": { "schema": "partnerRequest", "description": "Cooperation leads." },
+    "newsletterSubscribers": { "schema": "newsletterSubscriber", "description": "Mailing lists." }
+  }
+}

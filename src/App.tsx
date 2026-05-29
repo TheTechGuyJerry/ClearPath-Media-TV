@@ -18,6 +18,7 @@ import ThreeThings from './pages/ThreeThings';
 import Insights from './pages/Insights';
 import Regional from './pages/Regional';
 import MekariaSeries from './pages/MekariaSeries';
+import AdminDashboard from './pages/AdminDashboard';
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/explainers/insights" element={<Insights />} />
             <Route path="/about" element={<About />} />
             <Route path="/partner" element={<Partner />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </main>
         <Footer />
