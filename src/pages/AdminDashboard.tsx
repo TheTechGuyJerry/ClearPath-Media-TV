@@ -15,7 +15,10 @@ import {
   signInWithPopup, 
   GoogleAuthProvider, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile
 } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
@@ -65,6 +68,12 @@ export default function AdminDashboard() {
   const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // Email/Password login/registration state
+  const [emailInput, setEmailInput] = useState<string>('');
+  const [passwordInput, setPasswordInput] = useState<string>('');
+  const [nameInput, setNameInput] = useState<string>('');
+  const [isRegisterMode, setIsRegisterMode] = useState<boolean>(false);
 
   // Core CMS state
   const [activeTab, setActiveTab] = useState<string>('overview');
@@ -189,6 +198,58 @@ export default function AdminDashboard() {
       await signInWithPopup(auth, provider);
     } catch (e: any) {
       setAuthError(e.message || 'Authentication failed. Please verify credentials.');
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    if (!emailInput || !passwordInput) {
+      setAuthError('Please enter both email and password.');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      if (isRegisterMode) {
+        const userCredential = await createUserWithEmailAndPassword(auth, emailInput, passwordInput);
+        const registeredUser = userCredential.user;
+        
+        if (nameInput) {
+          await updateProfile(registeredUser, { displayName: nameInput });
+        }
+
+        // Save newly registered user to '/users' collection as an admin default
+        const newUserDoc = {
+          uid: registeredUser.uid,
+          email: registeredUser.email || emailInput,
+          name: nameInput || 'Admin User',
+          role: 'admin'
+        };
+        await setDoc(doc(db, 'users', registeredUser.uid), newUserDoc);
+      } else {
+        await signInWithEmailAndPassword(auth, emailInput, passwordInput);
+      }
+      
+      // Reset inputs on successful auth
+      setEmailInput('');
+      setPasswordInput('');
+      setNameInput('');
+    } catch (e: any) {
+      console.error('Email Auth Error: ', e);
+      let errMsg = e.message || 'Authentication failed.';
+      if (e.code === 'auth/email-already-in-use') {
+        errMsg = 'The email address is already in use by another account.';
+      } else if (e.code === 'auth/weak-password') {
+        errMsg = 'The password must be at least 6 characters.';
+      } else if (e.code === 'auth/invalid-email') {
+        errMsg = 'The email address is badly formatted.';
+      } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
+        errMsg = 'Incorrect email or password.';
+      }
+      setAuthError(errMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -509,32 +570,125 @@ export default function AdminDashboard() {
   // Unauthenticated Admin screen
   if (!user || !isAdminUser) {
     return (
-      <div className="min-h-[80vh] flex flex-col justify-center items-center px-4 bg-background selection:bg-secondary-container">
-        <div className="w-full max-w-md bg-white border border-outline-variant p-unit-xl rounded-lg shadow-xl text-center">
-          <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-unit-lg">
+      <div className="min-h-[90vh] flex flex-col justify-center items-center px-4 bg-background selection:bg-secondary-container py-12">
+        <div className="w-full max-w-md bg-white border border-outline-variant p-8 rounded-lg shadow-xl text-center">
+          <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
             <LayoutDashboard className="w-8 h-8" />
           </div>
           <h1 className="font-headline-lg text-primary mb-2">Clearpath Console</h1>
-          <p className="font-body-md text-on-surface-variant mb-unit-lg">
-            Authorized administrator access only. Please sign in with your verified Google email account.
+          <p className="font-body-md text-on-surface-variant mb-6 text-sm">
+            {isRegisterMode 
+              ? "Create a new administrator account to manage your platform's content."
+              : "Authorized administrator access only. Please sign in to manage content."}
           </p>
 
           {authError && (
-            <div className="mb-unit-md bg-error/10 border border-error text-error p-unit-md text-sm rounded flex items-center gap-2 text-left">
+            <div className="mb-4 bg-error/10 border border-error text-error p-3 text-sm rounded flex items-center gap-2 text-left">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{authError}</span>
             </div>
           )}
 
+          {/* Third Party: Gmail Login */}
           <button 
+            type="button"
             onClick={login}
-            className="w-full bg-primary text-white py-3 px-6 rounded-DEFAULT font-label-md hover:bg-primary/95 transition-all flex items-center justify-center gap-3 border shadow-sm cursor-pointer"
+            className="w-full bg-white hover:bg-surface-container-low text-primary py-2.5 px-4 rounded font-label-md transition-all flex items-center justify-center gap-3 border border-outline-variant shadow-sm cursor-pointer mb-2"
           >
-            <LogIn className="w-5 h-5" />
-            Sign In with Google
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+              <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.48c0,-0.61 -0.06,-1.2 -0.16,-1.75l0,0Z" fill="#4285f4" />
+                <path d="M12,20.6c2.43,0 4.47,-0.8 5.96,-2.18l-3.3,-2.58c-0.91,0.61 -2.08,0.98 -3.3,0.98c-2.31,0 -4.27,-1.56 -4.97,-3.66H3.01v2.66c1.49,2.96 4.54,4.8 8.01,4.8l0,0Z" fill="#34a853" />
+                <path d="M7.03,13.16c-0.18,-0.54 -0.28,-1.11 -0.28,-1.7s0.1,-1.16 0.28,-1.7V7.1H3.01C2.39,8.34 2,9.78 2,11.3c0,1.52 0.39,2.96 1.01,4.2l4.02,-3.14l0,0Z" fill="#fbbc05" />
+                <path d="M12,6.14c1.32,0 2.51,0.45 3.44,1.35l2.58,-2.58C16.46,3.46 14.42,2.6 12,2.6C8.53,2.6 5.48,4.44 3.01,7.1l4.02,3.14c0.7,-2.1 2.66,-3.66 4.97,-3.66l0,0Z" fill="#ea4335" />
+              </g>
+            </svg>
+            Continue with Google
           </button>
+
+          {/* Visual Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-outline-variant"></div>
+            </div>
+            <div className="relative flex justify-center text-[10px] text-on-surface-variant font-mono uppercase tracking-wider">
+              <span className="bg-white px-3">or email credentials</span>
+            </div>
+          </div>
+
+          {/* Email/Password Auth Form */}
+          <form onSubmit={handleEmailAuth} className="space-y-4 text-left">
+            {isRegisterMode && (
+              <div>
+                <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Full Name</label>
+                <input 
+                  type="text" 
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder="e.g. Jerry Agbedun"
+                  className="w-full border border-outline-variant rounded p-2 text-sm focus:outline-none focus:border-primary font-sans bg-transparent text-on-surface"
+                  required={isRegisterMode}
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Email Address</label>
+              <input 
+                type="email" 
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="administrator@clearpath.com"
+                className="w-full border border-outline-variant rounded p-2 text-sm focus:outline-none focus:border-primary font-sans bg-transparent text-on-surface"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Password</label>
+              <input 
+                type="password" 
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="••••••"
+                className="w-full border border-outline-variant rounded p-2 text-sm focus:outline-none focus:border-primary font-sans bg-transparent text-on-surface"
+                required
+              />
+            </div>
+
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-white py-2.5 px-4 rounded font-label-md hover:bg-primary/95 transition-all flex items-center justify-center gap-2 border shadow-sm cursor-pointer font-semibold text-sm mt-6"
+            >
+              {loading ? (
+                <span className="animate-pulse">Loading...</span>
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4" />
+                  {isRegisterMode ? "Register Administrator" : "Sign In with Credentials"}
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Auth mode toggle */}
+          <div className="mt-6 pt-4 border-t border-outline-variant">
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegisterMode(!isRegisterMode);
+                setAuthError(null);
+              }}
+              className="text-sm text-primary hover:underline font-semibold cursor-pointer"
+            >
+              {isRegisterMode 
+                ? "Already have an admin account? Sign In" 
+                : "Need a new admin account? Register one"}
+            </button>
+          </div>
           
-          <div className="mt-6 text-xs text-on-surface-variant font-mono">
+          <div className="mt-6 text-[10px] text-on-surface-variant font-mono">
             Bootstrapped accounts: jerryagbedun@gmail.com
           </div>
         </div>

@@ -19,8 +19,28 @@ import {
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId); /* CRITICAL */
+// Support external environment variable overrides alongside the json config
+const API_KEY = import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey;
+const AUTH_DOMAIN = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain;
+const PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId;
+const STORAGE_BUCKET = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket;
+const MESSAGING_SENDER_ID = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfig.messagingSenderId;
+const APP_ID = import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfig.appId;
+const FIRESTORE_DATABASE_ID = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || firebaseConfig.firestoreDatabaseId;
+const MEASUREMENT_ID = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || firebaseConfig.measurementId;
+
+const resolvedConfig = {
+  apiKey: API_KEY,
+  authDomain: AUTH_DOMAIN,
+  projectId: PROJECT_ID,
+  storageBucket: STORAGE_BUCKET,
+  messagingSenderId: MESSAGING_SENDER_ID,
+  appId: APP_ID,
+  measurementId: MEASUREMENT_ID
+};
+
+const app = initializeApp(resolvedConfig);
+export const db = getFirestore(app, FIRESTORE_DATABASE_ID || undefined); /* CRITICAL */
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
