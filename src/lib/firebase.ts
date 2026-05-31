@@ -29,15 +29,29 @@ const APP_ID = import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfig.appId;
 const FIRESTORE_DATABASE_ID = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || firebaseConfig.firestoreDatabaseId;
 const MEASUREMENT_ID = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || firebaseConfig.measurementId;
 
-const resolvedConfig = {
+interface FirebaseConfigType {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId?: string;
+}
+
+const resolvedConfig: FirebaseConfigType = {
   apiKey: API_KEY,
   authDomain: AUTH_DOMAIN,
   projectId: PROJECT_ID,
   storageBucket: STORAGE_BUCKET,
   messagingSenderId: MESSAGING_SENDER_ID,
-  appId: APP_ID,
-  measurementId: MEASUREMENT_ID
+  appId: APP_ID
 };
+
+// Only append measurementId if it is explicitly provided (Google Analytics are optional)
+if (MEASUREMENT_ID) {
+  resolvedConfig.measurementId = MEASUREMENT_ID;
+}
 
 const app = initializeApp(resolvedConfig);
 export const db = getFirestore(app, FIRESTORE_DATABASE_ID || undefined); /* CRITICAL */
