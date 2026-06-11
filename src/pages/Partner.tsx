@@ -1,6 +1,6 @@
 import { Megaphone, FileText, BookOpen, MessageSquare, CheckCircle2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export default function Partner() {
@@ -16,7 +16,7 @@ export default function Partner() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !organisation || !interest) {
+    if (!name.trim() || !email.trim() || !organisation.trim() || !interest) {
       alert('Please fill out all required fields.');
       return;
     }
@@ -24,19 +24,22 @@ export default function Partner() {
     setSubmitting(true);
     try {
       await addDoc(collection(db, 'partnerRequests'), {
-        name: name.trim(),
-        email: email.trim(),
+        fullName: name.trim(),
+        workEmail: email.toLowerCase().trim(),
         organisation: organisation.trim(),
-        role: role.trim(),
-        interest,
-        message: message.trim(),
-        submittedAt: Timestamp.now(),
-        status: 'pending'
+        jobTitle: role.trim(),
+        partnershipInterest: interest,
+        additionalInformation: message.trim(),
+        status: "new",
+        source: "partner_form",
+        submittedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
       setSubmitted(true);
     } catch (err) {
       console.error('Error submitting partner request:', err);
-      alert('Failed to submit partner request. Please check your network and try again.');
+      alert('Failed to submit partner request. Please try again: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setSubmitting(false);
     }

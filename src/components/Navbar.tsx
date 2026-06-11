@@ -1,12 +1,15 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import JoinModal from './JoinModal';
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const getLinkClass = (path: string, isMobile: boolean = false) => {
     const isActive = location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
@@ -40,9 +43,45 @@ export default function Navbar() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-unit-md mt-1 flex-shrink-0 z-10">
-            <button className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-full transition-all scale-95 duration-150 ease-in-out">
-              <Search className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              {isSearchOpen && (
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (searchQuery.trim()) {
+                      navigate(`/briefing?search=${encodeURIComponent(searchQuery.trim())}`);
+                      setIsSearchOpen(false);
+                      setSearchQuery('');
+                    }
+                  }}
+                  className="animate-fade-in"
+                >
+                  <input 
+                    type="text" 
+                    placeholder="Search briefings..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                    className="border border-outline-variant rounded-sm px-3 py-1 text-xs bg-surface-container-low focus:outline-none focus:border-primary w-32 md:w-48 transition-all"
+                  />
+                </form>
+              )}
+              <button 
+                onClick={() => {
+                  if (isSearchOpen && searchQuery.trim()) {
+                    navigate(`/briefing?search=${encodeURIComponent(searchQuery.trim())}`);
+                    setIsSearchOpen(false);
+                    setSearchQuery('');
+                  } else {
+                    setIsSearchOpen(!isSearchOpen);
+                  }
+                }}
+                className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-full transition-all scale-95 duration-150 ease-in-out cursor-pointer"
+                aria-label="Toggle search bar"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+            </div>
             
             <Link 
               to="/partner"

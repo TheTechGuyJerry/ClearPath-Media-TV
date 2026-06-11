@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getAnalytics, isSupported } from 'firebase/analytics';
 import { 
   getFirestore, 
   collection, 
@@ -57,6 +58,17 @@ const app = initializeApp(resolvedConfig);
 export const db = getFirestore(app, FIRESTORE_DATABASE_ID || undefined); /* CRITICAL */
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+
+// Initialize Firebase Analytics if measurementId is a real one starting with "G-"
+if (MEASUREMENT_ID && MEASUREMENT_ID.startsWith('G-')) {
+  isSupported().then((supported) => {
+    if (supported) {
+      getAnalytics(app);
+    }
+  }).catch((err) => {
+    console.warn('Analytics initialization failed: ', err);
+  });
+}
 
 // Operational types for Firestore error debugging
 export enum OperationType {

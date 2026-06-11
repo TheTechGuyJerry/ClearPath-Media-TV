@@ -4,12 +4,10 @@ import {
   getDocs, 
   setDoc, 
   doc, 
-  addDoc, 
   deleteDoc, 
-  updateDoc, 
   query, 
-  orderBy, 
-  where 
+  where,
+  updateDoc
 } from 'firebase/firestore';
 import { 
   signInWithPopup, 
@@ -28,23 +26,21 @@ import {
   OperationType, 
   handleFirestoreError 
 } from '../lib/firebase';
-import firebaseConfig from '../../firebase-applet-config.json';
 import { 
   Programme, 
-  Episode, 
-  Post, 
-  CustomPage, 
+  ProgrammeVideo, 
+  Explainer, 
+  ExplainerItem, 
+  Briefing, 
   SiteSettings, 
   PartnerRequest, 
   NewsletterSubscriber,
-  Topic 
+  UserProfile
 } from '../types';
 import { 
   LayoutDashboard, 
   Tv, 
-  Video, 
   BookOpen, 
-  FileText, 
   Settings, 
   Users, 
   Mail, 
@@ -58,16 +54,83 @@ import {
   CheckCircle, 
   X, 
   Upload, 
-  AlertCircle 
+  HelpCircle,
+  FileText,
+  Search,
+  MessageSquare
 } from 'lucide-react';
+import CMSForm from '../components/admin/CMSForm';
+import { seedProductionDatabase, repairClearPathProgrammesAndVideoLinks } from '../lib/seeder';
+import YoutubeResearchPanel from '../components/admin/YoutubeResearchPanel';
 
 const provider = new GoogleAuthProvider();
+
+const formatFirebaseDate = (dateVal: any): string => {
+  if (!dateVal) return 'Not available';
+  if (typeof dateVal === 'string' && (dateVal.trim() === '' || dateVal.toLowerCase().includes('invalid'))) {
+    return 'Not available';
+  }
+  
+  // 1. If it's a Firestore Timestamp (has toDate function)
+  if (dateVal && typeof dateVal.toDate === 'function') {
+    try {
+      const d = dateVal.toDate();
+      if (d && !isNaN(d.getTime())) {
+        return d.toLocaleDateString();
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  // 2. If it's a timestamp object without .toDate but with seconds/nanoseconds
+  if (dateVal && typeof dateVal.seconds === 'number') {
+    try {
+      return new Date(dateVal.seconds * 1000).toLocaleDateString();
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  // 2b. If it has serialized _seconds
+  if (dateVal && typeof dateVal._seconds === 'number') {
+    try {
+      return new Date(dateVal._seconds * 1000).toLocaleDateString();
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  // 3. Try parsing as a general string or number (ISO string, unix epoch, etc.)
+  try {
+    const parsedDate = new Date(dateVal);
+    if (parsedDate && !isNaN(parsedDate.getTime()) && parsedDate.toString() !== 'Invalid Date') {
+      return parsedDate.toLocaleDateString();
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  return 'Not available';
+};
+
+const getProspectName = (r: any) => r.fullName || r.name || r.prospectName || 'Not available';
+const getCorporateEntity = (r: any) => r.organisation || r.organization || r.corporateEntity || 'Not available';
+const getContact = (r: any) => {
+  const email = r.workEmail || r.email || r.contact || '';
+  return email.trim() !== '' ? email.trim() : 'Not available';
+};
+const getPartnershipInterest = (r: any) => r.partnershipInterest || r.partnershipType || r.interest || 'Not available';
+const getKeyMessage = (r: any) => r.additionalInformation || r.message || r.keyMessage || 'Not available';
+const getJobTitle = (r: any) => r.jobTitle || r.jobRole || r.role || r.jobTitleRole || r.designation || 'Not available';
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
   const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  const isSuperadmin = user?.email?.toLowerCase() === 'jerryagbedun@gmail.com';
 
   // Email/Password login/registration state
   const [emailInput, setEmailInput] = useState<string>('');
@@ -77,36 +140,48 @@ export default function AdminDashboard() {
 
   // Core CMS state
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
+  const [selectedExplainerId, setSelectedExplainerId] = useState<string | null>(null);
+
   const [programmes, setProgrammes] = useState<Programme[]>([]);
-  const [episodes, setEpisodes] = useState<Episode[]>([]);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [customPages, setCustomPages] = useState<CustomPage[]>([]);
+  const [programmeVideos, setProgrammeVideos] = useState<ProgrammeVideo[]>([]);
+  const [explainers, setExplainers] = useState<Explainer[]>([]);
+  const [explainerItems, setExplainerItems] = useState<ExplainerItem[]>([]);
+  const [briefings, setBriefings] = useState<Briefing[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [partnerRequests, setPartnerRequests] = useState<PartnerRequest[]>([]);
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
+  const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [adminUsers, setAdminUsers] = useState<any[]>([]);
 
   // Selection states for Modals/Forms
   const [editingItem, setEditingItem] = useState<{ type: string; data: any } | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<{ type: string; data: any } | null>(null);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
-
-  // Load state triggered
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+
+  // Program / Explainer specific tab states ('profile' | 'items')
+  const [progSubTab, setProgSubTab] = useState<'profile' | 'videos'>('profile');
+  const [explSubTab, setExplSubTab] = useState<'profile' | 'items'>('profile');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        // Enforce is admin check (jerryagbedun@gmail.com is absolute bootstrapped admin)
         const isJerry = currentUser.email?.toLowerCase() === 'jerryagbedun@gmail.com';
         if (isJerry) {
           setIsAdminUser(true);
         } else {
           try {
-            const userRef = doc(db, 'users', currentUser.uid);
-            const userSnap = await getDocs(query(collection(db, 'users'), where('uid', '==', currentUser.uid)));
+            // Check both by uid AND by email
+            const emailQuery = query(collection(db, 'users'), where('email', '==', currentUser.email?.toLowerCase()));
+            const userSnap = await getDocs(emailQuery);
             if (!userSnap.empty && userSnap.docs[0].data().role === 'admin') {
               setIsAdminUser(true);
+              const matchedDoc = userSnap.docs[0];
+              if (matchedDoc.data().uid !== currentUser.uid) {
+                await updateDoc(doc(db, 'users', matchedDoc.id), { uid: currentUser.uid });
+              }
             } else {
               setIsAdminUser(false);
               setAuthError('Access denied: You are not registered as an administrator.');
@@ -125,7 +200,6 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch collections when user changes / refreshes
   useEffect(() => {
     if (isAdminUser) {
       fetchData();
@@ -137,36 +211,73 @@ export default function AdminDashboard() {
     try {
       // Programmes
       const progSnap = await getDocs(collection(db, 'programmes'));
-      const progList = progSnap.docs.map(d => ({ id: d.id, ...d.data() } as Programme));
-      progList.sort((a,b) => (a.order || 0) - (b.order || 0));
+      let progList = progSnap.docs.map(d => ({ id: d.id, ...d.data() } as Programme));
+
+      // Programme Videos
+      const epSnap = await getDocs(collection(db, 'programmeVideos'));
+      const epList = epSnap.docs.map(d => ({ id: d.id, ...d.data() } as ProgrammeVideo));
+
+      const activeProgramsCount = progList.filter(p => p.status === 'active').length;
+      if (activeProgramsCount === 0 && epList.length > 0) {
+        console.log('0 active programmes found but videos exist. Running automatic repair...');
+        await repairClearPathProgrammesAndVideoLinks();
+        
+        // Re-read programmes & videos
+        const reProgSnap = await getDocs(collection(db, 'programmes'));
+        progList = reProgSnap.docs.map(d => ({ id: d.id, ...d.data() } as Programme));
+        
+        const reEpSnap = await getDocs(collection(db, 'programmeVideos'));
+        setProgrammeVideos(reEpSnap.docs.map(d => ({ id: d.id, ...d.data() } as ProgrammeVideo)));
+      } else {
+        setProgrammeVideos(epList);
+      }
+
+      progList.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
       setProgrammes(progList);
 
-      // Episodes
-      const epSnap = await getDocs(collection(db, 'episodes'));
-      const epList = epSnap.docs.map(d => ({ id: d.id, ...d.data() } as Episode));
-      setEpisodes(epList);
+      // Explainers
+      const exSnap = await getDocs(collection(db, 'explainers'));
+      const exList = exSnap.docs.map(d => ({ id: d.id, ...d.data() } as Explainer));
+      exList.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      setExplainers(exList);
 
-      // Posts
-      const postSnap = await getDocs(collection(db, 'posts'));
-      const postList = postSnap.docs.map(d => ({ id: d.id, ...d.data() } as Post));
-      setPosts(postList);
+      // Explainer Items
+      const itemSnap = await getDocs(collection(db, 'explainerItems'));
+      setExplainerItems(itemSnap.docs.map(d => ({ id: d.id, ...d.data() } as ExplainerItem)));
 
-      // Custom Pages
-      const pageSnap = await getDocs(collection(db, 'pages'));
-      setCustomPages(pageSnap.docs.map(d => ({ id: d.id, ...d.data() } as CustomPage)));
+      // Briefings
+      const bSnap = await getDocs(collection(db, 'briefings'));
+      const bList = bSnap.docs.map(d => ({ id: d.id, ...d.data() } as Briefing));
+      bList.sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+      setBriefings(bList);
 
       // Site Settings
       const settingsSnap = await getDocs(collection(db, 'siteSettings'));
       if (!settingsSnap.empty) {
         setSiteSettings({ id: settingsSnap.docs[0].id, ...settingsSnap.docs[0].data() } as SiteSettings);
       } else {
-        // Create default settings if absent
         const initialSettings: SiteSettings = {
           id: 'primary',
+          siteName: 'Clearpath Media',
+          siteTagline: 'Systems, Not Headlines',
+          heroTitle: 'Clearpath Media',
+          heroSubtitle: 'Public intelligence to interpret West African governance and policies without the noise.',
           heroVideoUrl: 'https://www.youtube.com/watch?v=3H95x0BV9nA',
           heroVideoId: '3H95x0BV9nA',
-          heroStart: 14,
-          heroEnd: 21,
+          featuredProgrammeId: 'osita-insights',
+          featuredExplainerId: 'explaining-nigeria',
+          featuredBriefingId: '',
+          youtubeChannelUrl: '',
+          facebookUrl: '',
+          instagramUrl: '',
+          xUrl: '',
+          tiktokUrl: '',
+          contactEmail: 'contact@clearpath.media',
+          partnershipEmail: 'partnerships@clearpath.media',
+          newsletterTitle: 'Subscribe to the Daily Brief',
+          newsletterDescription: 'A weekday morning briefing to understand deep system design inside civil policies.',
+          footerText: '© 2026 Clearpath Media. All rights reserved.',
+          updatedAt: new Date().toISOString()
         };
         await setDoc(doc(db, 'siteSettings', 'primary'), initialSettings);
         setSiteSettings(initialSettings);
@@ -175,16 +286,30 @@ export default function AdminDashboard() {
       // Partner requests
       const partnerSnap = await getDocs(collection(db, 'partnerRequests'));
       const partnerList = partnerSnap.docs.map(d => ({ id: d.id, ...d.data() } as PartnerRequest));
-      partnerList.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      partnerList.sort((a,b) => {
+        const timeA = a && a.submittedAt && typeof a.submittedAt.toDate === 'function' ? a.submittedAt.toDate().getTime() : new Date(a.submittedAt || a.createdAt || 0).getTime();
+        const timeB = b && b.submittedAt && typeof b.submittedAt.toDate === 'function' ? b.submittedAt.toDate().getTime() : new Date(b.submittedAt || b.createdAt || 0).getTime();
+        return timeB - timeA;
+      });
       setPartnerRequests(partnerList);
 
-      // Newsletter subscribers
+      // Subscribers
       const subSnap = await getDocs(collection(db, 'newsletterSubscribers'));
       setSubscribers(subSnap.docs.map(d => ({ id: d.id, ...d.data() } as NewsletterSubscriber)));
 
-      // Admin Users
-      const adminUsersSnap = await getDocs(collection(db, 'users'));
-      setAdminUsers(adminUsersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      // Contact Messages
+      const contactMsgSnap = await getDocs(collection(db, 'contactMessages'));
+      const contactMsgList = contactMsgSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      contactMsgList.sort((a,b) => {
+        const timeA = a && a.submittedAt && typeof a.submittedAt.toDate === 'function' ? a.submittedAt.toDate().getTime() : new Date(a.submittedAt || a.createdAt || 0).getTime();
+        const timeB = b && b.submittedAt && typeof b.submittedAt.toDate === 'function' ? b.submittedAt.toDate().getTime() : new Date(b.submittedAt || b.createdAt || 0).getTime();
+        return timeB - timeA;
+      });
+      setContactMessages(contactMsgList);
+
+      // Admins
+      const administratorsSnap = await getDocs(query(collection(db, 'users')));
+      setAdminUsers(administratorsSnap.docs.map(d => d.data()));
     } catch (e) {
       console.error("Error fetching admin data: ", e);
     } finally {
@@ -197,7 +322,7 @@ export default function AdminDashboard() {
     try {
       await signInWithPopup(auth, provider);
     } catch (e: any) {
-      setAuthError(e.message || 'Authentication failed. Please verify credentials.');
+      setAuthError(e.message || 'Authentication failed.');
     }
   };
 
@@ -205,33 +330,13 @@ export default function AdminDashboard() {
     e.preventDefault();
     setAuthError(null);
     if (!emailInput || !passwordInput) {
-      setAuthError('Please enter both email and password.');
+      setAuthError('Please enter email and password.');
       return;
     }
     
     setLoading(true);
     try {
-      if (isRegisterMode) {
-        const userCredential = await createUserWithEmailAndPassword(auth, emailInput, passwordInput);
-        const registeredUser = userCredential.user;
-        
-        if (nameInput) {
-          await updateProfile(registeredUser, { displayName: nameInput });
-        }
-
-        // Save newly registered user to '/users' collection as an admin default
-        const newUserDoc = {
-          uid: registeredUser.uid,
-          email: registeredUser.email || emailInput,
-          name: nameInput || 'Admin User',
-          role: 'admin'
-        };
-        await setDoc(doc(db, 'users', registeredUser.uid), newUserDoc);
-      } else {
-        await signInWithEmailAndPassword(auth, emailInput, passwordInput);
-      }
-      
-      // Reset inputs on successful auth
+      await signInWithEmailAndPassword(auth, emailInput, passwordInput);
       setEmailInput('');
       setPasswordInput('');
       setNameInput('');
@@ -239,12 +344,10 @@ export default function AdminDashboard() {
       console.error('Email Auth Error: ', e);
       let errMsg = e.message || 'Authentication failed.';
       if (e.code === 'auth/email-already-in-use') {
-        errMsg = 'The email address is already in use by another account.';
+        errMsg = 'The email address is already in use.';
       } else if (e.code === 'auth/weak-password') {
         errMsg = 'The password must be at least 6 characters.';
-      } else if (e.code === 'auth/invalid-email') {
-        errMsg = 'The email address is badly formatted.';
-      } else if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
+      } else if (e.code === 'auth/invalid-credential') {
         errMsg = 'Incorrect email or password.';
       }
       setAuthError(errMsg);
@@ -257,151 +360,29 @@ export default function AdminDashboard() {
     await signOut(auth);
   };
 
-  // Seeding sample data
-  const seedSampleData = async () => {
-    if (!confirm('Are you sure you want to initialize the database with sample data? This will write default programmes, briefings and explainers!')) return;
+  const runSeeder = async () => {
+    const confirmMsg = 'Are you sure you want to run the ClearPath Catalog Seed? This will safely seed default programmes, explainers, and base siteSettings into your Firestore database.';
+    if (!confirm(confirmMsg)) return;
     setLoading(true);
     try {
-      // 1. Seed public programmes
-      const samplePrograms: Programme[] = [
-        {
-          id: 'three-things',
-          tag: 'Conversations',
-          title: 'Osita Insights',
-          desc: 'A structured conversation with leaders and thinkers on judgment, responsibility, and national choices.',
-          about: 'Each episode, Osita Chidoka invites a prominent leader to discuss three specific events or decisions that defined their public service and the lessons they offer for future generations.',
-          img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0',
-          meta: { Cadence: 'Twice Monthly', Format: 'Video Conversation', Audience: 'Policy Makers, Executives' },
-          link: '/programmes/three-things',
-          linkText: 'Browse Episodes',
-          order: 1
-        },
-        {
-          id: 'daily-brief',
-          tag: 'Briefings',
-          title: 'Daily Brief with Annabel',
-          desc: 'A weekday briefing that helps professionals interpret events without chasing headlines.',
-          about: 'Annabel provides a high-level synthesis of economic data and policy shifts from across West Africa, delivered every morning for the busy professional.',
-          img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM',
-          meta: { Cadence: 'Weekdays', Format: 'Daily Briefing', Audience: 'Professionals, Investors' },
-          link: '/briefing',
-          linkText: "Watch Today's Brief",
-          order: 2
-        },
-        {
-          id: 'insights',
-          tag: 'Explainers',
-          title: 'Clearpath Insights',
-          desc: 'Short explainers translating complex issues into clear, accessible understanding.',
-          about: 'Designed for quick consumption, these visualizations break down legislative frameworks and market mechanics into their core elements.',
-          img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAeVLfCZOkjr_JQENUSHEqAjqhImldkoM6cBFtd6kJTkVvkqB1Wimrga4uO8bi_9o4q2GmcCqB1tZpqAGmQIDwPAH8F1lATsZJfeSCzrP22T0Mv2CtXzMkU1DGrd-n6wkR98R2pOU2-Bb8CoSuXOnxE-hNYap6qMwXPYvq3mXGh3sJTwEcq8rY7kMo7yUwcqwWZwNzxRmrh1F0qf5DlX7GX2ydgVgid5wF-DMmmYl5Ww1R3BtPERjhBA8yz74JaCGuiCimtXXaGFjk',
-          meta: { Cadence: 'Ongoing', Format: '60–120s Explainers', Audience: 'General Public, Students' },
-          link: '/explainers/insights',
-          linkText: 'View Library',
-          order: 3
-        }
-      ];
-
-      for (const p of samplePrograms) {
-        await setDoc(doc(db, 'programmes', p.id), p);
-      }
-
-      // 2. Seed default episodes
-      const sampleEpisodes: Episode[] = [
-        {
-          id: 'ep1',
-          programmeId: 'three-things',
-          title: 'Judgment & Choices - Leadership Lessons with Osita',
-          desc: 'A robust discussion on institutional reform, accountability, and shaping public infrastructure policies in Africa.',
-          youtubeUrl: 'https://www.youtube.com/watch?v=3H95x0BV9nA',
-          videoId: '3H95x0BV9nA',
-          thumbnail: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0',
-          publishStatus: 'published',
-          publishedAt: new Date().toISOString(),
-          duration: '42:15',
-          order: 1,
-          whatHappened: 'In this introductory session, we map out the core pathways of public policy implementation guidelines.',
-          whyItMatters: 'Understanding execution gaps helps policymakers predict issues in broad infrastructural undertakings.',
-          whatToWatchNext: 'Watch historical archives on regulatory acts to analyze long-term trends.'
-        }
-      ];
-
-      for (const ep of sampleEpisodes) {
-        await setDoc(doc(db, 'episodes', ep.id), ep);
-      }
-
-      // 3. Seed default posts (briefing/explainer)
-      const samplePosts: Post[] = [
-        {
-          id: 'brief-1',
-          category: 'Briefing',
-          title: 'Resource Diplomacy in the Sahel',
-          desc: 'Analyzing the new lithium mining agreements and their impact on regional security partnerships.',
-          content: '### Lithium Mining and Geopolitics \n\nA new framework of cooperation has taken place as sovereign lithium reserves attract global infrastructure partnerships...',
-          youtubeUrl: 'https://www.youtube.com/watch?v=3H95x0BV9nA',
-          videoId: '3H95x0BV9nA',
-          publishStatus: 'published',
-          publishedAt: new Date().toISOString(),
-          tags: ['POLICY', 'MINING', 'ECONOMY'],
-          whatHappened: 'The central bank announced a 50bps rate hike following higher-than-expected inflation data in the logistics sector.',
-          whyItMatters: 'This marks a hawkish shift that could dampen private sector credit growth during the critical Q4 trade window.',
-          whatToWatchNext: 'Secondary bond market yields and the upcoming manufacturing PMI reports for cross-sector contagion.'
-        },
-        {
-          id: 'brief-2',
-          category: 'Briefing',
-          title: 'Digital Infrastructure Expansion',
-          desc: 'Submarine cable investments and the competitive landscape for pan-African cloud providers.',
-          content: 'Broadband capacity continues to scale up as cloud providers execute key hyper-scale anchor datacenters.',
-          youtubeUrl: 'https://www.youtube.com/watch?v=3H95x0BV9nA',
-          videoId: '3H95x0BV9nA',
-          publishStatus: 'published',
-          publishedAt: new Date().toISOString(),
-          tags: ['TECH', 'ECONOMY'],
-          whatHappened: 'A newly integrated physical fiber loop improves uptime across key submarine cable drop-points.',
-          whyItMatters: 'This scales latency profiles by 40% for localized application workloads.',
-          whatToWatchNext: 'The upcoming regional telecom infrastructure reform hearings.'
-        },
-        {
-          id: 'brief-3',
-          category: 'Briefing',
-          title: 'The Port Congestion Crisis',
-          desc: 'Supply chain bottlenecks at regional hubs and the implications for seasonal inflation.',
-          content: 'Regional freight operations outline container processing backlogs resulting in seasonal cost adjustments.',
-          youtubeUrl: 'https://www.youtube.com/watch?v=3H95x0BV9nA',
-          videoId: '3H95x0BV9nA',
-          publishStatus: 'published',
-          publishedAt: new Date().toISOString(),
-          tags: ['TRADE', 'LOGISTICS'],
-          whatHappened: 'Logistics cargo queues reached a record average timeline metric during peak season operations.',
-          whyItMatters: 'Sustained bottlenecks risk elevating general CPI metrics due to warehouse overflow tariffs.',
-          whatToWatchNext: 'Customs clearance automation pilot program rollout timelines.'
-        }
-      ];
-
-      for (const p of samplePosts) {
-        await setDoc(doc(db, 'posts', p.id), p);
-      }
-
-      // Add Jerry to users list
-      await setDoc(doc(db, 'users', auth.currentUser?.uid || 'temp_uid'), {
-        uid: auth.currentUser?.uid || 'temp_uid',
-        email: auth.currentUser?.email || 'jerryagbedun@gmail.com',
-        role: 'admin',
-        name: auth.currentUser?.displayName || 'Jerry Admin',
-        createdAt: new Date().toISOString()
-      });
-
-      alert('Database seeded successfully with default materials!');
+      await seedProductionDatabase(
+        auth.currentUser?.uid || 'bootstrapped_user',
+        auth.currentUser?.email || 'jerryagbedun@gmail.com',
+        auth.currentUser?.displayName || 'Administrator'
+      );
+      
+      // Immediately run the repair & verification mapping
+      const { repairedProgrammesCount, repairedVideosCount } = await repairClearPathProgrammesAndVideoLinks();
+      
+      alert(`ClearPath Catalog seeded successfully! ${repairedProgrammesCount} programmes repaired and ${repairedVideosCount} verified video relationships updated. Please review AI-Discovered YouTube Videos if you need to load references!`);
       setRefreshTrigger(prev => prev + 1);
-    } catch (e: any) {
-      alert('Error seeding database: ' + e.message);
+    } catch (err: any) {
+      alert('Error seeding database: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Utility to parse YouTube URL to 11-char Video ID
   const getVideoIdFromUrl = (url: string): string => {
     if (!url) return '';
     try {
@@ -413,71 +394,121 @@ export default function AdminDashboard() {
     }
   };
 
-  // Image Upload handler for Storage
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadProgress('Uploading...');
-    try {
-      const storageRef = ref(storage, `images/${Date.now()}_${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadUrl = await getDownloadURL(snapshot.ref);
-
-      if (editingItem) {
-        setEditingItem({
-          ...editingItem,
-          data: {
-            ...editingItem.data,
-            [fieldName]: downloadUrl
-          }
-        });
-      }
-      setUploadProgress('Uploaded successfully!');
-    } catch (err: any) {
-      alert('Error uploading to storage: ' + err.message + '\n(You can also just paste a standard Image URL directly instead!)');
-      setUploadProgress('Upload failed.');
-    }
-  };
-
-  // Trigger resource additions/edits
   const handleEditInit = (type: string, data: any = {}) => {
     let initialData = { ...data };
-    if (!data.id && type === 'posts') {
-      initialData = { 
-        category: 'Briefing', 
-        title: '', 
-        desc: '', 
-        content: '', 
-        youtubeUrl: '', 
-        publishStatus: 'published', 
-        publishedAt: new Date().toISOString().split('T')[0], 
-        tags: [],
-        ...data 
-      };
-    } else if (!data.id && type === 'episodes') {
+    
+    if (!data.id && type === 'briefings') {
       initialData = {
-        programmeId: programmes[0]?.id || '',
         title: '',
-        desc: '',
+        slug: '',
+        excerpt: '',
+        content: '',
+        briefingType: 'daily',
+        presenter: 'Annabel K.',
         youtubeUrl: '',
-        publishStatus: 'published',
+        youtubeVideoId: '',
+        thumbnailUrl: '',
+        featuredImage: '',
+        keyPoints: '',
+        sourceLinks: '',
+        topicTags: [],
+        coverageArea: 'Nigeria & Africa',
+        status: 'published',
+        isFeatured: false,
         publishedAt: new Date().toISOString().split('T')[0],
+        seoTitle: '',
+        seoDescription: '',
+        ...data
+      };
+    } else if (!data.id && type === 'programmeVideos') {
+      initialData = {
+        programmeId: selectedProgrammeId || programmes[0]?.id || '',
+        title: '',
+        slug: '',
+        shortSummary: '',
+        fullDescription: '',
+        youtubeUrl: '',
+        youtubeVideoId: '',
+        thumbnailUrl: '',
         duration: '00:00',
+        presenters: '',
+        guests: '',
+        transcript: '',
+        keyPoints: '',
+        sourceLinks: '',
+        topicTags: [],
+        coverageArea: 'Nigeria',
+        status: 'published',
+        isFeatured: false,
+        publishedAt: new Date().toISOString().split('T')[0],
+        seoTitle: '',
+        seoDescription: '',
+        ...data
+      };
+    } else if (!data.id && type === 'explainerItems') {
+      initialData = {
+        explainerId: selectedExplainerId || explainers[0]?.id || '',
+        title: '',
+        slug: '',
+        excerpt: '',
+        content: '',
+        explainerType: 'video',
+        youtubeUrl: '',
+        youtubeVideoId: '',
+        thumbnailUrl: '',
+        featuredImage: '',
+        transcript: '',
+        keyQuestions: '',
+        keyPoints: '',
+        sourceLinks: '',
+        relatedDocuments: [],
+        topicTags: [],
+        coverageArea: 'Nigeria',
+        status: 'published',
+        isFeatured: false,
+        publishedAt: new Date().toISOString().split('T')[0],
+        seoTitle: '',
+        seoDescription: '',
         ...data
       };
     } else if (!data.id && type === 'programmes') {
       initialData = {
-        id: '',
-        tag: '',
         title: '',
-        desc: '',
-        about: '',
-        img: '',
-        meta: { Cadence: 'Weekly', Format: 'Video Conversation', Audience: 'Professionals' },
-        link: '/programmes/',
-        linkText: 'Browse Episodes',
-        comingSoon: false,
+        slug: '',
+        shortDescription: '',
+        fullDescription: '',
+        tagline: '',
+        hostName: '',
+        formatType: 'interview',
+        coverageArea: 'Nigeria',
+        topicFocus: [],
+        scheduleText: '',
+        youtubePlaylistUrl: '',
+        coverImage: '',
+        thumbnailImage: '',
+        status: 'active',
+        isFeatured: false,
+        sortOrder: programmes.length + 1,
+        seoTitle: '',
+        seoDescription: '',
+        ...data
+      };
+    } else if (!data.id && type === 'explainers') {
+      initialData = {
+        title: '',
+        slug: '',
+        shortDescription: '',
+        fullDescription: '',
+        tagline: '',
+        coverageArea: 'Nigeria',
+        topicFocus: [],
+        coverImage: '',
+        thumbnailImage: '',
+        status: 'active',
+        isFeatured: false,
+        sortOrder: explainers.length + 1,
+        seoTitle: '',
+        seoDescription: '',
         ...data
       };
     } else if (!data.id && type === 'users') {
@@ -486,9 +517,11 @@ export default function AdminDashboard() {
         email: '',
         name: '',
         role: 'admin',
+        createdAt: new Date().toISOString(),
         ...data
       };
     }
+
     setEditingItem({ type, data: initialData });
   };
 
@@ -497,47 +530,68 @@ export default function AdminDashboard() {
     if (!editingItem) return;
 
     const { type, data } = editingItem;
+    if (type === 'users' && !isSuperadmin) {
+      alert('Access denied: Only the superadministrator can create/modify administrators.');
+      return;
+    }
     setLoading(true);
 
     try {
-      // Custom formatting for IDs
-      let documentId = data.id || data.uid;
+      let documentId = data.id || data.slug || data.uid;
 
-      // Autocomplete YouTube Video IDs
-      if (data.youtubeUrl && !data.videoId) {
-        data.videoId = getVideoIdFromUrl(data.youtubeUrl);
-        if (data.videoId && !data.thumbnail) {
-          data.thumbnail = `https://img.youtube.com/vi/${data.videoId}/maxresdefault.jpg`;
+      if (type === 'users') {
+        if (!data.email) {
+          alert('Email is required for creating an administrator.');
+          setLoading(false);
+          return;
+        }
+        data.email = data.email.toLowerCase().trim();
+        documentId = data.email.replace(/[^a-zA-Z0-9]/g, '_');
+      }
+
+      // Autocomplete YouTube parameters
+      if (data.youtubeUrl && !data.youtubeVideoId) {
+        data.youtubeVideoId = getVideoIdFromUrl(data.youtubeUrl);
+        if (data.youtubeVideoId && !data.thumbnailUrl) {
+          data.thumbnailUrl = `https://img.youtube.com/vi/${data.youtubeVideoId}/maxresdefault.jpg`;
         }
       }
 
-      // Generate random slug-type ID if writing new posts / programs / episodes
       if (!documentId) {
-        documentId = (data.title || 'item')
+        // Fallback generator
+        const autoSlug = (data.title || 'item')
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)+/g, '') + '-' + Math.floor(Math.random() * 1000);
+          .replace(/(^-|-$)+/g, '');
+        documentId = autoSlug + '-' + Math.floor(Math.random() * 1000);
       }
 
       const cleanData = { ...data };
-      if (cleanData.id === undefined && type !== 'users') {
+      if (!cleanData.id && type !== 'users') {
         cleanData.id = documentId;
       }
+      cleanData.updatedAt = new Date().toISOString();
+      if (!cleanData.createdAt) {
+        cleanData.createdAt = new Date().toISOString();
+      }
 
-      // Save to Firebase
       await setDoc(doc(db, type, documentId), cleanData);
-      alert('Saved successfully!');
+      alert('Saved record successfully!');
       setEditingItem(null);
       setRefreshTrigger(prev => prev + 1);
     } catch (err: any) {
-      handleFirestoreError(err, OperationType.WRITE, `${type}/${data.id || data.uid}`);
+      handleFirestoreError(err, OperationType.WRITE, `${type}/${data.id || data.slug}`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteItem = async (collectionName: string, docId: string) => {
-    if (!confirm('Are you sure you want to delete this item permanently?')) return;
+    if (collectionName === 'users' && !isSuperadmin) {
+      alert('Access denied: Only the superadministrator can remove administrators.');
+      return;
+    }
+    if (!confirm('Are you sure you want to delete this dynamically loaded record permanently?')) return;
     setLoading(true);
     try {
       await deleteDoc(doc(db, collectionName, docId));
@@ -550,6 +604,32 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleUpdateStatus = async (collectionName: string, id: string, newStatus: string) => {
+    try {
+      const docRef = doc(db, collectionName, id);
+      await updateDoc(docRef, { status: newStatus, updatedAt: new Date().toISOString() });
+      
+      // Update local state immediately
+      if (collectionName === 'partnerRequests') {
+        setPartnerRequests(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
+      } else if (collectionName === 'newsletterSubscribers') {
+        setSubscribers(prev => prev.map(item => item.id === id ? { ...item, status: newStatus as any } : item));
+      } else if (collectionName === 'contactMessages') {
+        setContactMessages(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
+      }
+      
+      // Update active detail modal state if currently viewed
+      if (selectedDetail && selectedDetail.data.id === id) {
+        setSelectedDetail(prev => prev ? { ...prev, data: { ...prev.data, status: newStatus } } : null);
+      }
+      
+      alert('Status updated successfully!');
+    } catch (err) {
+      console.error('Error updating status:', err);
+      alert('Failed to update status.');
+    }
+  };
+
   const handleUpdateSiteSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!siteSettings) return;
@@ -557,8 +637,9 @@ export default function AdminDashboard() {
 
     try {
       siteSettings.heroVideoId = getVideoIdFromUrl(siteSettings.heroVideoUrl) || siteSettings.heroVideoId;
+      siteSettings.updatedAt = new Date().toISOString();
       await setDoc(doc(db, 'siteSettings', 'primary'), siteSettings);
-      alert('Homepage Settings updated successfully!');
+      alert('Homepage layout parameters updated successfully!');
       setRefreshTrigger(prev => prev + 1);
     } catch (err: any) {
       handleFirestoreError(err, OperationType.WRITE, 'siteSettings/primary');
@@ -567,609 +648,819 @@ export default function AdminDashboard() {
     }
   };
 
-  // Unauthenticated Admin screen
-  if (!user || !isAdminUser) {
+  if (loading && !user) {
     return (
-      <div className="min-h-[90vh] flex flex-col justify-center items-center px-4 bg-background selection:bg-secondary-container py-12">
-        <div className="w-full max-w-md bg-white border border-outline-variant p-8 rounded-lg shadow-xl text-center">
-          <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
-            <LayoutDashboard className="w-8 h-8" />
-          </div>
-          <h1 className="font-headline-lg text-primary mb-2">Clearpath Console</h1>
-          <p className="font-body-md text-on-surface-variant mb-6 text-sm">
-            {isRegisterMode 
-              ? "Create a new administrator account to manage your platform's content."
-              : "Authorized administrator access only. Please sign in to manage content."}
-          </p>
-
-          {authError && (
-            <div className="mb-4 bg-error/10 border border-error text-error p-3 text-sm rounded flex items-center gap-2 text-left">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{authError}</span>
-            </div>
-          )}
-
-          {/* Third Party: Gmail Login */}
-          <button 
-            type="button"
-            onClick={login}
-            className="w-full bg-white hover:bg-surface-container-low text-primary py-2.5 px-4 rounded font-label-md transition-all flex items-center justify-center gap-3 border border-outline-variant shadow-sm cursor-pointer mb-2"
-          >
-            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
-              <g transform="matrix(1, 0, 0, 1, 0, 0)">
-                <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.58h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.48c0,-0.61 -0.06,-1.2 -0.16,-1.75l0,0Z" fill="#4285f4" />
-                <path d="M12,20.6c2.43,0 4.47,-0.8 5.96,-2.18l-3.3,-2.58c-0.91,0.61 -2.08,0.98 -3.3,0.98c-2.31,0 -4.27,-1.56 -4.97,-3.66H3.01v2.66c1.49,2.96 4.54,4.8 8.01,4.8l0,0Z" fill="#34a853" />
-                <path d="M7.03,13.16c-0.18,-0.54 -0.28,-1.11 -0.28,-1.7s0.1,-1.16 0.28,-1.7V7.1H3.01C2.39,8.34 2,9.78 2,11.3c0,1.52 0.39,2.96 1.01,4.2l4.02,-3.14l0,0Z" fill="#fbbc05" />
-                <path d="M12,6.14c1.32,0 2.51,0.45 3.44,1.35l2.58,-2.58C16.46,3.46 14.42,2.6 12,2.6C8.53,2.6 5.48,4.44 3.01,7.1l4.02,3.14c0.7,-2.1 2.66,-3.66 4.97,-3.66l0,0Z" fill="#ea4335" />
-              </g>
-            </svg>
-            Continue with Google
-          </button>
-
-          {/* Visual Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-outline-variant"></div>
-            </div>
-            <div className="relative flex justify-center text-[10px] text-on-surface-variant font-mono uppercase tracking-wider">
-              <span className="bg-white px-3">or email credentials</span>
-            </div>
-          </div>
-
-          {/* Email/Password Auth Form */}
-          <form onSubmit={handleEmailAuth} className="space-y-4 text-left">
-            {isRegisterMode && (
-              <div>
-                <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Full Name</label>
-                <input 
-                  type="text" 
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  placeholder="e.g. Jerry Agbedun"
-                  className="w-full border border-outline-variant rounded p-2 text-sm focus:outline-none focus:border-primary font-sans bg-transparent text-on-surface"
-                  required={isRegisterMode}
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Email Address</label>
-              <input 
-                type="email" 
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                placeholder="administrator@clearpath.com"
-                className="w-full border border-outline-variant rounded p-2 text-sm focus:outline-none focus:border-primary font-sans bg-transparent text-on-surface"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Password</label>
-              <input 
-                type="password" 
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                placeholder="••••••"
-                className="w-full border border-outline-variant rounded p-2 text-sm focus:outline-none focus:border-primary font-sans bg-transparent text-on-surface"
-                required
-              />
-            </div>
-
-            <button 
-              type="submit"
-              disabled={loading}
-              className="w-full bg-primary text-white py-2.5 px-4 rounded font-label-md hover:bg-primary/95 transition-all flex items-center justify-center gap-2 border shadow-sm cursor-pointer font-semibold text-sm mt-6"
-            >
-              {loading ? (
-                <span className="animate-pulse">Loading...</span>
-              ) : (
-                <>
-                  <LogIn className="w-4 h-4" />
-                  {isRegisterMode ? "Register Administrator" : "Sign In with Credentials"}
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Auth mode toggle */}
-          <div className="mt-6 pt-4 border-t border-outline-variant">
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegisterMode(!isRegisterMode);
-                setAuthError(null);
-              }}
-              className="text-sm text-primary hover:underline font-semibold cursor-pointer"
-            >
-              {isRegisterMode 
-                ? "Already have an admin account? Sign In" 
-                : "Need a new admin account? Register one"}
-            </button>
-          </div>
-          
-          <div className="mt-6 text-[10px] text-on-surface-variant font-mono">
-            Bootstrapped accounts: jerryagbedun@gmail.com
-          </div>
+      <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+          <p className="font-sans font-medium text-primary text-sm tracking-wide">Syncing CMS workspace...</p>
         </div>
       </div>
     );
   }
 
+  // Auth screen
+  if (!user || !isAdminUser) {
+    return (
+      <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center p-6 font-sans">
+        <div className="w-full max-w-md bg-white border border-outline-variant p-8 rounded-lg shadow-sm">
+          <div className="text-center mb-8">
+            <h1 className="font-display font-semibold text-2xl text-primary mb-1">Clearpath Media</h1>
+            <p className="text-xs text-on-surface-variant uppercase tracking-widest font-semibold font-mono">CMS Administrator login</p>
+          </div>
+
+          {authError && (
+            <div className="mb-6 bg-error/10 border-l-4 border-error p-4 text-xs font-semibold text-error rounded-sm flex items-start gap-2">
+              <span>{authError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            {isRegisterMode && (
+              <div>
+                <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Full Name</label>
+                <input 
+                  type="text" 
+                  value={nameInput} 
+                  onChange={(e) => setNameInput(e.target.value)} 
+                  placeholder="e.g. Jerry Admin" 
+                  className="w-full px-4 py-2.5 border border-outline focus:border-primary focus:ring-0 rounded text-sm bg-transparent" 
+                />
+              </div>
+            )}
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Email Address</label>
+              <input 
+                type="email" 
+                required 
+                value={emailInput} 
+                onChange={(e) => setEmailInput(e.target.value)} 
+                placeholder="operator@clearpath.media" 
+                className="w-full px-4 py-2.5 border border-outline focus:border-primary focus:ring-0 rounded text-sm bg-transparent" 
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Password</label>
+              <input 
+                type="password" 
+                required 
+                value={passwordInput} 
+                onChange={(e) => setPasswordInput(e.target.value)} 
+                placeholder="••••••••" 
+                className="w-full px-4 py-2.5 border border-outline focus:border-primary focus:ring-0 rounded text-sm bg-transparent" 
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              className="w-full bg-primary text-white hover:bg-primary-container font-semibold py-3 rounded text-sm transition-colors cursor-pointer"
+            >
+              LOG IN
+            </button>
+          </form>
+
+          <div className="relative my-6 text-center border-b border-outline-variant pb-2">
+            <span className="bg-white px-3 text-xs text-on-surface-variant font-semibold absolute -top-2 left-1/2 -translate-x-1/2 uppercase font-mono">OR</span>
+          </div>
+
+          <button 
+            onClick={login}
+            className="w-full border border-outline-variant hover:bg-surface-container-high font-semibold py-3 rounded text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Database className="w-4 h-4 text-primary" /> SIGN IN WITH GOOGLE
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Active Programme/Explainer selections
+  const currentProg = programmes.find(p => p.id === selectedProgrammeId);
+  const currentExpl = explainers.find(e => e.id === selectedExplainerId);
+
   return (
-    <div className="min-h-screen bg-surface-container-low flex">
+    <div className="min-h-screen bg-surface-container-low flex font-sans">
       {/* Sidebar Navigation */}
       <aside className="w-64 bg-primary text-white shrink-0 flex flex-col border-r border-outline-variant">
         <div className="p-6 border-b border-white/10 flex items-center gap-3">
           <LayoutDashboard className="w-6 h-6 text-secondary-container" />
           <div>
-            <h1 className="font-headline-sm font-semibold tracking-wide">CMS Control</h1>
-            <p className="text-[10px] uppercase text-white/60 tracking-wider">Clearpath Media</p>
+            <h1 className="font-headline-sm font-bold tracking-wide text-white">CMS Workspace</h1>
+            <p className="text-[10px] uppercase text-white/50 tracking-widest font-mono">Clearpath Control</p>
           </div>
         </div>
 
-        <nav className="flex-grow p-4 space-y-1">
-          {[
-            { id: 'overview', label: 'Console Home', icon: LayoutDashboard },
-            { id: 'programmes', label: 'Programmes', icon: Tv },
-            { id: 'episodes', label: 'Episodes', icon: Video },
-            { id: 'posts', label: 'Briefs & Explainers', icon: BookOpen },
-            { id: 'siteSettings', label: 'Settings', icon: Settings },
-            { id: 'partnerRequests', label: 'Partnerships', icon: Users, qty: partnerRequests.length },
-            { id: 'subscribers', label: 'Subscribers', icon: Mail, qty: subscribers.length },
-            { id: 'admins', label: 'Admin Users', icon: Users, qty: adminUsers.length }
-          ].map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => { setActiveTab(item.id); setEditingItem(null); }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded text-sm transition-colors cursor-pointer ${
-                  isActive ? 'bg-white/15 font-semibold text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span>{item.label}</span>
-                </div>
-                {item.qty !== undefined && item.qty > 0 && (
-                  <span className="text-[11px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full font-bold">
-                    {item.qty}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
+        <nav className="flex-grow p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-210px)]">
+          <div className="space-y-1">
+            <button
+              onClick={() => { setActiveTab('overview'); setEditingItem(null); setSelectedProgrammeId(null); setSelectedExplainerId(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors cursor-pointer ${
+                activeTab === 'overview' ? 'bg-white/10 font-semibold text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Console Home</span>
+            </button>
+          </div>
 
-        <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-full bg-white/20 overflow-hidden shrink-0">
-              {user.photoURL ? (
-                <img src={user.photoURL} alt={user.displayName} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center font-bold text-sm text-white">
-                  {user.email?.charAt(0).toUpperCase()}
-                </div>
+          {/* Programmes category */}
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-white/40 px-3 text-[10px] uppercase tracking-wider font-bold">
+              <span>Programmes</span>
+              <button onClick={() => { handleEditInit('programmes'); setActiveTab('form'); }} className="hover:text-white p-0.5 cursor-pointer" title="Add New Programme">
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="space-y-0.5 pt-1 border-l border-white/10 ml-2 pl-2">
+              {programmes.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => { setActiveTab('programme-detail'); setSelectedProgrammeId(p.id); setEditingItem(null); }}
+                  className={`w-full text-left truncate block px-2.5 py-1.5 rounded text-[13px] transition-colors ${
+                    activeTab === 'programme-detail' && selectedProgrammeId === p.id 
+                      ? 'bg-white/10 font-medium text-white' 
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {p.title}
+                </button>
+              ))}
+              {programmes.length === 0 && (
+                <span className="text-[10px] text-white/30 italic block px-2.5 py-1">No programmes loaded</span>
               )}
             </div>
+          </div>
+
+          {/* Explainers category */}
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-white/40 px-3 text-[10px] uppercase tracking-wider font-bold">
+              <span>Explainers</span>
+              <button onClick={() => { handleEditInit('explainers'); setActiveTab('form'); }} className="hover:text-white p-0.5 cursor-pointer" title="Add New Explainer">
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="space-y-0.5 pt-1 border-l border-white/10 ml-2 pl-2">
+              {explainers.map((ex) => (
+                <button
+                  key={ex.id}
+                  onClick={() => { setActiveTab('explainer-detail'); setSelectedExplainerId(ex.id); setEditingItem(null); }}
+                  className={`w-full text-left truncate block px-2.5 py-1.5 rounded text-[13px] transition-colors ${
+                    activeTab === 'explainer-detail' && selectedExplainerId === ex.id 
+                      ? 'bg-white/10 font-medium text-white' 
+                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {ex.title}
+                </button>
+              ))}
+              {explainers.length === 0 && (
+                <span className="text-[10px] text-white/30 italic block px-2.5 py-1">No explainers loaded</span>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1 pt-2 border-t border-white/10">
+            <button
+              onClick={() => { setActiveTab('briefings'); setEditingItem(null); }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm transition-colors cursor-pointer ${
+                activeTab === 'briefings' ? 'bg-white/10 font-semibold text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className="w-4 h-4" />
+                <span>Briefings</span>
+              </div>
+              {briefings.length > 0 && (
+                <span className="bg-secondary-container text-on-secondary-container text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  {briefings.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('partnerRequests'); setEditingItem(null); }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm transition-colors cursor-pointer ${
+                activeTab === 'partnerRequests' ? 'bg-white/10 font-semibold text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-4 h-4" />
+                <span>Partnerships</span>
+              </div>
+              {partnerRequests.length > 0 && (
+                <span className="bg-secondary-container text-on-secondary-container text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  {partnerRequests.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('subscribers'); setEditingItem(null); }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm transition-colors cursor-pointer ${
+                activeTab === 'subscribers' ? 'bg-white/10 font-semibold text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4" />
+                <span>Subscribers</span>
+              </div>
+              {subscribers.length > 0 && (
+                <span className="bg-secondary-container text-on-secondary-container text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  {subscribers.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('contactMessages'); setEditingItem(null); }}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded text-sm transition-colors cursor-pointer ${
+                activeTab === 'contactMessages' ? 'bg-white/10 font-semibold text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <MessageSquare className="w-4 h-4" />
+                <span>Contact Messages</span>
+              </div>
+              {contactMessages.length > 0 && (
+                <span className="bg-secondary-container text-on-secondary-container text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  {contactMessages.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('admins'); setEditingItem(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors cursor-pointer ${
+                activeTab === 'admins' ? 'bg-white/10 font-semibold text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Admin Users</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('siteSettings'); setEditingItem(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors cursor-pointer ${
+                activeTab === 'siteSettings' ? 'bg-white/10 font-semibold text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              <span>Settings</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('youtube-research'); setEditingItem(null); }}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors cursor-pointer ${
+                activeTab === 'youtube-research' ? 'bg-white/10 font-semibold text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              <span>YouTube Research</span>
+            </button>
+          </div>
+        </nav>
+
+        {/* User context footer */}
+        <div className="p-4 border-t border-white/10 bg-black/10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm text-white">
+              {user.email?.charAt(0).toUpperCase()}
+            </div>
             <div className="min-w-0 flex-grow">
-              <p className="text-xs font-semibold truncate leading-none">{user.displayName || 'Admin'}</p>
-              <p className="text-[10px] text-white/60 truncate mt-1">{user.email}</p>
+              <p className="text-xs font-semibold truncate leading-none text-white">{user.displayName || 'Authorized Admin'}</p>
+              <p className="text-[10px] text-white/50 truncate mt-1">{user.email}</p>
             </div>
           </div>
           <button 
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 border border-white/20 hover:bg-white/5 text-xs py-2 rounded transition-colors text-white mt-1 cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 border border-white/15 hover:bg-white/5 text-xs py-2 rounded text-white cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" /> Sign Out
           </button>
         </div>
       </aside>
 
-      {/* Main CMS panel content */}
-      <main className="flex-grow p-8 overflow-y-auto">
+      {/* Main Control Panel Workplane */}
+      <main className="flex-1 p-8 overflow-y-auto max-h-screen">
         {loading && (
-          <div className="mb-6 bg-surface border border-outline-variant p-4 text-center rounded text-sm flex items-center justify-center gap-2 text-on-surface-variant font-mono">
-            <div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-            Loading Database Records...
+          <div className="bg-primary/5 p-3 rounded mb-6 text-xs text-primary font-medium animate-pulse flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+            <span>Saving changes or downloading operational registries...</span>
           </div>
         )}
 
-        {/* Console Home Overview screen */}
-        {activeTab === 'overview' && !editingItem && (
+        {/* Console Home screen */}
+        {activeTab === 'overview' && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white border border-outline-variant p-6 rounded-lg">
+            <div className="flex flex-col md:flex-row justify-between md:items-center bg-white p-6 rounded-lg border border-outline-variant shadow-xs gap-4">
               <div>
-                <h1 className="font-headline-lg text-primary">Console Home Dashboard</h1>
-                <p className="font-body-md text-on-surface-variant">Welcome back, {user.displayName || 'Admin'}. Access control verified. Standard databases live.</p>
+                <h1 className="font-display font-semibold text-2xl text-primary">Console Home Dashboard</h1>
+                <p className="text-sm text-on-surface-variant">Manage programs, newsletters, postings, and global layout timings.</p>
               </div>
-              <button 
-                onClick={seedSampleData}
-                className="bg-secondary text-white px-5 py-2.5 rounded font-label-md text-sm hover:bg-secondary/95 transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <Database className="w-4 h-4" /> Initialize / Seed Sample Data
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {[
-                { title: 'Programmes', count: programmes.length, desc: 'Active series blocks' },
-                { title: 'Episodes', count: episodes.length, desc: 'Uploaded video episodes' },
-                { title: 'Explainers & Briefs', count: posts.length, desc: 'Dynamic text/video material' },
-                { title: 'Partner Requests', count: partnerRequests.length, desc: 'Business leads pending review' },
-              ].map((stat, i) => (
-                <div key={i} className="bg-white border border-outline-variant p-6 rounded-lg">
-                  <span className="text-xs text-on-surface-variant uppercase tracking-wider">{stat.title}</span>
-                  <div className="text-3xl font-bold text-primary mt-2">{stat.count}</div>
-                  <p className="text-xs text-on-surface-variant mt-1">{stat.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-white border border-outline-variant rounded-lg p-6">
-              <h2 className="font-headline-md text-primary mb-4">Quick Diagnostic Logs</h2>
-              <div className="text-xs font-mono bg-surface-container-high p-4 rounded-md space-y-2 text-on-surface">
-                {programmes.length === 0 ? (
-                  <p className="text-error flex items-center gap-1">⚠️ Programmes collection is blank. Click 'Initialize / Seed Sample Data' above to populate!</p>
-                ) : (
-                  <p className="text-green-600 flex items-center gap-1">✓ Programmes collection contains {programmes.length} records.</p>
-                )}
-                {episodes.length === 0 ? (
-                  <p className="text-error flex items-center gap-1">⚠️ Episodes collection is blank. Seed or add episodes to show lists.</p>
-                ) : (
-                  <p className="text-green-600 flex items-center gap-1">✓ Episodes collection contains {episodes.length} listings.</p>
-                )}
-                {posts.length === 0 ? (
-                  <p className="text-error flex items-center gap-1">⚠️ Posts (Briefs/Explainers) are empty. Archive views will be placeholder-only.</p>
-                ) : (
-                  <p className="text-green-600 flex items-center gap-1">✓ Posts contains {posts.length} entries.</p>
-                )}
-                <p className="text-on-surface-variant">Database Endpoint: {firebaseConfig.projectId}</p>
-                <p className="text-on-surface-variant">Authorized Root Operator: jerryagbedun@gmail.com</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* CMS tabs sections */}
-        
-        {/* programmes section */}
-        {activeTab === 'programmes' && !editingItem && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="font-headline-lg text-primary">Manage Programmes</h1>
-                <p className="text-sm text-on-surface-variant">Define public programmes with specific audience tags and details.</p>
-              </div>
-              <button 
-                onClick={() => handleEditInit('programmes')}
-                className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" /> Add Programme
-              </button>
-            </div>
-
-            <div className="bg-white border border-outline-variant rounded-lg overflow-hidden">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-surface-container-high border-b border-outline-variant text-[11px] font-bold text-on-surface uppercase tracking-wider">
-                  <tr>
-                    <th className="p-4">Img</th>
-                    <th className="p-4">Title</th>
-                    <th className="p-4">Audience Tag</th>
-                    <th className="p-4">Sequence Rank</th>
-                    <th className="p-4">Client Link</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant">
-                  {programmes.map((p) => (
-                    <tr key={p.id} className="hover:bg-surface-container-low transition-colors">
-                      <td className="p-4">
-                        <img src={p.img} className="w-12 h-8 object-cover rounded border border-outline-variant" />
-                      </td>
-                      <td className="p-4 font-semibold text-primary">{p.title} {p.comingSoon && <span className="bg-gray-100 text-gray-700 text-[10px] px-2 py-0.5 rounded">Coming Soon</span>}</td>
-                      <td className="p-4 text-on-surface-variant font-mono text-xs">{p.tag}</td>
-                      <td className="p-4 text-on-surface-variant">{p.order ?? 0}</td>
-                      <td className="p-4 text-xs text-on-surface-variant font-mono">{p.link}</td>
-                      <td className="p-4 text-right space-x-2">
-                        <button 
-                          onClick={() => handleEditInit('programmes', p)}
-                          className="hover:text-primary text-on-surface-variant p-1 cursor-pointer"
-                        >
-                          <Edit className="w-4 h-4 inline" />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteItem('programmes', p.id)}
-                          className="hover:text-error text-on-surface-variant p-1 cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4 inline" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {programmes.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-on-surface-variant italic">No programmes added yet.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* episodes section */}
-        {activeTab === 'episodes' && !editingItem && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="font-headline-lg text-primary">Manage Episodes & Videos</h1>
-                <p className="text-sm text-on-surface-variant">Upload program episodes with metadata and embedded play targets.</p>
-              </div>
-              <button 
-                onClick={() => handleEditInit('episodes')}
-                className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" /> Add Episode
-              </button>
-            </div>
-
-            <div className="bg-white border border-outline-variant rounded-lg overflow-hidden">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-surface-container-high border-b border-outline-variant text-[11px] font-bold text-on-surface uppercase tracking-wider">
-                  <tr>
-                    <th className="p-4">Thumbnail</th>
-                    <th className="p-4">Episode Title</th>
-                    <th className="p-4">Programme</th>
-                    <th className="p-4">Video ID</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant">
-                  {episodes.map((ep) => (
-                    <tr key={ep.id} className="hover:bg-surface-container-low transition-colors">
-                      <td className="p-4">
-                        <img src={ep.thumbnail || `https://img.youtube.com/vi/${ep.videoId}/hqdefault.jpg`} className="w-12 h-8 object-cover rounded border border-outline-variant" />
-                      </td>
-                      <td className="p-4 font-semibold text-primary">{ep.title}</td>
-                      <td className="p-4 text-on-surface-variant font-mono text-xs">{ep.programmeId}</td>
-                      <td className="p-4 text-xs text-on-surface-variant font-mono">{ep.videoId}</td>
-                      <td className="p-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          ep.publishStatus === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {ep.publishStatus.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right space-x-2">
-                        <button 
-                          onClick={() => handleEditInit('episodes', ep)}
-                          className="hover:text-primary text-on-surface-variant p-1 cursor-pointer"
-                        >
-                          <Edit className="w-4 h-4 inline" />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteItem('episodes', ep.id)}
-                          className="hover:text-error text-on-surface-variant p-1 cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4 inline" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {episodes.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-on-surface-variant italic">No episodes added yet.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* posts briefings & explainers section */}
-        {activeTab === 'posts' && !editingItem && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="font-headline-lg text-primary">Manage Briefings & Explainers</h1>
-                <p className="text-sm text-on-surface-variant">Develop daily updates, announcements, or custom explanation materials.</p>
-              </div>
-              <button 
-                onClick={() => handleEditInit('posts')}
-                className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" /> Create Update Post
-              </button>
-            </div>
-
-            <div className="bg-white border border-outline-variant rounded-lg overflow-hidden">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-surface-container-high border-b border-outline-variant text-[11px] font-bold text-on-surface uppercase tracking-wider">
-                  <tr>
-                    <th className="p-4">Post Headline</th>
-                    <th className="p-4">Category</th>
-                    <th className="p-4">Tags</th>
-                    <th className="p-4">Date</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant">
-                  {posts.map((p) => (
-                    <tr key={p.id} className="hover:bg-surface-container-low transition-colors">
-                      <td className="p-4 font-semibold text-primary">{p.title}</td>
-                      <td className="p-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          p.category === 'Briefing' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-                        }`}>
-                          {p.category.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="p-4 text-xs text-on-surface-variant">{p.tags?.join(', ') || '-'}</td>
-                      <td className="p-4 text-xs text-on-surface-variant">{p.publishedAt}</td>
-                      <td className="p-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          p.publishStatus === 'published' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {p.publishStatus.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right space-x-2">
-                        <button 
-                          onClick={() => handleEditInit('posts', p)}
-                          className="hover:text-primary text-on-surface-variant p-1 cursor-pointer"
-                        >
-                          <Edit className="w-4 h-4 inline" />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteItem('posts', p.id)}
-                          className="hover:text-error text-on-surface-variant p-1 cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4 inline" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {posts.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-on-surface-variant italic">No updates or explainers added yet.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* site dynamic page configurations section */}
-        {activeTab === 'siteSettings' && (
-          <div className="bg-white border border-outline-variant p-6 rounded-lg max-w-2xl space-y-6">
-            <div>
-              <h1 className="font-headline-lg text-primary">System Homepage Settings</h1>
-              <p className="text-sm text-on-surface-variant">Update general homepage videos and default configuration options instantly.</p>
-            </div>
-
-            {siteSettings && (
-              <form onSubmit={handleUpdateSiteSettings} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Homepage Hero Background Loop YouTube URL</label>
-                  <input 
-                    type="text" 
-                    value={siteSettings.heroVideoUrl || `https://www.youtube.com/watch?v=${siteSettings.heroVideoId}`}
-                    onChange={(e) => setSiteSettings({ ...siteSettings, heroVideoUrl: e.target.value })}
-                    className="w-full px-4 py-2 border rounded border-outline BG-transparent focus:primary text-sm" 
-                    placeholder="https://www.youtube.com/watch?v=3H95x0BV9nA"
-                  />
-                  <p className="text-[11px] text-on-surface-variant mt-1 font-mono">Current Resolved YouTube video ID: {siteSettings.heroVideoId}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Seamless Loop Start Frame (Seconds)</label>
-                    <input 
-                      type="number" 
-                      value={siteSettings.heroStart}
-                      onChange={(e) => setSiteSettings({ ...siteSettings, heroStart: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent focus:primary text-sm" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Seamless Loop End Frame (Seconds)</label>
-                    <input 
-                      type="number" 
-                      value={siteSettings.heroEnd}
-                      onChange={(e) => setSiteSettings({ ...siteSettings, heroEnd: parseInt(e.target.value) || 0 })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent focus:primary text-sm" 
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Primary Featured Briefing Post ID</label>
-                    <select 
-                      value={siteSettings.latestBriefingId || ''}
-                      onChange={(e) => setSiteSettings({ ...siteSettings, latestBriefingId: e.target.value })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                    >
-                      <option value="">- Dynamic Latest Briefing -</option>
-                      {posts.filter(p => p.category === 'Briefing').map(p => (
-                        <option key={p.id} value={p.id}>{p.title}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Featured Explainer Post ID</label>
-                    <select 
-                      value={siteSettings.featuredExplainerId || ''}
-                      onChange={(e) => setSiteSettings({ ...siteSettings, featuredExplainerId: e.target.value })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                    >
-                      <option value="">- Select Explainer -</option>
-                      {posts.filter(p => p.category === 'Explainer').map(p => (
-                        <option key={p.id} value={p.id}>{p.title}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
+              <div className="flex flex-wrap gap-2.5">
                 <button 
-                  type="submit" 
-                  className="bg-primary text-white py-2 px-6 rounded text-sm font-semibold hover:bg-primary/95 transition-all cursor-pointer"
+                  onClick={() => setActiveTab('youtube-research')}
+                  className="bg-primary hover:bg-primary-container text-white font-semibold text-xs px-4 py-2 hover:bg-primary-container transition-all flex items-center gap-2 rounded cursor-pointer"
                 >
-                  Save Homepage Configuration
+                  <Search className="w-4 h-4" /> Review AI-Discovered YouTube Videos
                 </button>
-              </form>
+                <button 
+                  onClick={runSeeder}
+                  className="bg-secondary text-primary font-semibold text-xs px-4 py-2 hover:bg-secondary-container transition-all flex items-center gap-2 rounded border border-primary/20 cursor-pointer"
+                >
+                  <Database className="w-4 h-4" /> Seed Clearpath Catalog
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+              <div className="bg-white p-5 rounded-lg border border-outline-variant shadow-xs">
+                <span className="text-[10px] uppercase font-bold text-on-surface-variant">Active programmes</span>
+                <p className="text-4xl font-semibold text-primary mt-2">{programmes.filter(p => p.status === 'active').length}</p>
+              </div>
+              <div className="bg-white p-5 rounded-lg border border-outline-variant shadow-xs">
+                <span className="text-[10px] uppercase font-bold text-on-surface-variant">Active explainers</span>
+                <p className="text-4xl font-semibold text-primary mt-2">{explainers.filter(e => e.status === 'active').length}</p>
+              </div>
+              <div className="bg-white p-5 rounded-lg border border-outline-variant shadow-xs">
+                <span className="text-[10px] uppercase font-bold text-on-surface-variant">Published Videos</span>
+                <p className="text-4xl font-semibold text-primary mt-2">{programmeVideos.filter(v => v.status === 'published').length}</p>
+              </div>
+              <div className="bg-white p-5 rounded-lg border border-outline-variant shadow-xs">
+                <span className="text-[10px] uppercase font-bold text-on-surface-variant">Mailing subscribers</span>
+                <p className="text-4xl font-semibold text-primary mt-2">{subscribers.length}</p>
+              </div>
+              <div className="bg-white p-5 rounded-lg border border-outline-variant shadow-xs">
+                <span className="text-[10px] uppercase font-bold text-on-surface-variant">Partnerships leads</span>
+                <p className="text-4xl font-semibold text-primary mt-2">{partnerRequests.length}</p>
+              </div>
+              <div className="bg-white p-5 rounded-lg border border-outline-variant shadow-xs">
+                <span className="text-[10px] uppercase font-bold text-on-surface-variant">Contact Messages</span>
+                <p className="text-4xl font-semibold text-primary mt-2">{contactMessages.length}</p>
+              </div>
+            </div>
+
+            <section className="bg-white p-6 rounded-lg border border-outline-variant shadow-xs">
+              <h2 className="font-headline-md text-primary mb-4">Quick actions</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onClick={() => { handleEditInit('programmes'); setActiveTab('form'); }} className="p-4 border border-outline-variant hover:bg-surface-container-high text-left rounded cursor-pointer transition-all flex items-center gap-3">
+                  <Plus className="w-5 h-5 text-primary" />
+                  <div>
+                    <span className="block text-sm font-semibold text-primary">New Programme card</span>
+                    <span className="text-xs text-on-surface-variant">Create top-level dynamic categorizations</span>
+                  </div>
+                </button>
+                <button onClick={() => { handleEditInit('explainers'); setActiveTab('form'); }} className="p-4 border border-outline-variant hover:bg-surface-container-high text-left rounded cursor-pointer transition-all flex items-center gap-3">
+                  <Plus className="w-5 h-5 text-primary" />
+                  <div>
+                    <span className="block text-sm font-semibold text-primary">New Explainer card</span>
+                    <span className="text-xs text-on-surface-variant">Define structured civics topic collections</span>
+                  </div>
+                </button>
+                <button onClick={() => { handleEditInit('briefings'); setActiveTab('form'); }} className="p-4 border border-outline-variant hover:bg-surface-container-high text-left rounded cursor-pointer transition-all flex items-center gap-3">
+                  <Plus className="w-5 h-5 text-primary" />
+                  <div>
+                    <span className="block text-sm font-semibold text-primary">Publish new briefing</span>
+                    <span className="text-xs text-on-surface-variant">Upload new morning/weekly reports</span>
+                  </div>
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* Dynamic CMS Form Match */}
+        {activeTab === 'form' && editingItem && (
+          <div className="animate-fade-in">
+            <CMSForm 
+              type={editingItem.type}
+              data={editingItem.data}
+              programmes={programmes}
+              explainers={explainers}
+              onChange={(updated) => setEditingItem({ ...editingItem, data: updated })}
+              onSave={handleSaveItem}
+              onCancel={() => {
+                setEditingItem(null);
+                if (editingItem.type === 'programmes' || editingItem.type === 'programmeVideos') {
+                  setActiveTab(selectedProgrammeId ? 'programme-detail' : 'overview');
+                } else if (editingItem.type === 'explainers' || editingItem.type === 'explainerItems') {
+                  setActiveTab(selectedExplainerId ? 'explainer-detail' : 'overview');
+                } else if (editingItem.type === 'briefings') {
+                  setActiveTab('briefings');
+                } else {
+                  setActiveTab('overview');
+                }
+              }}
+              uploadProgress={uploadProgress}
+              onFileChange={async (e, field) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploadProgress('Uploading...');
+                try {
+                  const storageRef = ref(storage, `${editingItem.type}/${Date.now()}_${file.name}`);
+                  const isSnap = await uploadBytes(storageRef, file);
+                  const isUrl = await getDownloadURL(isSnap.ref);
+                  setEditingItem({
+                    ...editingItem,
+                    data: { ...editingItem.data, [field]: isUrl }
+                  });
+                  setUploadProgress('Uploaded successfully!');
+                } catch (err: any) {
+                  alert('Upload error: ' + err.message);
+                  setUploadProgress('Failed');
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {/* Profile and video controls inside dynamic programme */}
+        {activeTab === 'programme-detail' && currentProg && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center border-b border-outline-variant pb-3 mb-2 bg-white p-6 rounded-lg border">
+              <div>
+                <span className="text-xs uppercase text-primary font-bold font-mono tracking-wider bg-secondary px-2.5 py-0.5 rounded">Programme Panel</span>
+                <h1 className="font-display font-semibold text-2xl text-primary mt-1">{currentProg.title}</h1>
+                <p className="text-xs text-on-surface-variant">Slug identifier: <span className="font-mono text-primary font-semibold">{currentProg.slug}</span></p>
+              </div>
+              <div className="flex gap-2.5">
+                <button 
+                  onClick={() => handleDeleteItem('programmes', currentProg.id)}
+                  className="bg-error/10 hover:bg-error/20 text-error px-4 py-2 rounded text-xs font-semibold cursor-pointer"
+                >
+                  Delete Programme
+                </button>
+              </div>
+            </div>
+
+            {/* Sub headers */}
+            <div className="flex border-b border-outline-variant gap-4 bg-white/60 p-2 rounded">
+              <button 
+                onClick={() => setProgSubTab('profile')} 
+                className={`px-4 py-2 text-sm font-medium rounded transition-colors cursor-pointer ${
+                  progSubTab === 'profile' ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                }`}
+              >
+                Edit Programme Profile
+              </button>
+              <button 
+                onClick={() => setProgSubTab('videos')} 
+                className={`px-4 py-2 text-sm font-medium rounded transition-colors cursor-pointer ${
+                  progSubTab === 'videos' ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                }`}
+              >
+                Programme Videos
+              </button>
+            </div>
+
+            {progSubTab === 'profile' && (
+              <div className="bg-white p-6 rounded-lg border border-outline-variant">
+                <CMSForm 
+                  type="programmes"
+                  data={currentProg}
+                  programmes={programmes}
+                  explainers={explainers}
+                  onChange={(updated) => {
+                    const idx = programmes.findIndex(p => p.id === currentProg.id);
+                    if (idx > -1) {
+                      const updatedProgs = [...programmes];
+                      updatedProgs[idx] = updated;
+                      setProgrammes(updatedProgs);
+                    }
+                    setEditingItem({ type: 'programmes', data: updated });
+                  }}
+                  onSave={async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    try {
+                      await setDoc(doc(db, 'programmes', currentProg.id), currentProg);
+                      alert('Programme Profile updated successfully!');
+                      setRefreshTrigger(p => p + 1);
+                    } catch (err: any) {
+                      alert('Save error: ' + err.message);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  onCancel={() => { setSelectedProgrammeId(null); setActiveTab('overview'); }}
+                  uploadProgress={null}
+                  onFileChange={() => {}}
+                />
+              </div>
+            )}
+
+            {progSubTab === 'videos' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center bg-white p-4 border rounded-lg gap-4">
+                  <h3 className="font-semibold text-primary">Manage Videos under {currentProg.title}</h3>
+                  <div className="flex gap-2.5">
+                    <button 
+                      onClick={() => { handleEditInit('programmeVideos', { programmeId: currentProg.id }); setActiveTab('form'); }}
+                      className="bg-primary hover:bg-primary-container text-white px-3.5 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 cursor-pointer animate-fade-in"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Video
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white border rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-surface-container-high border-b border-outline-variant text-[10px] font-bold text-on-surface uppercase tracking-wider">
+                      <tr>
+                        <th className="p-3">Thumbnail</th>
+                        <th className="p-3">Video Title</th>
+                        <th className="p-3">Presenters/Guests</th>
+                        <th className="p-3">Link/Slug</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant">
+                      {programmeVideos.filter(v => v.programmeId === currentProg.id).map(v => (
+                        <tr key={v.id} className="hover:bg-surface-container-low transition-colors">
+                          <td className="p-3">
+                            <img src={v.thumbnailUrl || 'https://img.youtube.com/vi/' + v.youtubeVideoId + '/maxresdefault.jpg'} className="w-16 h-10 object-cover rounded border" />
+                          </td>
+                          <td className="p-3">
+                            <p className="font-bold text-primary">{v.title}</p>
+                            <span className="text-[10px] text-on-surface-variant">Duration: {v.duration || 'N/A'}</span>
+                          </td>
+                          <td className="p-3 font-mono text-on-surface-variant font-medium">
+                            <p>{v.presenters || 'Unassigned'}</p>
+                            <p className="text-[10px] text-gray-500">{v.guests}</p>
+                          </td>
+                          <td className="p-3 text-[11px] font-mono text-gray-500">{v.slug}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ${
+                              v.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-850'
+                            }`}>{v.status}</span>
+                          </td>
+                          <td className="p-3 text-right space-x-1.5">
+                            <button onClick={() => { setEditingItem({ type: 'programmeVideos', data: v }); setActiveTab('form'); }} className="hover:text-primary text-gray-400 p-1 cursor-pointer"><Edit className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteItem('programmeVideos', v.id)} className="hover:text-error text-gray-400 p-1 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                      {programmeVideos.filter(v => v.programmeId === currentProg.id).length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-on-surface-variant italic">No videos have been added to this dynamic programme yet.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
         )}
 
-        {/* partnerRequests section */}
-        {activeTab === 'partnerRequests' && !editingItem && (
+        {/* Profile and article controls inside dynamic explainer */}
+        {activeTab === 'explainer-detail' && currentExpl && (
           <div className="space-y-6">
-            <div>
-              <h1 className="font-headline-lg text-primary">Institution Partner Requests</h1>
-              <p className="text-sm text-on-surface-variant">Review submitted application queries and interest from private/civil organizations.</p>
+            <div className="flex justify-between items-center border-b border-outline-variant pb-3 mb-2 bg-white p-6 rounded-lg border">
+              <div>
+                <span className="text-xs uppercase text-primary font-bold font-mono tracking-wider bg-secondary px-2.5 py-0.5 rounded">Explainer Panel</span>
+                <h1 className="font-display font-semibold text-2xl text-primary mt-1">{currentExpl.title}</h1>
+                <p className="text-xs text-on-surface-variant">Slug identifier: <span className="font-mono text-primary font-semibold">{currentExpl.slug}</span></p>
+              </div>
+              <div>
+                <button 
+                  onClick={() => handleDeleteItem('explainers', currentExpl.id)}
+                  className="bg-error/10 hover:bg-error/20 text-error px-4 py-2 rounded text-xs font-semibold cursor-pointer"
+                >
+                  Delete Explainer
+                </button>
+              </div>
             </div>
 
-            <div className="bg-white border border-outline-variant rounded-lg overflow-hidden">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-surface-container-high border-b border-outline-variant text-[11px] font-bold text-on-surface uppercase tracking-wider">
+            {/* Sub headers */}
+            <div className="flex border-b border-outline-variant gap-4 bg-white/60 p-2 rounded">
+              <button 
+                onClick={() => setExplSubTab('profile')} 
+                className={`px-4 py-2 text-sm font-medium rounded transition-colors cursor-pointer ${
+                  explSubTab === 'profile' ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                }`}
+              >
+                Edit Explainer Profile
+              </button>
+              <button 
+                onClick={() => setExplSubTab('items')} 
+                className={`px-4 py-2 text-sm font-medium rounded transition-colors cursor-pointer ${
+                  explSubTab === 'items' ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container'
+                }`}
+              >
+                Explainer Items / Content
+              </button>
+            </div>
+
+            {explSubTab === 'profile' && (
+              <div className="bg-white p-6 border rounded-lg">
+                <CMSForm 
+                  type="explainers"
+                  data={currentExpl}
+                  programmes={programmes}
+                  explainers={explainers}
+                  onChange={(updated) => {
+                    const idx = explainers.findIndex(ex => ex.id === currentExpl.id);
+                    if (idx > -1) {
+                      const updatedExList = [...explainers];
+                      updatedExList[idx] = updated;
+                      setExplainers(updatedExList);
+                    }
+                    setEditingItem({ type: 'explainers', data: updated });
+                  }}
+                  onSave={async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    try {
+                      await setDoc(doc(db, 'explainers', currentExpl.id), currentExpl);
+                      alert('Explainer Profile updated successfully!');
+                      setRefreshTrigger(p => p + 1);
+                    } catch (err: any) {
+                      alert('Save error: ' + err.message);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  onCancel={() => { setSelectedExplainerId(null); setActiveTab('overview'); }}
+                  uploadProgress={null}
+                  onFileChange={() => {}}
+                />
+              </div>
+            )}
+
+            {explSubTab === 'items' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center bg-white p-4 border rounded-lg animate-fade-in">
+                  <h3 className="font-semibold text-primary">Manage Items under {currentExpl.title}</h3>
+                  <button 
+                    onClick={() => { handleEditInit('explainerItems', { explainerId: currentExpl.id }); setActiveTab('form'); }}
+                    className="bg-primary hover:bg-primary-container text-white px-3.5 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Explainer Item
+                  </button>
+                </div>
+
+                <div className="bg-white border rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-surface-container-high border-b border-outline-variant text-[10px] font-bold text-on-surface uppercase tracking-wider">
+                      <tr>
+                        <th className="p-3">Cover</th>
+                        <th className="p-3">Title</th>
+                        <th className="p-3">Type</th>
+                        <th className="p-3">Slug / Path</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant">
+                      {explainerItems.filter(v => v.explainerId === currentExpl.id).map(item => (
+                        <tr key={item.id} className="hover:bg-surface-container-low transition-colors">
+                          <td className="p-3">
+                            <img src={item.featuredImage || 'https://images.unsplash.com/photo-1522881111613-3efeb7397b9c?auto=format&fit=crop&w=320&q=80'} className="w-16 h-10 object-cover rounded border" />
+                          </td>
+                          <td className="p-3">
+                            <p className="font-bold text-primary">{item.title}</p>
+                            <p className="text-[10px] text-on-surface-variant line-clamp-1">{item.excerpt}</p>
+                          </td>
+                          <td className="p-3">
+                            <span className="bg-surface-container-highest text-on-surface px-2 py-0.5 rounded text-[10px] font-medium font-mono uppercase text-gray-600">{item.explainerType}</span>
+                          </td>
+                          <td className="p-3 text-[11px] font-mono text-gray-500">{item.slug}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ${
+                              item.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-850'
+                            }`}>{item.status}</span>
+                          </td>
+                          <td className="p-3 text-right space-x-1.5">
+                            <button onClick={() => { setEditingItem({ type: 'explainerItems', data: item }); setActiveTab('form'); }} className="hover:text-primary text-gray-400 p-1 cursor-pointer"><Edit className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteItem('explainerItems', item.id)} className="hover:text-error text-gray-400 p-1 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                      {explainerItems.filter(v => v.explainerId === currentExpl.id).length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-on-surface-variant italic">No items have been assigned to this explainer folder yet.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* feedings / briefings tab view */}
+        {activeTab === 'briefings' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center bg-white p-6 border rounded-lg">
+              <div>
+                <h1 className="font-display font-semibold text-2xl text-primary">Manage Briefings</h1>
+                <p className="text-sm text-on-surface-variant">Write and distribute daily or weekly macro analyses.</p>
+              </div>
+              <button 
+                onClick={() => { handleEditInit('briefings'); setActiveTab('form'); }}
+                className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Add Briefing
+              </button>
+            </div>
+
+            <div className="bg-white border rounded-lg overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-surface-container-high border-b border-outline-variant text-[10px] font-bold text-on-surface uppercase tracking-wider">
                   <tr>
-                    <th className="p-4">Sender Nom</th>
-                    <th className="p-4">Organization</th>
-                    <th className="p-4">Email</th>
-                    <th className="p-4">Message</th>
-                    <th className="p-4">Time Sent</th>
-                    <th className="p-4 text-right">Delete</th>
+                    <th className="p-4">Title</th>
+                    <th className="p-4">Type</th>
+                    <th className="p-4">Presenter</th>
+                    <th className="p-4">Release Date</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant">
-                  {partnerRequests.map((r) => (
-                    <tr key={r.id} className="hover:bg-surface-container-low transition-colors">
-                      <td className="p-4 font-semibold text-primary">{r.name}</td>
-                      <td className="p-4 text-on-surface">{r.organization || '-'}</td>
-                      <td className="p-4 font-mono text-xs text-on-surface-variant">{r.email}</td>
-                      <td className="p-4 text-xs text-on-surface max-w-xs truncate" title={r.message}>{r.message}</td>
-                      <td className="p-4 text-xs text-on-surface-variant">{new Date(r.createdAt).toLocaleString()}</td>
+                  {briefings.map(b => (
+                    <tr key={b.id} className="hover:bg-surface-container-low transition-colors">
+                      <td className="p-4">
+                        <p className="font-bold text-primary">{b.title}</p>
+                        <p className="text-[10px] text-on-surface-variant line-clamp-1">{b.excerpt}</p>
+                      </td>
+                      <td className="p-4">
+                        <span className="bg-blue-50 text-blue-800 px-2.5 py-0.5 rounded text-[10px] font-medium uppercase font-mono">{b.briefingType}</span>
+                      </td>
+                      <td className="p-4 font-mono text-on-surface-variant">{b.presenter}</td>
+                      <td className="p-4 text-on-surface-variant">{b.publishedAt}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ${
+                          b.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-850'
+                        }`}>{b.status}</span>
+                      </td>
+                      <td className="p-4 text-right space-x-2">
+                        <button onClick={() => { setEditingItem({ type: 'briefings', data: b }); setActiveTab('form'); }} className="hover:text-primary text-gray-400 p-1 cursor-pointer"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => handleDeleteItem('briefings', b.id)} className="hover:text-error text-gray-400 p-1 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                      </td>
+                    </tr>
+                  ))}
+                  {briefings.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="p-10 text-center text-on-surface-variant italic">No briefings found. Click 'Add Briefing' to create.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* partnerships view */}
+        {activeTab === 'partnerRequests' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="bg-white p-6 border rounded-lg">
+              <h1 className="font-display font-semibold text-2xl text-primary">Partnership Requests</h1>
+              <p className="text-sm text-on-surface-variant">Incoming corporate collaborations and proposals.</p>
+            </div>
+
+            <div className="bg-white border rounded-lg overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-surface-container-high border-b border-outline-variant text-[10px] font-bold text-on-surface uppercase tracking-wider">
+                  <tr>
+                    <th className="p-4">Prospect Name</th>
+                    <th className="p-4">Corporate Entity</th>
+                    <th className="p-4">Contact</th>
+                    <th className="p-4">Partnership Interest</th>
+                    <th className="p-4">Key Message / Detail</th>
+                    <th className="p-4">Submitted At</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant">
+                  {partnerRequests.map(r => (
+                    <tr key={r.id} onClick={() => setSelectedDetail({ type: 'partnerRequests', data: r })} className="hover:bg-surface-container-low transition-colors cursor-pointer">
+                      <td className="p-4 font-bold text-primary">{getProspectName(r)}</td>
+                      <td className="p-4 font-medium text-on-surface">{getCorporateEntity(r)}</td>
+                      <td className="p-4 font-mono text-on-surface-variant">{getContact(r)}</td>
+                      <td className="p-4 font-medium text-on-surface">{getPartnershipInterest(r)}</td>
+                      <td className="p-4 text-on-surface-variant max-w-xs truncate">{getKeyMessage(r)}</td>
+                      <td className="p-4 text-gray-500 font-mono text-[11px]">{formatFirebaseDate(r.submittedAt || r.createdAt)}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                          (r.status || 'new') === 'new' ? 'bg-blue-100 text-blue-800' :
+                          (r.status || '') === 'pending' ? 'bg-amber-100 text-amber-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {r.status || 'new'}
+                        </span>
+                      </td>
                       <td className="p-4 text-right">
-                        <button 
-                          onClick={() => handleDeleteItem('partnerRequests', r.id)}
-                          className="hover:text-error text-on-surface-variant p-1 cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4 inline" />
-                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteItem('partnerRequests', r.id); }} className="hover:text-error text-gray-400 p-1 cursor-pointer"><Trash2 className="w-4.5 h-4.5" /></button>
                       </td>
                     </tr>
                   ))}
                   {partnerRequests.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-on-surface-variant italic">No requests submitted yet.</td>
+                      <td colSpan={8} className="p-10 text-center text-on-surface-variant italic">No partnership submissions received yet.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1178,41 +1469,50 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* subscribers section */}
-        {activeTab === 'subscribers' && !editingItem && (
-          <div className="space-y-6">
-            <div>
-              <h1 className="font-headline-lg text-primary">Newsletter Subscribers</h1>
-              <p className="text-sm text-on-surface-variant">Manage emails signed up for the dynamic daily updates newsletter.</p>
+        {/* subscribers view */}
+        {activeTab === 'subscribers' && (
+          <div className="space-y-6 animate-fade-in font-sans">
+            <div className="bg-white p-6 border rounded-lg">
+              <h1 className="font-display font-semibold text-2xl text-primary">Newsletter Subscribers</h1>
+              <p className="text-sm text-on-surface-variant">Mailing lists for morning Daily Briefings digests.</p>
             </div>
 
-            <div className="bg-white border border-outline-variant rounded-lg overflow-hidden max-w-xl">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-surface-container-high border-b border-outline-variant text-[11px] font-bold text-on-surface uppercase tracking-wider">
+            <div className="bg-white border rounded-lg overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-surface-container-high border-b border-outline-variant text-[10px] font-bold text-on-surface uppercase tracking-wider">
                   <tr>
-                    <th className="p-4">Registrar Email</th>
-                    <th className="p-4">Subscribed At</th>
+                    <th className="p-4">Subscriber Email</th>
+                    <th className="p-4">Selected Briefings</th>
+                    <th className="p-4">Registered Date</th>
+                    <th className="p-4">Subscription Status</th>
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant">
-                  {subscribers.map((s) => (
-                    <tr key={s.id} className="hover:bg-surface-container-low transition-colors">
-                      <td className="p-4 font-mono text-xs text-primary">{s.email}</td>
-                      <td className="p-4 text-xs text-on-surface-variant">{new Date(s.subscribedAt).toLocaleString()}</td>
+                  {subscribers.map(s => (
+                    <tr key={s.id} onClick={() => setSelectedDetail({ type: 'subscribers', data: s })} className="hover:bg-surface-container-low transition-colors cursor-pointer">
+                      <td className="p-4 font-bold text-primary font-mono">{s.email}</td>
+                      <td className="p-4 text-on-surface-variant max-w-xs truncate">
+                        {s.selectedBriefings && Array.isArray(s.selectedBriefings) && s.selectedBriefings.length > 0 
+                          ? s.selectedBriefings.join(', ') 
+                          : 'None / General Weekly Brief'}
+                      </td>
+                      <td className="p-4 text-gray-500 font-mono">{formatFirebaseDate(s.subscribedAt || s.createdAt)}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                          (s.status || 'active') === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {s.status || 'active'}
+                        </span>
+                      </td>
                       <td className="p-4 text-right">
-                        <button 
-                          onClick={() => handleDeleteItem('newsletterSubscribers', s.id)}
-                          className="hover:text-error text-on-surface-variant p-1 cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4 inline" />
-                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteItem('newsletterSubscribers', s.id); }} className="hover:text-error text-gray-400 p-1 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                       </td>
                     </tr>
                   ))}
                   {subscribers.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-on-surface-variant italic">No subscribers yet.</td>
+                      <td colSpan={5} className="p-10 text-center text-on-surface-variant italic">No email subscriptions recorded.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1221,55 +1521,48 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* admins list */}
-        {activeTab === 'admins' && !editingItem && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="font-headline-lg text-primary">Console Admin Users</h1>
-                <p className="text-sm text-on-surface-variant">Grant other stakeholders the permission to update and manage content.</p>
-              </div>
-              <button 
-                onClick={() => handleEditInit('users')}
-                className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 cursor-pointer"
-              >
-                <Plus className="w-4 h-4" /> Add Admin User
-              </button>
+        {/* contactMessages view */}
+        {activeTab === 'contactMessages' && (
+          <div className="space-y-6 animate-fade-in font-sans">
+            <div className="bg-white p-6 border rounded-lg">
+              <h1 className="font-display font-semibold text-2xl text-primary">Contact Messages</h1>
+              <p className="text-sm text-on-surface-variant">Reach-out inquiries submitted from the subscribe modal.</p>
             </div>
 
-            <div className="bg-white border border-outline-variant rounded-lg overflow-hidden max-w-2xl">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-surface-container-high border-b border-outline-variant text-[11px] font-bold text-on-surface uppercase tracking-wider">
+            <div className="bg-white border rounded-lg overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-surface-container-high border-b border-outline-variant text-[10px] font-bold text-on-surface uppercase tracking-wider">
                   <tr>
-                    <th className="p-4">User UID</th>
-                    <th className="p-4">Name</th>
-                    <th className="p-4">Email Address</th>
-                    <th className="p-4">Role Permission</th>
+                    <th className="p-4">Sender Name</th>
+                    <th className="p-4">Email</th>
+                    <th className="p-4">Message</th>
+                    <th className="p-4">Submitted At</th>
+                    <th className="p-4">Status</th>
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant">
-                  {adminUsers.map((item) => (
-                    <tr key={item.id} className="hover:bg-surface-container-low transition-colors">
-                      <td className="p-4 text-xs font-mono text-on-surface-variant">{item.uid}</td>
-                      <td className="p-4 font-semibold text-primary">{item.name || 'Anonymous'}</td>
-                      <td className="p-4 font-mono text-xs">{item.email}</td>
-                      <td className="p-4 text-xs text-on-surface-variant">{item.role}</td>
+                  {contactMessages.map(m => (
+                    <tr key={m.id} onClick={() => setSelectedDetail({ type: 'contactMessages', data: m })} className="hover:bg-surface-container-low transition-colors cursor-pointer">
+                      <td className="p-4 font-bold text-primary">{m.fullName || 'Anonymous'}</td>
+                      <td className="p-4 font-mono text-on-surface-variant">{m.email}</td>
+                      <td className="p-4 font-normal text-on-surface max-w-sm whitespace-pre-wrap">{m.message}</td>
+                      <td className="p-4 text-gray-500 font-mono text-[11px]">{formatFirebaseDate(m.submittedAt || m.createdAt)}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                          (m.status || 'new') === 'new' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {m.status || 'new'}
+                        </span>
+                      </td>
                       <td className="p-4 text-right">
-                        {item.email !== 'jerryagbedun@gmail.com' && (
-                          <button 
-                            onClick={() => handleDeleteItem('users', item.id)}
-                            className="hover:text-error text-on-surface-variant p-1 cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4 inline" />
-                          </button>
-                        )}
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteItem('contactMessages', m.id); }} className="hover:text-error text-gray-400 p-1 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                       </td>
                     </tr>
                   ))}
-                  {adminUsers.length === 0 && (
+                  {contactMessages.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-on-surface-variant italic">No secondary admins registered.</td>
+                      <td colSpan={6} className="p-10 text-center text-on-surface-variant italic">No messages found.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1278,517 +1571,308 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Form Modal for Creating/Editing CMS items */}
-        {editingItem && (
-          <div className="bg-white border border-outline-variant rounded-lg p-6 max-w-3xl space-y-6">
-            <div className="flex justify-between items-center border-b border-outline-variant pb-4">
+        {/* Admin registry users view */}
+        {activeTab === 'admins' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center bg-white p-6 border rounded-lg">
               <div>
-                <h2 className="font-headline-lg text-primary uppercase text-lg tracking-wide">
-                  {editingItem.data.id || editingItem.data.uid ? 'Edit' : 'Create'} {editingItem.type.slice(0, -1)}
-                </h2>
-                <p className="text-xs text-on-surface-variant font-mono mt-1">Collection ID: {editingItem.data.id || 'Pending Auto-Generation'}</p>
+                <h1 className="font-display font-semibold text-2xl text-primary">CMS Administrators</h1>
+                <p className="text-sm text-on-surface-variant">Manage role privileges and staff credentials.</p>
               </div>
-              <button 
-                onClick={() => { setEditingItem(null); setUploadProgress(null); }}
-                className="text-on-surface-variant hover:text-primary cursor-pointer"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              {isSuperadmin && (
+                <button 
+                  onClick={() => { handleEditInit('users'); setActiveTab('form'); }}
+                  className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Add Admin
+                </button>
+              )}
             </div>
 
-            <form onSubmit={handleSaveItem} className="space-y-4">
-              {editingItem.type === 'programmes' && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Programme Slug (Identifier)</label>
-                      <input 
-                        type="text" 
-                        required
-                        disabled={!!editingItem.data.id}
-                        value={editingItem.data.id || ''}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, id: e.target.value } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm disabled:opacity-50"
-                        placeholder="three-things"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Display Category Tag</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={editingItem.data.tag || ''}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, tag: e.target.value } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                        placeholder="Conversations"
-                      />
-                    </div>
-                  </div>
+            <div className="bg-white border rounded-lg overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-surface-container-high border-b border-outline-variant text-[10px] font-bold text-on-surface uppercase tracking-wider">
+                  <tr>
+                    <th className="p-4">Admin Name</th>
+                    <th className="p-4">Registry Email</th>
+                    <th className="p-4">Access Role Privilege</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant">
+                  {adminUsers.map((a, i) => (
+                    <tr key={a.uid || i} className="hover:bg-surface-container-low transition-colors">
+                      <td className="p-4 font-bold text-primary">{a.name || 'Staff operator'}</td>
+                      <td className="p-4 font-mono text-on-surface-variant">{a.email}</td>
+                      <td className="p-4">
+                        <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider">{a.role}</span>
+                      </td>
+                      <td className="p-4 text-right">
+                        {a.email !== 'jerryagbedun@gmail.com' && isSuperadmin && (
+                          <button onClick={() => handleDeleteItem('users', a.uid || a.id)} className="hover:text-error text-gray-400 p-1 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Programme Title</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={editingItem.data.title || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      placeholder="Osita Insights"
-                    />
-                  </div>
+        {/* site timeline settings screen */}
+        {activeTab === 'siteSettings' && siteSettings && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 border rounded-lg">
+              <h1 className="font-display font-semibold text-2xl text-primary font-bold">Homepage Player Parameters</h1>
+              <p className="text-sm text-on-surface-variant">Update primary layout parameters and background YouTube repeat loop frame numbers.</p>
+            </div>
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Short Subtitle / Teaser Description</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={editingItem.data.desc || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, desc: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      placeholder="A structured conversation with leaders and thinkers..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Detailed About Text</label>
-                    <textarea 
-                      required
-                      rows={4}
-                      value={editingItem.data.about || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, about: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      placeholder="Detailed background history of this dynamic programming category."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Banner / Hero Image Poster URL</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={editingItem.data.img || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, img: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm mb-2"
-                      placeholder="https://images.unsplash.com/..."
-                    />
-                    <div className="flex items-center gap-3">
-                      <label className="bg-surface-container-high px-4 py-2 border border-outline rounded cursor-pointer text-xs font-semibold hover:bg-surface-container-highest transition-colors flex items-center gap-2">
-                        <Upload className="w-4 h-4" />
-                        Upload Image File to Storage
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={(e) => handleImageFileChange(e, 'img')} 
-                        />
-                      </label>
-                      {uploadProgress && <span className="text-xs font-mono text-primary font-bold">{uploadProgress}</span>}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 border-t border-outline-variant pt-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Metadata: Cadence</label>
-                      <input 
-                        type="text" 
-                        value={editingItem.data.meta?.Cadence || ''}
-                        onChange={(e) => setEditingItem({ 
-                          ...editingItem, 
-                          data: { 
-                            ...editingItem.data, 
-                            meta: { ...editingItem.data.meta, Cadence: e.target.value } 
-                          } 
-                        })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                        placeholder="Twice Monthly"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Metadata: Format</label>
-                      <input 
-                        type="text" 
-                        value={editingItem.data.meta?.Format || ''}
-                        onChange={(e) => setEditingItem({ 
-                          ...editingItem, 
-                          data: { 
-                            ...editingItem.data, 
-                            meta: { ...editingItem.data.meta, Format: e.target.value } 
-                          } 
-                        })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                        placeholder="Video Conversation"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Metadata: Audience</label>
-                      <input 
-                        type="text" 
-                        value={editingItem.data.meta?.Audience || ''}
-                        onChange={(e) => setEditingItem({ 
-                          ...editingItem, 
-                          data: { 
-                            ...editingItem.data, 
-                            meta: { ...editingItem.data.meta, Audience: e.target.value } 
-                          } 
-                        })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                        placeholder="Executives"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Sequence Order (Priority Rank)</label>
-                      <input 
-                        type="number" 
-                        value={editingItem.data.order || 0}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, order: parseInt(e.target.value) || 0 } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      />
-                    </div>
-                    <div className="flex items-center pt-8">
-                      <label className="flex items-center gap-2 cursor-pointer text-sm">
-                        <input 
-                          type="checkbox" 
-                          checked={editingItem.data.comingSoon || false}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, comingSoon: e.target.checked } })}
-                          className="rounded border-outline text-primary focus:ring-0"
-                        />
-                        <span className="font-bold text-on-surface-variant uppercase text-xs">Flag as Coming Soon (Placeholder Mode)</span>
-                      </label>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {editingItem.type === 'episodes' && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Associated Programme Series</label>
-                      <select 
-                        required
-                        value={editingItem.data.programmeId || ''}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, programmeId: e.target.value } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      >
-                        {programmes.map(p => (
-                          <option key={p.id} value={p.id}>{p.title}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Duration Length</label>
-                      <input 
-                        type="text" 
-                        value={editingItem.data.duration || '00:00'}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, duration: e.target.value } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                        placeholder="42:15"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Episode Title</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={editingItem.data.title || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Episode Summary / Description</label>
-                    <textarea 
-                      rows={3}
-                      value={editingItem.data.desc || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, desc: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">YouTube URL / Share Link</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={editingItem.data.youtubeUrl || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, youtubeUrl: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      placeholder="https://www.youtube.com/watch?v=3H95x0BV9nA"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Publication Status</label>
-                      <select 
-                        value={editingItem.data.publishStatus || 'published'}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, publishStatus: e.target.value } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      >
-                        <option value="published">Published</option>
-                        <option value="draft">Draft (CMS Only)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Publish Date</label>
-                      <input 
-                        type="date" 
-                        required
-                        value={editingItem.data.publishedAt || ''}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, publishedAt: e.target.value } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Additional Bullet Point Content for Structured Programs page like Briefing */}
-                  <div className="border-t border-outline-variant pt-4 space-y-4">
-                    <h3 className="text-sm font-bold uppercase text-primary">Structured Content Points (For Detailed Ep Pages)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-on-surface-variant mb-2">What Happened</label>
-                        <textarea 
-                          rows={3}
-                          value={editingItem.data.whatHappened || ''}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, whatHappened: e.target.value } })}
-                          className="w-full px-4 py-2 border rounded border-outline text-sm"
-                          placeholder="Bullet detail summarizing the context..."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-on-surface-variant mb-2">Why It Matters</label>
-                        <textarea 
-                          rows={3}
-                          value={editingItem.data.whyItMatters || ''}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, whyItMatters: e.target.value } })}
-                          className="w-full px-4 py-2 border rounded border-outline text-sm"
-                          placeholder="Underlying trade or regulatory dynamics..."
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-on-surface-variant mb-2">What to Watch Next</label>
-                        <textarea 
-                          rows={3}
-                          value={editingItem.data.whatToWatchNext || ''}
-                          onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, whatToWatchNext: e.target.value } })}
-                          className="w-full px-4 py-2 border rounded border-outline text-sm"
-                          placeholder="Indicators and milestones for updates..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {editingItem.type === 'posts' && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Category Classification</label>
-                      <select 
-                        required
-                        value={editingItem.data.category || 'Briefing'}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, category: e.target.value } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      >
-                        <option value="Briefing">Daily Briefing Update</option>
-                        <option value="Explainer">Explainer Essay</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Tags / Topics (Comma separated)</label>
-                      <input 
-                        type="text" 
-                        value={editingItem.data.tags?.join(', ') || ''}
-                        onChange={(e) => setEditingItem({ 
-                          ...editingItem, 
-                          data: { 
-                            ...editingItem.data, 
-                            tags: e.target.value.split(',').map(t => t.trim().toUpperCase()).filter(Boolean) 
-                          } 
-                        })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                        placeholder="POLICY, TRADE, MINING"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Post Title / Headline</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={editingItem.data.title || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, title: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Teaser Summary Description</label>
-                    <textarea 
-                      rows={2}
-                      value={editingItem.data.desc || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, desc: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">YouTube URL if any (Resolves videoId & thumbnail automatically)</label>
-                    <input 
-                      type="text" 
-                      value={editingItem.data.youtubeUrl || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, youtubeUrl: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      placeholder="https://www.youtube.com/watch?v=3H95x0BV9nA"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Markdown Essay Content (Explainers)</label>
-                    <textarea 
-                      rows={6}
-                      value={editingItem.data.content || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, content: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent font-mono text-xs"
-                      placeholder="### Explaining structural changes in West African Trade policies..."
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Publication Status</label>
-                      <select 
-                        value={editingItem.data.publishStatus || 'published'}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, publishStatus: e.target.value } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      >
-                        <option value="published">Published</option>
-                        <option value="draft">Draft (CMS Only)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Publish Date</label>
-                      <input 
-                        type="date" 
-                        required
-                        value={editingItem.data.publishedAt || ''}
-                        onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, publishedAt: e.target.value } })}
-                        className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  {editingItem.data.category === 'Briefing' && (
-                    <div className="border-t border-outline-variant pt-4 space-y-4">
-                      <h3 className="text-sm font-bold uppercase text-primary">Daily Brief Structured Sections</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-xs font-bold text-on-surface-variant mb-2">What Happened</label>
-                          <textarea 
-                            rows={3}
-                            value={editingItem.data.whatHappened || ''}
-                            onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, whatHappened: e.target.value } })}
-                            className="w-full px-4 py-2 border rounded border-outline text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-on-surface-variant mb-2">Why It Matters</label>
-                          <textarea 
-                            rows={3}
-                            value={editingItem.data.whyItMatters || ''}
-                            onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, whyItMatters: e.target.value } })}
-                            className="w-full px-4 py-2 border rounded border-outline text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-on-surface-variant mb-2">What to Watch Next</label>
-                          <textarea 
-                            rows={3}
-                            value={editingItem.data.whatToWatchNext || ''}
-                            onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, whatToWatchNext: e.target.value } })}
-                            className="w-full px-4 py-2 border rounded border-outline text-sm"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {editingItem.type === 'users' && (
-                <>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">New Admin User UID (Identifier)</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={editingItem.data.uid || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, uid: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      placeholder="Paste User's UID from Firebase Auth Console"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Display Name</label>
-                    <input 
-                      type="text" 
-                      value={editingItem.data.name || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, name: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      placeholder="Jane Doe"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Email Address</label>
-                    <input 
-                      type="email" 
-                      required
-                      value={editingItem.data.email || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, data: { ...editingItem.data, email: e.target.value } })}
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm"
-                      placeholder="jane@example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-on-surface-variant mb-2">Authentication Role</label>
-                    <select 
-                      value="admin"
-                      disabled
-                      className="w-full px-4 py-2 border rounded border-outline BG-transparent text-sm opacity-50 bg-gray-50"
-                    >
-                      <option value="admin">Administrator Role (Pre-configured)</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              <div className="flex gap-4 border-t border-outline-variant pt-4">
-                <button 
-                  type="submit" 
-                  className="bg-primary text-white py-2 px-6 rounded text-sm font-semibold hover:bg-primary/95 transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <Save className="w-4 h-4" /> Save Record
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => { setEditingItem(null); setUploadProgress(null); }}
-                  className="border border-outline px-6 py-2 rounded text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
-                >
-                  Cancel
+            <form onSubmit={handleUpdateSiteSettings} className="bg-white p-6 border rounded-lg space-y-4 shadow-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Background Clip Video Play URL *</label>
+                  <input type="text" required value={siteSettings.heroVideoUrl || ''} onChange={(e) => setSiteSettings({ ...siteSettings, heroVideoUrl: e.target.value })} className="w-full px-3 py-2 border rounded text-sm bg-transparent" />
+                </div>
+                <div>
+                  <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Calculated video ID (YouTube)</label>
+                  <input type="text" disabled value={siteSettings.heroVideoId || ''} className="w-full px-3 py-2 border rounded text-sm bg-gray-100 font-mono text-gray-500" />
+                </div>
+                <div>
+                  <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Featured Programme Identifier</label>
+                  <select value={siteSettings.featuredProgrammeId || ''} onChange={(e) => setSiteSettings({ ...siteSettings, featuredProgrammeId: e.target.value })} className="w-full px-3 py-2 border rounded text-sm bg-transparent">
+                    <option value="">-- Choose Featured Programme --</option>
+                    {programmes.map(p => (
+                      <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Featured Explainer Identifier</label>
+                  <select value={siteSettings.featuredExplainerId || ''} onChange={(e) => setSiteSettings({ ...siteSettings, featuredExplainerId: e.target.value })} className="w-full px-3 py-2 border rounded text-sm bg-transparent">
+                    <option value="">-- Choose Featured Explainer --</option>
+                    {explainers.map(ex => (
+                      <option key={ex.id} value={ex.id}>{ex.title}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2 border-t pt-4">
+                  <h3 className="font-semibold text-primary mb-2 text-sm">Site Contact Coordinates</h3>
+                </div>
+                <div>
+                  <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Contact Email</label>
+                  <input type="email" value={siteSettings.contactEmail || ''} onChange={(e) => setSiteSettings({ ...siteSettings, contactEmail: e.target.value })} className="w-full px-3 py-2 border rounded text-sm bg-transparent" />
+                </div>
+                <div>
+                  <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Partnership Email</label>
+                  <input type="email" value={siteSettings.partnershipEmail || ''} onChange={(e) => setSiteSettings({ ...siteSettings, partnershipEmail: e.target.value })} className="w-full px-3 py-2 border rounded text-sm bg-transparent" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Mailing list Title</label>
+                  <input type="text" value={siteSettings.newsletterTitle || ''} onChange={(e) => setSiteSettings({ ...siteSettings, newsletterTitle: e.target.value })} className="w-full px-3 py-2 border rounded text-sm bg-transparent" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Mailing list description</label>
+                  <textarea value={siteSettings.newsletterDescription || ''} onChange={(e) => setSiteSettings({ ...siteSettings, newsletterDescription: e.target.value })} rows={2} className="w-full px-3 py-2 border rounded text-sm bg-transparent" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Footer Copyright/Disclaimer text</label>
+                  <input type="text" value={siteSettings.footerText || ''} onChange={(e) => setSiteSettings({ ...siteSettings, footerText: e.target.value })} className="w-full px-3 py-2 border rounded text-sm bg-transparent" />
+                </div>
+              </div>
+              <div className="flex justify-end pt-4 border-t mt-4">
+                <button type="submit" className="bg-primary hover:bg-primary-container text-white px-6 py-2.5 rounded text-sm font-semibold flex items-center gap-2 cursor-pointer">
+                  <Save className="w-4 h-4" /> Save Timing parameters
                 </button>
               </div>
             </form>
           </div>
         )}
+
+        {/* Dynamic YouTube Research / AI Discovery Review screen */}
+        {activeTab === 'youtube-research' && (
+          <YoutubeResearchPanel 
+            programmes={programmes} 
+            onVideoApproved={() => setRefreshTrigger(prev => prev + 1)} 
+          />
+        )}
       </main>
+
+      {/* Detail card modal */}
+      {selectedDetail && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in font-sans">
+          <div className="bg-white rounded-lg border border-outline-variant shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Header */}
+            <div className="bg-primary text-white p-6 flex justify-between items-start">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-white/70">
+                  {selectedDetail.type === 'partnerRequests' ? 'Partnership Request' :
+                   selectedDetail.type === 'subscribers' ? 'Newsletter Subscriber' :
+                   'Contact Message'}
+                </span>
+                <h3 className="text-xl font-bold font-display mt-1">
+                  {selectedDetail.type === 'partnerRequests' ? getProspectName(selectedDetail.data) :
+                   selectedDetail.type === 'subscribers' ? selectedDetail.data.email :
+                   (selectedDetail.data.fullName || 'Anonymous Message')}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setSelectedDetail(null)} 
+                className="text-white hover:text-secondary-container transition-colors p-1 cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-grow text-sm text-left">
+              {selectedDetail.type === 'partnerRequests' && (
+                <>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Company/Organisation</h4>
+                    <p className="font-semibold text-primary">{getCorporateEntity(selectedDetail.data)}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Job Title / Role</h4>
+                    <p className="font-semibold text-primary">{getJobTitle(selectedDetail.data)}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Work Email Address</h4>
+                    <a href={`mailto:${getContact(selectedDetail.data)}`} className="font-mono font-semibold text-primary hover:underline">{getContact(selectedDetail.data)}</a>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Partnership Interest Category</h4>
+                    <p className="font-semibold text-primary">{getPartnershipInterest(selectedDetail.data)}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Additional Information / Message</h4>
+                    <div className="bg-surface-container-low p-4 rounded border border-outline-variant font-normal text-on-surface-variant whitespace-pre-wrap leading-relaxed">
+                      {getKeyMessage(selectedDetail.data)}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Date Submitted</h4>
+                    <p className="font-mono text-gray-500">{formatFirebaseDate(selectedDetail.data.submittedAt || selectedDetail.data.createdAt)}</p>
+                  </div>
+                </>
+              )}
+
+              {selectedDetail.type === 'subscribers' && (
+                <>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Subscriber Email</h4>
+                    <a href={`mailto:${selectedDetail.data.email}`} className="font-mono font-semibold text-primary hover:underline">{selectedDetail.data.email}</a>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Preferences Categories</h4>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedDetail.data.selectedBriefings && Array.isArray(selectedDetail.data.selectedBriefings) && selectedDetail.data.selectedBriefings.length > 0 ? (
+                        selectedDetail.data.selectedBriefings.map((b: string) => (
+                          <span key={b} className="bg-primary/10 text-primary text-[10px] font-semibold px-2 py-0.5 rounded uppercase">{b}</span>
+                        ))
+                      ) : (
+                        <span className="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded">None / General Weekly Brief</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Subscription Date</h4>
+                    <p className="font-mono text-gray-500">{formatFirebaseDate(selectedDetail.data.subscribedAt || selectedDetail.data.createdAt)}</p>
+                  </div>
+                </>
+              )}
+
+              {selectedDetail.type === 'contactMessages' && (
+                <>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Sender Full Name</h4>
+                    <p className="font-semibold text-primary">{selectedDetail.data.fullName || 'Anonymous'}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Contact Email</h4>
+                    <a href={`mailto:${selectedDetail.data.email}`} className="font-mono font-semibold text-primary hover:underline">{selectedDetail.data.email}</a>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Message Body</h4>
+                    <div className="bg-surface-container-low p-4 rounded border border-outline-variant font-normal text-on-surface-variant whitespace-pre-wrap leading-relaxed text-left">
+                      {selectedDetail.data.message}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Date Received</h4>
+                    <p className="font-mono text-gray-500">{formatFirebaseDate(selectedDetail.data.submittedAt || selectedDetail.data.createdAt)}</p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer with Actions */}
+            <div className="bg-surface-container-low p-6 border-t border-outline-variant flex flex-col sm:flex-row gap-3 justify-between items-center text-xs">
+              {/* Status Update Control */}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="font-semibold text-on-surface-variant text-[10px] uppercase">Status:</span>
+                <select 
+                  value={selectedDetail.data.status || (selectedDetail.type === 'subscribers' ? 'active' : 'new')}
+                  onChange={(e) => {
+                    const dbCollection = selectedDetail.type === 'subscribers' ? 'newsletterSubscribers' : selectedDetail.type;
+                    handleUpdateStatus(dbCollection, selectedDetail.data.id, e.target.value);
+                  }}
+                  className="bg-white border rounded px-2.5 py-1.5 focus:border-primary focus:ring-0 text-xs font-semibold uppercase text-primary"
+                >
+                  {selectedDetail.type === 'partnerRequests' && (
+                    <>
+                      <option value="new">NEW</option>
+                      <option value="pending">PENDING</option>
+                      <option value="processed">PROCESSED</option>
+                      <option value="archived">ARCHIVED</option>
+                    </>
+                  )}
+                  {selectedDetail.type === 'subscribers' && (
+                    <>
+                      <option value="active">ACTIVE</option>
+                      <option value="paused">PAUSED</option>
+                      <option value="unsubscribed">UNSUBSCRIBED</option>
+                    </>
+                  )}
+                  {selectedDetail.type === 'contactMessages' && (
+                    <>
+                      <option value="new">NEW</option>
+                      <option value="read">READ</option>
+                      <option value="flagged">FLAGGED</option>
+                      <option value="replied">REPLIED</option>
+                      <option value="archived">ARCHIVED</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              {/* Delete Button */}
+              <button
+                onClick={async () => {
+                  if (confirm('Are you sure you want to delete this specific record permanently from the database?')) {
+                    const dbCollection = selectedDetail.type === 'subscribers' ? 'newsletterSubscribers' : selectedDetail.type;
+                    setSelectedDetail(null);
+                    // trigger standard delete
+                    setLoading(true);
+                    try {
+                      await deleteDoc(doc(db, dbCollection, selectedDetail.data.id));
+                      alert('Deleted dynamically successfully.');
+                      setRefreshTrigger(prev => prev + 1);
+                    } catch (err: any) {
+                      handleFirestoreError(err, OperationType.DELETE, `${dbCollection}/${selectedDetail.data.id}`);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }
+                }}
+                className="w-full sm:w-auto hover:bg-error/10 hover:text-error text-gray-500 font-bold border border-transparent hover:border-error/20 px-4 py-2 rounded flex items-center justify-center gap-1.5 uppercase tracking-wide cursor-pointer text-[11px]"
+              >
+                <Trash2 className="w-4 h-4 text-error" /> Delete Entry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
