@@ -40,7 +40,11 @@ const fallbackProgramGrid: ProgrammeVideo[] = [
   }
 ];
 
-export default function ThreeThings() {
+interface ThreeThingsProps {
+  forcedSlug?: string;
+}
+
+export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
   const { slug, id } = useParams<{ slug?: string; id?: string }>();
   const [searchParams] = useSearchParams();
   const [programme, setProgramme] = useState<Programme | null>(null);
@@ -74,7 +78,7 @@ export default function ThreeThings() {
       setErrorStatus(null);
       setDiagError(null);
       
-      const progParam = slug || id || '';
+      const progParam = forcedSlug || slug || id || '';
       setDiagSlug(progParam);
 
       if (!progParam) {
@@ -149,7 +153,7 @@ export default function ThreeThings() {
     (v.shortSummary && v.shortSummary.toLowerCase().includes((searchTerm || '').toLowerCase()))
   );
 
-  if (loading && !programme) {
+  if (loading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center font-sans pr-margin-desktop">
         <div className="flex flex-col items-center gap-3">
@@ -160,14 +164,24 @@ export default function ThreeThings() {
     );
   }
 
-  const shownProg = programme || {
-    title: 'Osita Insights',
-    tagline: 'Reflective national choices.',
-    fullDescription: 'Osita Chidoka invitations exploring the key policies that shape societies.',
-    scheduleText: 'Twice monthly',
-    formatType: 'Long-form conversation',
-    coverageArea: 'Nigeria'
-  };
+  if (!programme) {
+    return (
+      <div className="min-h-[400px] flex flex-col items-center justify-center font-sans pr-margin-desktop py-unit-xl">
+        <div className="text-center max-w-md mx-auto px-margin-mobile">
+          <h2 className="text-2xl font-bold text-primary mb-3">Programme Not Found</h2>
+          <p className="text-body-md text-on-surface-variant mb-6">
+            We couldn't load the requested programme. It may have been renamed or archived.
+          </p>
+          <Link to="/" className="inline-flex bg-primary text-white px-6 py-2.5 rounded hover:bg-primary-container font-semibold transition-all">
+            Return Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const shownProg: Programme = programme;
+  const shouldShowComingSoon = shownProg.comingSoon === true || videos.length === 0;
 
   return (
     <div className="w-full">
@@ -183,32 +197,45 @@ export default function ThreeThings() {
 
       <section ref={playerSectionRef} className="mb-unit-xl grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto font-sans">
         <div className="lg:col-span-8">
-          <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-outline-variant shadow-sm group font-sans">
-            {activeVideoId ? (
-              <iframe 
-                width="100%" 
-                height="100%" 
-                src={`https://www.youtube.com/embed/${activeVideoId}?rel=0&autoplay=1`} 
-                title={activeTitle} 
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowFullScreen
-                className="absolute inset-0 w-full h-full"
-              ></iframe>
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-container-high text-on-surface-variant p-6 text-center">
-                <Play className="w-12 h-12 text-outline/50 mb-3" />
-                <span className="font-semibold text-sm">No videos published for this programme yet</span>
-                <p className="text-xs text-outline mt-1">Please seeding or approving discovered videos in the admin console first.</p>
+          {shouldShowComingSoon ? (
+            <div className="bg-surface-container-low border border-outline-variant rounded-lg p-12 text-center">
+              <h2 className="text-[28px] font-bold text-primary mb-3">
+                {shownProg.comingSoonTitle || "Coming Soon"}
+              </h2>
+              <p className="text-body-md text-on-surface-variant max-w-md mx-auto leading-relaxed">
+                {shownProg.comingSoonMessage || "This programme is being prepared. Check back soon for new ClearPath Media content."}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-outline-variant shadow-sm group font-sans">
+                {activeVideoId ? (
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src={`https://www.youtube.com/embed/${activeVideoId}?rel=0&autoplay=1`} 
+                    title={activeTitle} 
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  ></iframe>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-container-high text-on-surface-variant p-6 text-center">
+                    <Play className="w-12 h-12 text-outline/50 mb-3" />
+                    <span className="font-semibold text-sm">No videos published for this programme yet</span>
+                    <p className="text-xs text-outline mt-1">Please seed or approve discovered videos in the admin console first.</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <div className="mt-4 bg-white p-4 border rounded-lg shadow-xs font-sans">
-            <h2 className="font-semibold text-lg text-primary">{activeTitle || 'No Video Available'}</h2>
-            {activeVideoId && videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription && (
-              <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">{videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription}</p>
-            )}
-          </div>
+              <div className="mt-4 bg-white p-4 border rounded-lg shadow-xs font-sans">
+                <h2 className="font-semibold text-lg text-primary">{activeTitle || 'No Video Available'}</h2>
+                {activeVideoId && videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription && (
+                  <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">{videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription}</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         <aside className="lg:col-span-4 space-y-unit-lg">
@@ -232,56 +259,106 @@ export default function ThreeThings() {
               </div>
             </div>
           </div>
+
+          {shownProg.showAuthorCard !== false && (
+            <div className="p-unit-lg border border-outline-variant bg-surface-container-low rounded-lg font-sans">
+              <div className="flex items-center gap-unit-md mb-unit-md">
+                <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-primary/10 border border-primary/25 flex items-center justify-center">
+                  {shownProg.authorImage ? (
+                    <img 
+                      src={shownProg.authorImage} 
+                      alt={shownProg.authorName || 'Host'} 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="text-primary font-bold text-lg">
+                      {(shownProg.authorName || 'CP')
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-headline-md text-headline-md !text-lg font-bold text-primary">{shownProg.authorName || 'ClearPath Editorial Team'}</h3>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">{shownProg.authorRoleLabel || 'Programme Host'}</p>
+                  {shownProg.authorTitle && (
+                    <p className="text-xs text-on-surface-variant/80 italic mt-0.5">{shownProg.authorTitle}</p>
+                  )}
+                </div>
+              </div>
+              <p className="font-body-md text-body-md text-on-surface-variant italic leading-relaxed">
+                {shownProg.authorBio}
+              </p>
+              {shownProg.authorButtonText && shownProg.authorButtonUrl && (
+                <div className="mt-4">
+                  <a 
+                    href={shownProg.authorButtonUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline uppercase"
+                  >
+                    {shownProg.authorButtonText} <ArrowRight className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
         </aside>
       </section>
 
-      <section className="mt-unit-xl px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto pb-unit-xl font-sans">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-unit-lg gap-unit-md">
-          <h3 className="font-headline-lg text-headline-md text-primary border-l-4 border-primary pl-unit-sm font-semibold">Video Library</h3>
-          <div className="flex flex-col sm:flex-row items-center gap-unit-sm w-full md:w-auto mt-unit-sm md:mt-0">
-            <div className="relative flex-grow w-full sm:w-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
-              <input 
-                type="text" 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search index or topics..." 
-                className="w-full sm:w-64 pl-10 pr-4 py-2.5 border border-outline focus:border-primary focus:ring-0 rounded-sm text-body-md bg-transparent" 
-              />
+      {!shouldShowComingSoon && (
+        <section className="mt-unit-xl px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto pb-unit-xl font-sans font-sans">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-unit-lg gap-unit-md">
+            <h3 className="font-headline-lg text-headline-md text-primary border-l-4 border-primary pl-unit-sm font-semibold">Video Library</h3>
+            <div className="flex flex-col sm:flex-row items-center gap-unit-sm w-full md:w-auto mt-unit-sm md:mt-0">
+              <div className="relative flex-grow w-full sm:w-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
+                <input 
+                  type="text" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search index or topics..." 
+                  className="w-full sm:w-64 pl-10 pr-4 py-2.5 border border-outline focus:border-primary focus:ring-0 rounded-sm text-body-md bg-transparent" 
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {filteredEpisodes.length === 0 ? (
-          <div className="p-12 text-center text-on-surface-variant bg-surface-container-low rounded border border-outline-variant">
-            No videos published for this programme yet.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
-            {filteredEpisodes.map((item, idx) => (
-              <article key={idx} className={`group bg-white border p-unit-lg flex flex-col hover:border-primary transition-colors duration-300 rounded ${activeVideoId === item.youtubeVideoId ? 'border-primary ring-1 ring-primary' : 'border-outline-variant'}`}>
-                <div className="flex justify-between items-start mb-unit-sm">
-                  <span className="font-label-sm text-label-sm text-outline font-mono text-xs">
-                    {item.publishedAtLabel || formatFirestoreDate(item.publishedAt || item.createdAt, 'Recent')}
-                  </span>
-                  {item.duration && (
-                    <span className="flex items-center gap-1 text-[10px] bg-gray-100 font-bold px-1.5 py-0.5 rounded border"><Clock className="w-3 h-3" /> {item.duration}</span>
-                  )}
-                </div>
-                <h4 className="font-headline-md text-xl font-semibold text-primary mb-2 group-hover:text-primary-container transition-colors leading-snug">{item.title}</h4>
-                <p className="font-label-md text-label-md text-secondary mb-unit-md flex items-center gap-1.5 text-xs font-semibold"><Users className="w-3.5 h-3.5" /> {item.presenters || 'Osita Insights'}</p>
-                <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3 mb-unit-lg flex-grow leading-relaxed">{item.shortSummary}</p>
-                <button 
-                  onClick={() => selectEpisodeForPlayback(item.youtubeVideoId || '3H95x0BV9nA', item.title)}
-                  className="w-full bg-primary text-white py-unit-sm font-label-md text-label-md flex items-center justify-center gap-unit-sm hover:bg-primary-container transition-colors uppercase tracking-wide cursor-pointer font-bold rounded text-xs py-3 mt-2"
-                >
-                  WATCH VIDEO <ArrowRight className="w-4 h-4" />
-                </button>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+          {filteredEpisodes.length === 0 ? (
+            <div className="p-12 text-center text-on-surface-variant bg-surface-container-low rounded border border-outline-variant">
+              No videos matches your search criteria.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+              {filteredEpisodes.map((item, idx) => (
+                <article key={idx} className={`group bg-white border p-unit-lg flex flex-col hover:border-primary transition-colors duration-300 rounded ${activeVideoId === item.youtubeVideoId ? 'border-primary ring-1 ring-primary' : 'border-outline-variant'}`}>
+                  <div className="flex justify-between items-start mb-unit-sm">
+                    <span className="font-label-sm text-label-sm text-outline font-mono text-xs">
+                      {item.publishedAtLabel || formatFirestoreDate(item.publishedAt || item.createdAt, 'Recent')}
+                    </span>
+                    {item.duration && (
+                      <span className="flex items-center gap-1 text-[10px] bg-gray-100 font-bold px-1.5 py-0.5 rounded border"><Clock className="w-3 h-3" /> {item.duration}</span>
+                    )}
+                  </div>
+                  <h4 className="font-headline-md text-xl font-semibold text-primary mb-2 group-hover:text-primary-container transition-colors leading-snug">{item.title}</h4>
+                  <p className="font-label-md text-label-md text-secondary mb-unit-md flex items-center gap-1.5 text-xs font-semibold"><Users className="w-3.5 h-3.5" /> {item.presenters || 'Osita Insights'}</p>
+                  <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3 mb-unit-lg flex-grow leading-relaxed">{item.shortSummary}</p>
+                  <button 
+                    onClick={() => selectEpisodeForPlayback(item.youtubeVideoId || '3H95x0BV9nA', item.title)}
+                    className="w-full bg-primary text-white py-unit-sm font-label-md text-label-md flex items-center justify-center gap-unit-sm hover:bg-primary-container transition-colors uppercase tracking-wide cursor-pointer font-bold rounded text-xs py-3 mt-2"
+                  >
+                    WATCH VIDEO <ArrowRight className="w-4 h-4" />
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Preview diagnostics block */}
       {(process.env.NODE_ENV !== 'production' || window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost')) && (
@@ -290,9 +367,9 @@ export default function ThreeThings() {
             <h4 className="text-sm font-bold text-slate-300 border-b border-slate-800 pb-2 mb-2 uppercase tracking-wider">🔬 Preview Diagnostics</h4>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div><span className="text-slate-500">target slug:</span> <span className="font-semibold text-white">{diagSlug}</span></div>
-              <div><span className="text-slate-500">programme resolved:</span> <span className="font-semibold text-white">{diagResolved ? 'true' : 'false'}</span></div>
-              <div><span className="text-slate-500">programme id:</span> <span className="font-semibold text-white">{diagProgrammeId || 'none'}</span></div>
-              <div><span className="text-slate-500">videos matched:</span> <span className="font-semibold text-white">{diagVideosMatched}</span></div>
+              <div><span className="text-slate-500">programme resolved:</span> <span className="font-semibold text-white">{programme ? 'true' : 'false'}</span></div>
+              <div><span className="text-slate-500">programme id:</span> <span className="font-semibold text-white">{shownProg.id || 'none'}</span></div>
+              <div><span className="text-slate-500">videos matched:</span> <span className="font-semibold text-white">{videos.length}</span></div>
               <div><span className="text-slate-500">last error:</span> <span className={diagError ? "text-red-400 font-bold" : "text-green-400"}>{diagError || 'none'}</span></div>
             </div>
           </div>

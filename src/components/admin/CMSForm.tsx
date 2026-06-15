@@ -14,6 +14,17 @@ interface CMSFormProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>, field: string) => void;
 }
 
+const getYoutubeVideoId = (url: string): string => {
+  if (!url) return '';
+  try {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : '';
+  } catch {
+    return '';
+  }
+};
+
 export default function CMSForm({
   type,
   data,
@@ -142,7 +153,20 @@ export default function CMSForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Programme *</label>
-              <select required value={data.programmeId || ''} onChange={(e) => setField('programmeId', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent">
+              <select 
+                required 
+                value={data.programmeId || ''} 
+                onChange={(e) => {
+                  const pId = e.target.value;
+                  const found = programmes.find(p => p.id === pId);
+                  onChange({
+                    ...data,
+                    programmeId: pId,
+                    programmeTitle: found ? found.title : ''
+                  });
+                }} 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent"
+              >
                 <option value="">-- Choose Programme --</option>
                 {programmes.map(p => (
                   <option key={p.id} value={p.id}>{p.title}</option>
@@ -151,31 +175,130 @@ export default function CMSForm({
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Video Title *</label>
-              <input type="text" required value={data.title || ''} onChange={(e) => setField('title', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              <input 
+                type="text" 
+                required 
+                value={data.title || ''} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // If slug is empty, set automatic draft slug
+                  const autoSlug = !data.slug ? val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : data.slug;
+                  onChange({
+                    ...data,
+                    title: val,
+                    slug: autoSlug
+                  });
+                }} 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" 
+              />
             </div>
             <div>
-              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">URL / Link *</label>
-              <input type="text" required value={data.slug || ''} onChange={(e) => setField('slug', e.target.value)} placeholder="e.g. ep-1-unintended-consequences" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">URL Reference Slug *</label>
+              <input 
+                type="text" 
+                required 
+                value={data.slug || ''} 
+                onChange={(e) => setField('slug', e.target.value)} 
+                placeholder="e.g. ep-1-power-crisis" 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" 
+              />
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">YouTube Video Play URL *</label>
-              <input type="text" required value={data.youtubeUrl || ''} onChange={(e) => setField('youtubeUrl', e.target.value)} placeholder="e.g. https://www.youtube.com/watch?v=3H95x0BV9nA" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              <input 
+                type="text" 
+                required 
+                value={data.youtubeUrl || ''} 
+                onChange={(e) => {
+                  const url = e.target.value;
+                  const vidId = getYoutubeVideoId(url);
+                  const updated = {
+                    ...data,
+                    youtubeUrl: url,
+                    youtubeVideoId: vidId || data.youtubeVideoId || '',
+                    embedUrl: vidId ? `https://www.youtube.com/embed/${vidId}` : (data.embedUrl || ''),
+                    thumbnailUrl: vidId ? `https://img.youtube.com/vi/${vidId}/maxresdefault.jpg` : (data.thumbnailUrl || '')
+                  };
+                  onChange(updated);
+                }} 
+                placeholder="e.g. https://www.youtube.com/watch?v=WEA1_bXybRY" 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" 
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">YouTube Video ID (Auto or custom)</label>
+              <input 
+                type="text" 
+                value={data.youtubeVideoId || ''} 
+                onChange={(e) => {
+                  const vidId = e.target.value;
+                  onChange({
+                    ...data,
+                    youtubeVideoId: vidId,
+                    embedUrl: vidId ? `https://www.youtube.com/embed/${vidId}` : data.embedUrl,
+                    thumbnailUrl: vidId ? `https://img.youtube.com/vi/${vidId}/maxresdefault.jpg` : data.thumbnailUrl
+                  });
+                }} 
+                placeholder="e.g. WEA1_bXybRY" 
+                className="w-full px-3 py-2 border border-outline rounded text-sm font-mono bg-transparent" 
+              />
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Duration</label>
-              <input type="text" value={data.duration || ''} onChange={(e) => setField('duration', e.target.value)} placeholder="e.g. 42:15" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              <input type="text" value={data.duration || ''} onChange={(e) => setField('duration', e.target.value)} placeholder="e.g. 08:30" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
             </div>
             <div>
-              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Thumbnail URL (Pastes auto or paste manually)</label>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Thumbnail URL</label>
               <input type="text" value={data.thumbnailUrl || ''} onChange={(e) => setField('thumbnailUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
             </div>
             <div>
-              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Presenters</label>
-              <input type="text" value={data.presenters || ''} onChange={(e) => setField('presenters', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Embed URL</label>
+              <input type="text" value={data.embedUrl || ''} onChange={(e) => setField('embedUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
             </div>
             <div>
-              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Guests</label>
-              <input type="text" value={data.guests || ''} onChange={(e) => setField('guests', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Presenter / Host</label>
+              <input 
+                type="text" 
+                value={data.presenter || data.presenters || ''} 
+                onChange={(e) => {
+                  onChange({
+                    ...data,
+                    presenters: e.target.value,
+                    presenter: e.target.value
+                  });
+                }} 
+                placeholder="e.g. Annabel K."
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" 
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Guest Names</label>
+              <input 
+                type="text" 
+                value={data.guestNames || data.guests || ''} 
+                onChange={(e) => {
+                  onChange({
+                    ...data,
+                    guests: e.target.value,
+                    guestNames: e.target.value
+                  });
+                }} 
+                placeholder="e.g. John Doe, Osita Chidoka" 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" 
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Topic Tags (Comma separated)</label>
+              <input 
+                type="text" 
+                value={Array.isArray(data.topicTags) ? data.topicTags.join(', ') : (data.topicTags || '')} 
+                onChange={(e) => {
+                  const arr = e.target.value.split(',').map(tag => tag.trim().toUpperCase()).filter(Boolean);
+                  setField('topicTags', arr);
+                }} 
+                placeholder="e.g. GOVERNANCE, INFRASTRUCTURE, POWER" 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" 
+              />
             </div>
             <div className="md:col-span-2">
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Short Summary</label>
@@ -187,11 +310,11 @@ export default function CMSForm({
             </div>
             <div className="md:col-span-2">
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Key Points (One per line)</label>
-              <textarea value={data.keyPoints || ''} onChange={(e) => setField('keyPoints', e.target.value)} rows={3} placeholder="- Government revenues are down&#10;- Subsidies are being reviewed" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              <textarea value={data.keyPoints || ''} onChange={(e) => setField('keyPoints', e.target.value)} rows={3} placeholder="- Key point 1&#10;- Key point 2" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Source / Reference Links (One per line)</label>
-              <textarea value={data.sourceLinks || ''} onChange={(e) => setField('sourceLinks', e.target.value)} rows={2} placeholder="https://clearpath.media/briefing" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              <textarea value={data.sourceLinks || ''} onChange={(e) => setField('sourceLinks', e.target.value)} rows={2} placeholder="https://example.com/source" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Status</label>
@@ -202,8 +325,33 @@ export default function CMSForm({
               </select>
             </div>
             <div>
-              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Published At Date</label>
-              <input type="date" value={data.publishedAt || ''} onChange={(e) => setField('publishedAt', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Is Featured Video?</label>
+              <select value={data.isFeatured ? 'true' : 'false'} onChange={(e) => onChange({ ...data, isFeatured: e.target.value === 'true' })} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent">
+                <option value="false">No</option>
+                <option value="true">Yes, Flag as Featured</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Ordering weight / Sort Order</label>
+              <input type="number" value={data.sortOrder || 0} onChange={(e) => setField('sortOrder', parseInt(e.target.value) || 0)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Sorting Date (publishedAt) *</label>
+              <input type="date" required value={data.publishedAt || ''} onChange={(e) => setField('publishedAt', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Manual Display Date (displayDate)</label>
+              <input type="text" value={data.displayDate || ''} onChange={(e) => setField('displayDate', e.target.value)} placeholder="e.g. Oct 24, 2023" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+            </div>
+            <div className="md:col-span-2 border-t border-outline-variant pt-3 mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">SEO Title</label>
+                <input type="text" value={data.seoTitle || ''} onChange={(e) => setField('seoTitle', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              </div>
+              <div>
+                <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">SEO Description</label>
+                <input type="text" value={data.seoDescription || ''} onChange={(e) => setField('seoDescription', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              </div>
             </div>
           </div>
         )}
@@ -403,8 +551,28 @@ export default function CMSForm({
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Access Role Privilege</label>
-              <select value={data.role || 'admin'} onChange={(e) => setField('role', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent">
-                <option value="admin">Administrator (Full Access)</option>
+              <select value={data.role || 'editor'} onChange={(e) => setField('role', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent">
+                <option value="super_admin">Super Administrator (Full Access + User Management)</option>
+                <option value="editor">Editor (Content Modifications only)</option>
+                <option value="viewer">Viewer (Read-Only auditing)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Account Active Status</label>
+              <select 
+                value={data.status || (data.disabled ? 'disabled' : 'active')} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onChange({
+                    ...data,
+                    status: val,
+                    disabled: val === 'disabled'
+                  });
+                }} 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent"
+              >
+                <option value="active">Active (Access Allowed)</option>
+                <option value="disabled">Disabled (Lockout/Blocked)</option>
               </select>
             </div>
           </div>

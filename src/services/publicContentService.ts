@@ -50,7 +50,97 @@ export function slugify(text: string | null | undefined): string {
 }
 
 // ==========================================
-// 2. Safe Firestore Operations
+// 2. Fallback / Default Author Cards & Enriching
+// ==========================================
+
+export const DEFAULT_AUTHOR_CARDS: Record<string, Partial<Programme>> = {
+  'daily-brief-with-annabel': {
+    authorName: 'Annabel Orji',
+    authorTitle: 'Host, Daily Brief with Annabel',
+    authorRoleLabel: 'Briefing Host',
+    authorBio: 'ClearPath Media’s weekday briefing voice, helping audiences understand the public issues, policies, and power dynamics shaping Nigeria and Africa.',
+    showAuthorCard: true,
+  },
+  'osita-insights': {
+    authorName: 'Osita Chidoka',
+    authorTitle: 'Host, Osita Insights',
+    authorRoleLabel: 'Programme Host',
+    authorBio: 'Osita Insights examines governance, public leadership, political institutions, and civic responsibility through calm, evidence-based commentary.',
+    showAuthorCard: true,
+  },
+  'clearpath-insights': {
+    authorName: 'ClearPath Editorial Team',
+    authorTitle: 'ClearPath Media',
+    authorRoleLabel: 'Editorial Desk',
+    authorBio: 'ClearPath Insights provides context-rich analysis on policy, governance, society, and public life.',
+    showAuthorCard: true,
+  },
+  'nigeria-neighbours': {
+    authorName: 'ClearPath Editorial Team',
+    authorTitle: 'Regional Affairs Desk',
+    authorRoleLabel: 'Regional Analysis',
+    authorBio: 'Nigeria & Neighbours explores the connections between Nigeria, Africa, diplomacy, borders, security, trade, and regional power.',
+    showAuthorCard: true,
+  },
+  'nigeria-and-neighbours': {
+    authorName: 'ClearPath Editorial Team',
+    authorTitle: 'Regional Affairs Desk',
+    authorRoleLabel: 'Regional Analysis',
+    authorBio: 'Nigeria & Neighbours explores the connections between Nigeria, Africa, diplomacy, borders, security, trade, and regional power.',
+    showAuthorCard: true,
+  },
+  'election-matters': {
+    authorName: 'ClearPath Editorial Team',
+    authorTitle: 'Elections Desk',
+    authorRoleLabel: 'Electoral Analysis',
+    authorBio: 'Election Matters explains electoral systems, campaigns, institutions, voter behaviour, and democratic accountability.',
+    showAuthorCard: true,
+  },
+  'mekaria-series': {
+    authorName: 'ClearPath Editorial Team',
+    authorTitle: 'Mekaria Series',
+    authorRoleLabel: 'Special Series',
+    authorBio: 'Mekaria Series presents focused conversations and civic learning around leadership, institutions, public service, and development.',
+    showAuthorCard: true,
+  }
+};
+
+export function enrichProgramme(p: Programme): Programme {
+  const slugKey = p.slug || slugify(p.title) || p.id || '';
+  const cleanSlugKey = slugKey.toLowerCase().trim();
+  
+  // Try exact key or key with/without hyphens or prefix
+  const matchKey = Object.keys(DEFAULT_AUTHOR_CARDS).find(k => 
+    k === cleanSlugKey ||
+    cleanSlugKey.includes(k) ||
+    k.includes(cleanSlugKey) ||
+    k.replace(/-/g, '') === cleanSlugKey.replace(/-/g, '')
+  );
+  
+  const defaults = matchKey ? DEFAULT_AUTHOR_CARDS[matchKey] : {};
+  
+  return {
+    ...p,
+    // Author/Presenter fields with robust defaults
+    authorName: p.authorName || defaults.authorName || 'ClearPath Editorial Team',
+    authorTitle: p.authorTitle || defaults.authorTitle || 'ClearPath Media',
+    authorRoleLabel: p.authorRoleLabel || defaults.authorRoleLabel || 'Editorial Desk',
+    authorBio: p.authorBio || defaults.authorBio || 'ClearPath Insights provides context-rich analysis on policy, governance, society, and public life.',
+    authorImage: p.authorImage || defaults.authorImage || '',
+    authorSocialUrl: p.authorSocialUrl || defaults.authorSocialUrl || '',
+    authorButtonText: p.authorButtonText || defaults.authorButtonText || '',
+    authorButtonUrl: p.authorButtonUrl || defaults.authorButtonUrl || '',
+    showAuthorCard: p.showAuthorCard !== undefined ? p.showAuthorCard : (defaults.showAuthorCard !== undefined ? defaults.showAuthorCard : true),
+    
+    // Coming soon fields with robust defaults
+    comingSoon: p.comingSoon !== undefined ? p.comingSoon : false,
+    comingSoonTitle: p.comingSoonTitle || 'Coming Soon',
+    comingSoonMessage: p.comingSoonMessage || 'This programme is being prepared. Check back soon for new ClearPath Media content.'
+  };
+}
+
+// ==========================================
+// 3. Safe Firestore Operations
 // ==========================================
 
 export async function getActiveProgrammes(): Promise<Programme[]> {
@@ -60,12 +150,13 @@ export async function getActiveProgrammes(): Promise<Programme[]> {
     
     const list = snap.docs.map(doc => {
       const data = doc.data();
-      return { 
+      const rawProg = { 
         id: doc.id, 
         ...data,
         createdAtLabel: formatFirestoreDate(data.createdAt),
         updatedAtLabel: formatFirestoreDate(data.updatedAt)
       } as Programme;
+      return enrichProgramme(rawProg);
     });
     const active = list.filter(p => p.status === 'active');
     

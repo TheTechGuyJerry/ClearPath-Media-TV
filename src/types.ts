@@ -30,6 +30,22 @@ export interface Programme {
   updatedAt: string;
   createdAtLabel?: string;
   updatedAtLabel?: string;
+  
+  // Author/Presenter fields
+  authorName?: string;
+  authorTitle?: string;
+  authorBio?: string;
+  authorImage?: string;
+  authorRoleLabel?: string;
+  authorSocialUrl?: string;
+  authorButtonText?: string;
+  authorButtonUrl?: string;
+  showAuthorCard?: boolean;
+
+  // Coming Soon fields
+  comingSoon?: boolean;
+  comingSoonTitle?: string;
+  comingSoonMessage?: string;
 }
 
 export interface ProgrammeVideo {
@@ -57,6 +73,10 @@ export interface ProgrammeVideo {
   publishedAt: string;
   createdAt: string;
   updatedAt: string;
+  presenter?: string;
+  guestNames?: string;
+  displayDate?: string;
+  sortOrder?: number;
   seoTitle?: string;
   seoDescription?: string;
   sourceChannelTitle?: string;

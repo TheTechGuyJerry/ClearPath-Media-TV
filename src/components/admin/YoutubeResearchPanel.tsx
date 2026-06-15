@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { collection, doc, setDoc, getDocs, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, serverTimestamp, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Programme, ProgrammeVideo } from '../../types';
 import { getYoutubeVideoId } from '../../lib/youtube';
@@ -30,6 +30,7 @@ interface DiscoveredVideo {
 interface YoutubeResearchPanelProps {
   programmes: Programme[];
   onVideoApproved: () => void;
+  effectiveRole?: string;
 }
 
 const ALLOWED_PROGRAMMES = [
@@ -406,7 +407,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
   }
 ];
 
-export default function YoutubeResearchPanel({ programmes, onVideoApproved }: YoutubeResearchPanelProps) {
+export default function YoutubeResearchPanel({ programmes, onVideoApproved, effectiveRole }: YoutubeResearchPanelProps) {
   const [loading, setLoading] = useState(false);
   const [discoveredVideos, setDiscoveredVideos] = useState<DiscoveredVideo[]>([]);
   const [statusMessage, setStatusMessage] = useState('');
@@ -415,6 +416,7 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved }: Yo
   const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
+  const [overwriteMetadata, setOverwriteMetadata] = useState<boolean>(false);
 
   const startAnalysis = async () => {
     setLoading(true);
@@ -529,6 +531,9 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved }: Yo
   };
 
   const persistVideo = async (video: DiscoveredVideo) => {
+    if (effectiveRole === 'viewer') {
+      throw new Error('Access Denied: Read-only viewers are not allowed to persist video assets.');
+    }
     // 1. Exact title matching & Seeding programmes if missing
     const matchedTitle = video.suggestedProgramme;
     const progSnap = await getDocs(collection(db, 'programmes'));
@@ -552,6 +557,23 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved }: Yo
       .replace(/(^-|-$)/g, '');
 
     const docId = `${progId}_${video.youtubeVideoId}`;
+
+    // Part E check: Avoid overwriting manual admin edits
+    const docRef = doc(db, 'programmeVideos', docId);
+    try {
+      const existingSnap = await getDoc(docRef);
+      if (existingSnap.exists() && !overwriteMetadata) {
+        // Document exists and overwrite toggle is turned off, keep as is
+        setApprovedIds(prev => {
+          const next = new Set(prev);
+          next.add(video.youtubeVideoId);
+          return next;
+        });
+        return;
+      }
+    } catch (e) {
+      console.warn("Could not inspect existing record state:", e);
+    }
 
     const videoDoc: any = {
       id: docId, // Prevent duplication by using combined unique docId
@@ -593,6 +615,10 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved }: Yo
   };
 
   const approveIndividual = async (idx: number) => {
+    if (effectiveRole === 'viewer') {
+      alert('Access Denied: Read-only viewers are not allowed to persist video assets.');
+      return;
+    }
     const video = discoveredVideos[idx];
     try {
       await persistVideo(video);
@@ -604,6 +630,10 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved }: Yo
   };
 
   const approveSelected = async () => {
+    if (effectiveRole === 'viewer') {
+      alert('Access Denied: Read-only viewers are not allowed to persist video assets.');
+      return;
+    }
     const toApprove = discoveredVideos.filter(v => selectedIds.has(v.youtubeVideoId) && !approvedIds.has(v.youtubeVideoId));
     if (toApprove.length === 0) {
       alert('No unapproved selected videos to save.');
@@ -637,14 +667,28 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved }: Yo
               Seed the verified static playlist assets directly back into your programs. This bypasses live web scrapers to provide reliable video catalogs and previews immediately.
             </p>
           </div>
-          <button
-            onClick={startAnalysis}
-            disabled={loading}
-            className="self-start md:self-center bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
-          >
-            <Search className="w-4 h-4" /> 
-            {loading ? 'Populating data...' : 'Load Verified ClearPath Video Library'}
-          </button>
+          <div className="flex flex-col items-start md:items-end gap-2 shrink-0">
+            <button
+              onClick={startAnalysis}
+              disabled={loading}
+              className="bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
+            >
+              <Search className="w-4 h-4" /> 
+              {loading ? 'Populating data...' : 'Load Verified ClearPath Video Library'}
+            </button>
+            <div className="flex items-center gap-2 mt-1">
+              <input 
+                type="checkbox" 
+                id="overwriteMetadata"
+                checked={overwriteMetadata} 
+                onChange={(e) => setOverwriteMetadata(e.target.checked)}
+                className="cursor-pointer rounded border-outline"
+              />
+              <label htmlFor="overwriteMetadata" className="text-xs font-medium text-on-surface-variant cursor-pointer select-none">
+                Overwrite existing video metadata / overrides
+              </label>
+            </div>
+          </div>
         </div>
 
         {statusMessage && (

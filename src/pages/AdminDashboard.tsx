@@ -129,8 +129,10 @@ export default function AdminDashboard() {
   const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<'super_admin' | 'editor' | 'viewer'>('viewer');
 
-  const isSuperadmin = user?.email?.toLowerCase() === 'jerryagbedun@gmail.com';
+  const effectiveRole = user?.email?.toLowerCase() === 'jerryagbedun@gmail.com' ? 'super_admin' : userRole;
+  const isSuperadmin = effectiveRole === 'super_admin' || user?.email?.toLowerCase() === 'jerryagbedun@gmail.com';
 
   // Email/Password login/registration state
   const [emailInput, setEmailInput] = useState<string>('');
@@ -164,6 +166,12 @@ export default function AdminDashboard() {
   const [progSubTab, setProgSubTab] = useState<'profile' | 'videos'>('profile');
   const [explSubTab, setExplSubTab] = useState<'profile' | 'items'>('profile');
 
+  // Video Management Section States
+  const [videoSearchTerm, setVideoSearchTerm] = useState<string>('');
+  const [videoSelectedProgId, setVideoSelectedProgId] = useState<string>('all');
+  const [videoInlineEditId, setVideoInlineEditId] = useState<string | null>(null);
+  const [videoInlineData, setVideoInlineData] = useState<any | null>(null);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -171,16 +179,33 @@ export default function AdminDashboard() {
         const isJerry = currentUser.email?.toLowerCase() === 'jerryagbedun@gmail.com';
         if (isJerry) {
           setIsAdminUser(true);
+          setUserRole('super_admin');
         } else {
           try {
             // Check both by uid AND by email
             const emailQuery = query(collection(db, 'users'), where('email', '==', currentUser.email?.toLowerCase()));
             const userSnap = await getDocs(emailQuery);
-            if (!userSnap.empty && userSnap.docs[0].data().role === 'admin') {
-              setIsAdminUser(true);
-              const matchedDoc = userSnap.docs[0];
-              if (matchedDoc.data().uid !== currentUser.uid) {
-                await updateDoc(doc(db, 'users', matchedDoc.id), { uid: currentUser.uid });
+            if (!userSnap.empty) {
+              const matchedUserData = userSnap.docs[0].data();
+              
+              if (matchedUserData.status === 'disabled' || matchedUserData.disabled === true) {
+                setIsAdminUser(false);
+                setAuthError('Access denied: This administrator account has been disabled.');
+                setLoading(false);
+                return;
+              }
+
+              const r = matchedUserData.role;
+              if (r === 'super_admin' || r === 'admin' || r === 'editor' || r === 'viewer') {
+                setIsAdminUser(true);
+                setUserRole(r === 'admin' ? 'super_admin' : r);
+                const matchedDoc = userSnap.docs[0];
+                if (matchedDoc.data().uid !== currentUser.uid) {
+                  await updateDoc(doc(db, 'users', matchedDoc.id), { uid: currentUser.uid });
+                }
+              } else {
+                setIsAdminUser(false);
+                setAuthError('Access denied: You do not have an authorizing role assigned.');
               }
             } else {
               setIsAdminUser(false);
@@ -529,9 +554,14 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (!editingItem) return;
 
+    if (effectiveRole === 'viewer') {
+      alert('Access Denied: Read-only viewers are not allowed to submit modifications.');
+      return;
+    }
+
     const { type, data } = editingItem;
-    if (type === 'users' && !isSuperadmin) {
-      alert('Access denied: Only the superadministrator can create/modify administrators.');
+    if (type === 'users' && effectiveRole !== 'super_admin') {
+      alert('Access denied: Only Super Administrators can create/modify administrators.');
       return;
     }
     setLoading(true);
@@ -587,8 +617,12 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteItem = async (collectionName: string, docId: string) => {
-    if (collectionName === 'users' && !isSuperadmin) {
-      alert('Access denied: Only the superadministrator can remove administrators.');
+    if (effectiveRole === 'viewer') {
+      alert('Access Denied: Read-only viewers are not allowed to delete resources.');
+      return;
+    }
+    if (collectionName === 'users' && effectiveRole !== 'super_admin') {
+      alert('Access denied: Only Super Administrators can remove administrators.');
       return;
     }
     if (!confirm('Are you sure you want to delete this dynamically loaded record permanently?')) return;
@@ -605,6 +639,10 @@ export default function AdminDashboard() {
   };
 
   const handleUpdateStatus = async (collectionName: string, id: string, newStatus: string) => {
+    if (effectiveRole === 'viewer') {
+      alert('Access Denied: Read-only viewers cannot toggle publish status.');
+      return;
+    }
     try {
       const docRef = doc(db, collectionName, id);
       await updateDoc(docRef, { status: newStatus, updatedAt: new Date().toISOString() });
@@ -633,6 +671,10 @@ export default function AdminDashboard() {
   const handleUpdateSiteSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!siteSettings) return;
+    if (effectiveRole === 'viewer') {
+      alert('Access Denied: Read-only viewers cannot update site settings.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -791,6 +833,26 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* All Programme Videos shortcut */}
+          <div className="space-y-1">
+            <button
+              onClick={() => { setActiveTab('programme-videos'); setEditingItem(null); setSelectedProgrammeId(null); setSelectedExplainerId(null); }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded text-sm transition-colors cursor-pointer ${
+                activeTab === 'programme-videos' ? 'bg-white/10 font-semibold text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Tv className="w-4 h-4 text-secondary-container" />
+                <span>Programme Videos</span>
+              </div>
+              {programmeVideos.length > 0 && (
+                <span className="bg-secondary-container text-on-secondary-container text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  {programmeVideos.length}
+                </span>
+              )}
+            </button>
+          </div>
+
           {/* Explainers category */}
           <div className="space-y-1">
             <div className="flex justify-between items-center text-white/40 px-3 text-[10px] uppercase tracking-wider font-bold">
@@ -929,6 +991,11 @@ export default function AdminDashboard() {
             <div className="min-w-0 flex-grow">
               <p className="text-xs font-semibold truncate leading-none text-white">{user.displayName || 'Authorized Admin'}</p>
               <p className="text-[10px] text-white/50 truncate mt-1">{user.email}</p>
+              <div className="mt-1.5 font-mono">
+                <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider bg-secondary text-primary border border-primary/20">
+                  {effectiveRole}
+                </span>
+              </div>
             </div>
           </div>
           <button 
@@ -1074,7 +1141,362 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Profile and video controls inside dynamic programme */}
+        {/* Programme Videos workspace */}
+        {activeTab === 'programme-videos' && (
+          <div className="space-y-6 animate-fade-in text-on-surface">
+            <div className="bg-white p-6 border border-outline-variant rounded-lg shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h1 className="font-display font-semibold text-2xl text-primary">Programme Videos Management</h1>
+                <p className="text-sm text-on-surface-variant">Update metadata, assign and categorize video assets, corrected display timings, or toggle featured statuses.</p>
+              </div>
+              <button 
+                onClick={() => { handleEditInit('programmeVideos'); setActiveTab('form'); }}
+                className="bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded font-semibold text-xs flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Add Programme Video
+              </button>
+            </div>
+
+            {/* Searching, Filtering & Actions panel */}
+            <div className="bg-white p-4 border border-outline-variant rounded-lg shadow-xs flex flex-col md:flex-row gap-4 justify-between items-center">
+              <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto flex-1">
+                {/* Text search */}
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input 
+                    type="text" 
+                    value={videoSearchTerm}
+                    onChange={(e) => setVideoSearchTerm(e.target.value)}
+                    placeholder="Search by title, slugs or topic tag..."
+                    className="w-full pl-9 pr-4 py-2 border border-outline focus:border-primary focus:ring-0 rounded text-xs bg-transparent"
+                  />
+                  {videoSearchTerm && (
+                    <button onClick={() => setVideoSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown Programme Filter */}
+                <select 
+                  value={videoSelectedProgId}
+                  onChange={(e) => setVideoSelectedProgId(e.target.value)}
+                  className="px-3 py-2 border border-outline rounded text-xs bg-transparent min-w-[200px]"
+                >
+                  <option value="all">All Programmes</option>
+                  {programmes.map(p => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="text-xs text-on-surface-variant font-medium shrink-0">
+                Found <strong className="text-primary">{
+                  programmeVideos.filter(video => {
+                    if (videoSelectedProgId !== 'all' && video.programmeId !== videoSelectedProgId) return false;
+                    if (videoSearchTerm.trim() !== '') {
+                      const q = videoSearchTerm.toLowerCase();
+                      const matchTitle = video.title?.toLowerCase().includes(q);
+                      const matchTags = Array.isArray(video.topicTags) 
+                        ? video.topicTags.some(t => t.toLowerCase().includes(q))
+                        : typeof video.topicTags === 'string' && (video.topicTags as string).toLowerCase().includes(q);
+                      return matchTitle || matchTags;
+                    }
+                    return true;
+                  }).length
+                }</strong> entries
+              </div>
+            </div>
+
+            {/* Video Records Table */}
+            <div className="bg-white border border-outline-variant rounded-lg overflow-hidden shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse min-w-[1000px]">
+                  <thead className="bg-surface-container-high border-b border-outline-variant text-[10px] font-bold text-on-surface uppercase tracking-wider">
+                    <tr>
+                      <th className="p-3 w-28">Preview</th>
+                      <th className="p-3">Video Title & Slug</th>
+                      <th className="p-3">Programme Assigned</th>
+                      <th className="p-3">Summary</th>
+                      <th className="p-3">Status</th>
+                      <th className="p-3">Dates</th>
+                      <th className="p-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant">
+                    {programmeVideos
+                      .filter(video => {
+                        if (videoSelectedProgId !== 'all' && video.programmeId !== videoSelectedProgId) return false;
+                        if (videoSearchTerm.trim() !== '') {
+                          const q = videoSearchTerm.toLowerCase();
+                          const matchTitle = video.title?.toLowerCase().includes(q);
+                          const matchTags = Array.isArray(video.topicTags) 
+                            ? video.topicTags.some(t => t.toLowerCase().includes(q))
+                            : typeof video.topicTags === 'string' && (video.topicTags as string).toLowerCase().includes(q);
+                          return matchTitle || matchTags;
+                        }
+                        return true;
+                      })
+                      .map((video) => {
+                        const isInlineEditing = videoInlineEditId === video.id;
+
+                        // Quick toggle status handler
+                        const toggleStatus = async () => {
+                          const newStatus = video.status === 'published' ? 'draft' : 'published';
+                          try {
+                            setLoading(true);
+                            await updateDoc(doc(db, 'programmeVideos', video.id), { status: newStatus, updatedAt: new Date().toISOString() });
+                            alert(`Video status toggled to "${newStatus}"!`);
+                            setRefreshTrigger(p => p + 1);
+                          } catch (err: any) {
+                            alert('Error updating status: ' + err.message);
+                          } finally {
+                            setLoading(false);
+                          }
+                        };
+
+                        // Quick archive handler
+                        const archiveVideo = async () => {
+                          try {
+                            setLoading(true);
+                            await updateDoc(doc(db, 'programmeVideos', video.id), { status: 'archived', updatedAt: new Date().toISOString() });
+                            alert('Video status archived successfully.');
+                            setRefreshTrigger(p => p + 1);
+                          } catch (err: any) {
+                            alert('Error archiving video: ' + err.message);
+                          } finally {
+                            setLoading(false);
+                          }
+                        };
+
+                        // Inline edits init
+                        const startInlineEdit = () => {
+                          setVideoInlineEditId(video.id);
+                          setVideoInlineData({
+                            title: video.title || '',
+                            shortSummary: video.shortSummary || '',
+                            programmeId: video.programmeId || ''
+                          });
+                        };
+
+                        // Inline edit save
+                        const saveInlineEdit = async () => {
+                          if (!videoInlineData) return;
+                          try {
+                            setLoading(true);
+                            const foundProg = programmes.find(p => p.id === videoInlineData.programmeId);
+                            const payload = {
+                              title: videoInlineData.title,
+                              shortSummary: videoInlineData.shortSummary,
+                              programmeId: videoInlineData.programmeId,
+                              programmeTitle: foundProg ? foundProg.title : '',
+                              updatedAt: new Date().toISOString()
+                            };
+
+                            await updateDoc(doc(db, 'programmeVideos', video.id), payload);
+                            alert('Inline edits saved successfully!');
+                            setVideoInlineEditId(null);
+                            setVideoInlineData(null);
+                            setRefreshTrigger(p => p + 1);
+                          } catch (err: any) {
+                            alert('Error saving inline edits: ' + err.message);
+                          } finally {
+                            setLoading(false);
+                          }
+                        };
+
+                        return (
+                          <tr key={video.id} className="hover:bg-slate-50 transition-colors">
+                            {/* Thumbnail preview */}
+                            <td className="p-3">
+                              <div className="relative w-24 h-14 bg-gray-100 rounded overflow-hidden shadow-xs border border-outline">
+                                <img 
+                                  referrerPolicy="no-referrer"
+                                  src={video.thumbnailUrl || `https://img.youtube.com/vi/${video.youtubeVideoId}/hqdefault.jpg`} 
+                                  alt="thumbnail"
+                                  className="w-full h-full object-cover"
+                                />
+                                {video.isFeatured && (
+                                  <span className="absolute top-1 left-1 bg-amber-500 text-white font-bold text-[8px] px-1.5 py-0.5 rounded shadow-sm">
+                                    FEATURED
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Title and slug */}
+                            <td className="p-3 max-w-xs">
+                              {isInlineEditing ? (
+                                <div className="space-y-1.5">
+                                  <label className="block text-[8px] font-bold text-gray-400 uppercase">Title</label>
+                                  <input 
+                                    type="text"
+                                    value={videoInlineData?.title || ''}
+                                    onChange={(e) => setVideoInlineData({ ...videoInlineData, title: e.target.value })}
+                                    className="w-full px-2 py-1 border rounded text-xs bg-white focus:ring-1 focus:ring-primary"
+                                  />
+                                </div>
+                              ) : (
+                                <div>
+                                  <span className="font-semibold text-primary block leading-snug">{video.title}</span>
+                                  <span className="font-mono text-[10px] text-on-surface-variant block mt-1">/{video.slug}</span>
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Program select assignment */}
+                            <td className="p-3">
+                              {isInlineEditing ? (
+                                <div className="space-y-1.5">
+                                  <label className="block text-[8px] font-bold text-gray-400 uppercase">Programme</label>
+                                  <select
+                                    value={videoInlineData?.programmeId || ''}
+                                    onChange={(e) => setVideoInlineData({ ...videoInlineData, programmeId: e.target.value })}
+                                    className="w-full px-1.5 py-1 border rounded text-xs bg-white"
+                                  >
+                                    {programmes.map(p => (
+                                      <option key={p.id} value={p.id}>{p.title}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ) : (
+                                <span className="font-semibold text-amber-900 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded text-[10.5px]">
+                                  {video.programmeTitle || video.programmeId}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Summary / Tag list */}
+                            <td className="p-3 max-w-sm">
+                              {isInlineEditing ? (
+                                <div className="space-y-1.5">
+                                  <label className="block text-[8px] font-bold text-gray-400 uppercase">Summary</label>
+                                  <textarea
+                                    rows={2}
+                                    value={videoInlineData?.shortSummary || ''}
+                                    onChange={(e) => setVideoInlineData({ ...videoInlineData, shortSummary: e.target.value })}
+                                    className="w-full p-1 border rounded text-[11px] bg-white text-gray-600"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="space-y-1">
+                                  <span className="text-[11px] leading-relaxed block text-on-surface-variant line-clamp-2">
+                                    {video.shortSummary || 'No summary registered.'}
+                                  </span>
+                                  {/* Tags display */}
+                                  {Array.isArray(video.topicTags) && video.topicTags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {video.topicTags.map(tag => (
+                                        <span key={tag} className="text-[9px] bg-sky-50 text-sky-800 font-bold font-mono px-1.5 py-0.2 rounded">
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Status label */}
+                            <td className="p-3 font-mono text-[11px]">
+                              <span className={`px-2 py-0.5 rounded font-bold uppercase text-[9.5px] ${
+                                video.status === 'published' ? 'bg-green-100 text-green-700' :
+                                video.status === 'draft' ? 'bg-amber-100 text-amber-700' :
+                                'bg-gray-100 text-gray-600'
+                              }`}>
+                                {video.status || 'draft'}
+                              </span>
+                            </td>
+
+                            {/* Dates correction */}
+                            <td className="p-3 space-y-1 shrink-0 w-36">
+                              <div className="text-[11px] font-medium font-mono text-gray-600">
+                                <span className="text-[9px] text-gray-400 font-sans block">Display:</span>
+                                {video.displayDate || 'Not specified'}
+                              </div>
+                              <div className="text-[10px] font-mono text-gray-400">
+                                <span className="text-[9px] text-gray-400 font-sans block">Sort date:</span>
+                                {video.publishedAt ? formatFirebaseDate(video.publishedAt) : 'None'}
+                              </div>
+                            </td>
+
+                            {/* Actions panel */}
+                            <td className="p-3 text-right shrink-0 w-48">
+                              {isInlineEditing ? (
+                                <div className="space-x-1.5">
+                                  <button onClick={saveInlineEdit} className="bg-primary hover:bg-primary-container text-white font-bold px-2 py-1 rounded text-[10px] cursor-pointer">
+                                    Save
+                                  </button>
+                                  <button onClick={() => setVideoInlineEditId(null)} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded text-[10px] cursor-pointer">
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex flex-wrap justify-end gap-1.5">
+                                  <button 
+                                    onClick={startInlineEdit}
+                                    className="bg-yellow-50 hover:bg-yellow-105 text-yellow-800 border border-yellow-200 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                    title="Quick edit text fields without launching full form"
+                                  >
+                                    Quick Edit
+                                  </button>
+                                  <button 
+                                    onClick={() => { handleEditInit('programmeVideos', video); setActiveTab('form'); }}
+                                    className="bg-sky-50 hover:bg-sky-105 text-sky-800 border border-sky-200 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                    title="Launch full fields form"
+                                  >
+                                    Edit Full
+                                  </button>
+                                  <button 
+                                    onClick={toggleStatus}
+                                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                    title={video.status === 'published' ? 'Unpublish video (toggles Draft state)' : 'Publish video'}
+                                  >
+                                    {video.status === 'published' ? 'Unpublish' : 'Publish'}
+                                  </button>
+                                  {video.status !== 'archived' && (
+                                    <button 
+                                      onClick={archiveVideo}
+                                      className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                      title="Flag as archived"
+                                    >
+                                      Archive
+                                    </button>
+                                  )}
+                                  <a 
+                                    href={video.youtubeUrl || `https://www.youtube.com/watch?v=${video.youtubeVideoId}`} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="bg-red-50 hover:bg-red-105 border border-red-100 text-red-700 px-2 py-1 rounded text-[10px] font-medium flex items-center gap-0.5"
+                                  >
+                                    Preview
+                                  </a>
+                                  <button 
+                                    onClick={() => handleDeleteItem('programmeVideos', video.id)}
+                                    className="text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                                    title="Delete video record permanently"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    {programmeVideos.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-on-surface-variant font-mono italic">
+                          No videos registered. Try loading verified YouTube Library inside 'Console Home' or review seeder entries first!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
         {activeTab === 'programme-detail' && currentProg && (
           <div className="space-y-6">
             <div className="flex justify-between items-center border-b border-outline-variant pb-3 mb-2 bg-white p-6 rounded-lg border">
@@ -1176,31 +1598,111 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant">
-                      {programmeVideos.filter(v => v.programmeId === currentProg.id).map(v => (
-                        <tr key={v.id} className="hover:bg-surface-container-low transition-colors">
-                          <td className="p-3">
-                            <img src={v.thumbnailUrl || 'https://img.youtube.com/vi/' + v.youtubeVideoId + '/maxresdefault.jpg'} className="w-16 h-10 object-cover rounded border" />
-                          </td>
-                          <td className="p-3">
-                            <p className="font-bold text-primary">{v.title}</p>
-                            <span className="text-[10px] text-on-surface-variant">Duration: {v.duration || 'N/A'}</span>
-                          </td>
-                          <td className="p-3 font-mono text-on-surface-variant font-medium">
-                            <p>{v.presenters || 'Unassigned'}</p>
-                            <p className="text-[10px] text-gray-500">{v.guests}</p>
-                          </td>
-                          <td className="p-3 text-[11px] font-mono text-gray-500">{v.slug}</td>
-                          <td className="p-3">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ${
-                              v.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-850'
-                            }`}>{v.status}</span>
-                          </td>
-                          <td className="p-3 text-right space-x-1.5">
-                            <button onClick={() => { setEditingItem({ type: 'programmeVideos', data: v }); setActiveTab('form'); }} className="hover:text-primary text-gray-400 p-1 cursor-pointer"><Edit className="w-4 h-4" /></button>
-                            <button onClick={() => handleDeleteItem('programmeVideos', v.id)} className="hover:text-error text-gray-400 p-1 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
-                          </td>
-                        </tr>
-                      ))}
+                      {programmeVideos.filter(v => v.programmeId === currentProg.id).map(v => {
+                        // Quick status toggle
+                        const toggleVideoStatus = async () => {
+                          const nextStatus = v.status === 'published' ? 'draft' : 'published';
+                          try {
+                            setLoading(true);
+                            await updateDoc(doc(db, 'programmeVideos', v.id), { status: nextStatus, updatedAt: new Date().toISOString() });
+                            alert(`Video status updated to "${nextStatus}"!`);
+                            setRefreshTrigger(p => p + 1);
+                          } catch (err: any) {
+                            alert('Save error: ' + err.message);
+                          } finally {
+                            setLoading(false);
+                          }
+                        };
+
+                        // Quick archive
+                        const archiveVideoItem = async () => {
+                          try {
+                            setLoading(true);
+                            await updateDoc(doc(db, 'programmeVideos', v.id), { status: 'archived', updatedAt: new Date().toISOString() });
+                            alert(`Video archived successfully.`);
+                            setRefreshTrigger(p => p + 1);
+                          } catch (err: any) {
+                            alert('Save error: ' + err.message);
+                          } finally {
+                            setLoading(false);
+                          }
+                        };
+
+                        return (
+                          <tr key={v.id} className="hover:bg-surface-container-low transition-colors">
+                            <td className="p-3">
+                              <img 
+                                referrerPolicy="no-referrer"
+                                src={v.thumbnailUrl || `https://img.youtube.com/vi/${v.youtubeVideoId}/hqdefault.jpg`} 
+                                className="w-16 h-10 object-cover rounded border" 
+                                alt=""
+                              />
+                            </td>
+                            <td className="p-3">
+                              <p className="font-bold text-primary">{v.title}</p>
+                              <span className="text-[10px] text-on-surface-variant flex items-center gap-1.5 mt-0.5">
+                                <span>Duration: {v.duration || 'N/A'}</span>
+                                {v.isFeatured && <span className="bg-amber-100 text-amber-800 text-[8px] font-bold px-1 rounded">FEATURED</span>}
+                              </span>
+                            </td>
+                            <td className="p-3 font-mono text-on-surface-variant font-medium">
+                              <p>{v.presenters || v.presenter || 'Unassigned'}</p>
+                              <p className="text-[10px] text-gray-500">{v.guests || v.guestNames}</p>
+                            </td>
+                            <td className="p-3 text-[11px] font-mono text-gray-500">/{v.slug}</td>
+                            <td className="p-3">
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                                v.status === 'published' ? 'bg-green-100 text-green-800' : 
+                                v.status === 'draft' ? 'bg-amber-100 text-amber-700' :
+                                'bg-gray-100 text-gray-600'
+                              }`}>{v.status || 'draft'}</span>
+                            </td>
+                            <td className="p-3 text-right">
+                              <div className="flex justify-end items-center gap-2">
+                                <button 
+                                  onClick={() => { setEditingItem({ type: 'programmeVideos', data: v }); setActiveTab('form'); }} 
+                                  className="text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 px-2 py-1 rounded text-[10px] cursor-pointer"
+                                  title="Edit full"
+                                >
+                                  Edit
+                                </button>
+                                <button 
+                                  onClick={toggleVideoStatus}
+                                  className="text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 px-2 py-1 rounded text-[10px] cursor-pointer"
+                                  title={v.status === 'published' ? 'Mark draft' : 'Approve publish'}
+                                >
+                                  {v.status === 'published' ? 'Unpublish' : 'Publish'}
+                                </button>
+                                {v.status !== 'archived' && (
+                                  <button 
+                                    onClick={archiveVideoItem}
+                                    className="text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded text-[10px] cursor-pointer"
+                                    title="Mark archived"
+                                  >
+                                    Archive
+                                  </button>
+                                )}
+                                <a 
+                                  href={v.youtubeUrl || `https://www.youtube.com/watch?v=${v.youtubeVideoId}`} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="text-red-700 hover:text-red-900 bg-red-50 hover:bg-red-105 px-2 py-1 rounded text-[10px] cursor-pointer inline-flex items-center"
+                                  title="Watch on YouTube"
+                                >
+                                  Preview
+                                </a>
+                                <button 
+                                  onClick={() => handleDeleteItem('programmeVideos', v.id)} 
+                                  className="text-gray-400 hover:text-red-600 p-1 cursor-pointer"
+                                  title="Permanently remove video record"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                       {programmeVideos.filter(v => v.programmeId === currentProg.id).length === 0 && (
                         <tr>
                           <td colSpan={6} className="p-8 text-center text-on-surface-variant italic">No videos have been added to this dynamic programme yet.</td>
@@ -1574,46 +2076,137 @@ export default function AdminDashboard() {
         {/* Admin registry users view */}
         {activeTab === 'admins' && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white p-6 border rounded-lg">
+            <div className="flex justify-between items-center bg-white p-6 border rounded-lg shadow-xs">
               <div>
-                <h1 className="font-display font-semibold text-2xl text-primary">CMS Administrators</h1>
-                <p className="text-sm text-on-surface-variant">Manage role privileges and staff credentials.</p>
+                <span className="text-xs uppercase text-primary font-bold font-mono tracking-wider bg-secondary px-2.5 py-0.5 rounded">Security Registry</span>
+                <h1 className="font-display font-semibold text-2xl text-primary mt-1">CMS Administrators</h1>
+                <p className="text-sm text-on-surface-variant">Configure role privileges, enable, disable, and manage security staff credentials.</p>
               </div>
               {isSuperadmin && (
                 <button 
                   onClick={() => { handleEditInit('users'); setActiveTab('form'); }}
-                  className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 cursor-pointer"
+                  className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 cursor-pointer shadow-xs transition-colors shrink-0"
                 >
-                  <Plus className="w-4 h-4" /> Add Admin
+                  <Plus className="w-4 h-4" /> Add Administrator
                 </button>
               )}
             </div>
 
             <div className="bg-white border rounded-lg overflow-hidden shadow-xs">
-              <table className="w-full text-left text-xs border-collapse">
+              <table className="w-full text-left text-xs border-collapse min-w-[700px]">
                 <thead className="bg-surface-container-high border-b border-outline-variant text-[10px] font-bold text-on-surface uppercase tracking-wider">
                   <tr>
                     <th className="p-4">Admin Name</th>
                     <th className="p-4">Registry Email</th>
                     <th className="p-4">Access Role Privilege</th>
+                    <th className="p-4">Status</th>
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant">
-                  {adminUsers.map((a, i) => (
-                    <tr key={a.uid || i} className="hover:bg-surface-container-low transition-colors">
-                      <td className="p-4 font-bold text-primary">{a.name || 'Staff operator'}</td>
-                      <td className="p-4 font-mono text-on-surface-variant">{a.email}</td>
-                      <td className="p-4">
-                        <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider">{a.role}</span>
-                      </td>
-                      <td className="p-4 text-right">
-                        {a.email !== 'jerryagbedun@gmail.com' && isSuperadmin && (
-                          <button onClick={() => handleDeleteItem('users', a.uid || a.id)} className="hover:text-error text-gray-400 p-1 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
-                        )}
-                      </td>
+                  {adminUsers.map((a, i) => {
+                    const finalDocId = a.email ? a.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : '';
+                    const isJerry = a.email?.toLowerCase() === 'jerryagbedun@gmail.com';
+                    const isDisabled = a.disabled === true || a.status === 'disabled';
+
+                    // Handler to quickly toggle disabled state
+                    const toggleDisableAdmin = async () => {
+                      if (!isSuperadmin) {
+                        alert('Only super administrators can disable or enable other admin accounts.');
+                        return;
+                      }
+                      if (isJerry) {
+                        alert('Safety limit: You cannot disable the primary super_admin account.');
+                        return;
+                      }
+
+                      const nextStatus = isDisabled ? 'active' : 'disabled';
+                      const confirmMsg = `Are you sure you want to ${isDisabled ? 'activate' : 'disable'} ${a.name || 'this admin'} (${a.email})?`;
+                      if (!confirm(confirmMsg)) return;
+
+                      try {
+                        setLoading(true);
+                        await updateDoc(doc(db, 'users', finalDocId), { 
+                          status: nextStatus, 
+                          disabled: nextStatus === 'disabled',
+                          updatedAt: new Date().toISOString()
+                        });
+                        alert(`Account successfully ${isDisabled ? 'activated' : 'disabled'}!`);
+                        setRefreshTrigger(p => p + 1);
+                      } catch (err: any) {
+                        alert('Error updating status: ' + err.message);
+                      } finally {
+                        setLoading(false);
+                      }
+                    };
+
+                    return (
+                      <tr key={a.uid || a.email || i} className="hover:bg-surface-container-low transition-colors">
+                        <td className="p-4">
+                          <p className="font-bold text-primary flex items-center gap-1.5">
+                            {a.name || 'Staff Operator'}
+                            {isJerry && <span className="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.2 rounded font-bold uppercase shrink-0">FOUNDER</span>}
+                          </p>
+                        </td>
+                        <td className="p-4 font-mono text-on-surface-variant">{a.email}</td>
+                        <td className="p-4">
+                          <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide inline-block ${
+                            a.role === 'super_admin' || a.role === 'admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
+                            a.role === 'editor' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                            'bg-gray-100 text-gray-700 border border-gray-200'
+                          }`}>
+                            {a.role || 'admin'}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-2 h-2 rounded-full ${isDisabled ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
+                            <span className={`text-[11px] font-medium ${isDisabled ? 'text-red-700' : 'text-green-700'}`}>
+                              {isDisabled ? 'Disabled' : 'Active'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2.5 items-center">
+                            {!isJerry && isSuperadmin && (
+                              <>
+                                <button 
+                                  onClick={() => { handleEditInit('users', a); setActiveTab('form'); }}
+                                  className="text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 px-2 py-1 rounded text-xs cursor-pointer"
+                                  title="Edit full settings"
+                                >
+                                  Edit
+                                </button>
+                                <button 
+                                  onClick={toggleDisableAdmin}
+                                  className={`px-2 py-1 rounded text-xs cursor-pointer transition-colors ${
+                                    isDisabled 
+                                      ? 'bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-950' 
+                                      : 'bg-amber-50 hover:bg-amber-100 text-amber-700 hover:text-amber-950'
+                                  }`}
+                                  title={isDisabled ? 'Activate account' : 'Lockout account'}
+                                >
+                                  {isDisabled ? 'Enable' : 'Disable'}
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteItem('users', finalDocId || a.uid || a.id)} 
+                                  className="text-gray-400 hover:text-red-600 p-1 cursor-pointer"
+                                  title="Permanently remove permission Doc"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {adminUsers.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-10 text-center text-on-surface-variant italic">No administrators found.</td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>

@@ -3,81 +3,111 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Security Helpers ---
+    // --- Authentication Helpers ---
     function isSignedIn() {
       return request.auth != null;
     }
 
+    // Helper to fetch user data if it exists
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Check if the user document exists in the database
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    // Is the user jerryagbedun@gmail.com (Implicit Super Admin)
+    function isHardcodedSuperAdmin() {
+      return isSignedIn() && request.auth.token.email == "jerryagbedun@gmail.com";
+    }
+
+    // Is the user a registered active administrator?
     function isActiveAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == "jerryagbedun@gmail.com" || (
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "active" ||
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
-          )
+      return isHardcodedSuperAdmin() || (
+        isSignedIn() && userExists() && getUserData().status != "disabled" && getUserData().disabled != true
+      );
+    }
+
+    // Is the user a Super Admin?
+    function isSuperAdmin() {
+      return isHardcodedSuperAdmin() || (
+        isActiveAdmin() && (getUserData().role == "super_admin" || getUserData().role == "admin")
+      );
+    }
+
+    // Is the user a Content Editor or Super Admin?
+    function isEditorOrSuperAdmin() {
+      return isHardcodedSuperAdmin() || (
+        isActiveAdmin() && (
+          getUserData().role == "super_admin" || 
+          getUserData().role == "admin" || 
+          getUserData().role == "editor"
         )
       );
     }
 
     // --- Collections Configurations ---
 
-    // 1. Users Collection
+    // 1. Users / Administrator Registry
     match /users/{userId} {
-      allow read, write: if isActiveAdmin();
+      allow read: if isActiveAdmin();
+      allow write: if isSuperAdmin();
     }
 
     // 2. Programmes Collection
     match /programmes/{docId} {
-      allow read: if resource.data.status == "active" || isActiveAdmin();
-      allow write: if isActiveAdmin();
+      allow read: if resource == null || resource.data.status == "active" || isActiveAdmin();
+      allow write: if isEditorOrSuperAdmin();
     }
 
     // 3. ProgrammeVideos Collection
     match /programmeVideos/{docId} {
-      allow read: if resource.data.status == "published" || isActiveAdmin();
-      allow write: if isActiveAdmin();
+      allow read: if resource == null || resource.data.status == "published" || isActiveAdmin();
+      allow write: if isEditorOrSuperAdmin();
     }
 
     // 4. Explainers Collection
     match /explainers/{docId} {
-      allow read: if resource.data.status == "active" || isActiveAdmin();
-      allow write: if isActiveAdmin();
+      allow read: if resource == null || resource.data.status == "active" || isActiveAdmin();
+      allow write: if isEditorOrSuperAdmin();
     }
 
     // 5. ExplainerItems Collection
     match /explainerItems/{docId} {
-      allow read: if resource.data.status == "published" || isActiveAdmin();
-      allow write: if isActiveAdmin();
+      allow read: if resource == null || resource.data.status == "published" || isActiveAdmin();
+      allow write: if isEditorOrSuperAdmin();
     }
 
     // 6. Briefings Collection
     match /briefings/{docId} {
-      allow read: if resource.data.status == "published" || isActiveAdmin();
-      allow write: if isActiveAdmin();
+      allow read: if resource == null || resource.data.status == "published" || isActiveAdmin();
+      allow write: if isEditorOrSuperAdmin();
     }
 
     // 7. SiteSettings Collection
     match /siteSettings/{docId} {
       allow read: if true;
-      allow write: if isActiveAdmin();
+      allow write: if isSuperAdmin();
     }
 
-    // 8. PartnerRequests Collection
+    // 8. PartnerRequests Collection (Corporate submissions)
     match /partnerRequests/{docId} {
       allow create: if true;
-      allow read, update, delete: if isActiveAdmin();
+      allow read, update, delete: if isSuperAdmin() || isEditorOrSuperAdmin(); // Editors can view leads, but viewer role is read-only
     }
 
     // 9. NewsletterSubscribers Collection
     match /newsletterSubscribers/{docId} {
       allow create: if true;
-      allow read, update, delete: if isActiveAdmin();
+      allow read, update, delete: if isSuperAdmin() || isEditorOrSuperAdmin();
     }
 
     // 10. ContactMessages Collection
     match /contactMessages/{docId} {
       allow create: if true;
-      allow read, update, delete: if isActiveAdmin();
+      allow read, update, delete: if isSuperAdmin() || isEditorOrSuperAdmin();
     }
   }
 }
