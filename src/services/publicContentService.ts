@@ -160,9 +160,21 @@ export async function getActiveProgrammes(): Promise<Programme[]> {
     });
     const active = list.filter(p => p.status === 'active');
     
+    // Deduplicate by slug or slugified title to ensure each program is unique
+    const uniqueActive: Programme[] = [];
+    const seenSlugs = new Set<string>();
+    
+    active.forEach(p => {
+      const key = (p.slug || slugify(p.title) || p.id || '').toLowerCase().trim();
+      if (!seenSlugs.has(key)) {
+        seenSlugs.add(key);
+        uniqueActive.push(p);
+      }
+    });
+    
     // Client-side sort order to avoid compound indexes
-    active.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-    return active;
+    uniqueActive.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    return uniqueActive;
   } catch (error) {
     console.error('[publicContentService] Error in getActiveProgrammes:', error);
     return [];

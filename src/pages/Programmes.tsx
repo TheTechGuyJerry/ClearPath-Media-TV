@@ -66,7 +66,18 @@ export default function Programmes() {
 
       // Parse Programmes
       if (results[0].status === 'fulfilled') {
-        programs = safeArray(results[0].value);
+        const rawPrograms = safeArray(results[0].value);
+        // Ensure no duplicates exist in state
+        const uniquePrograms: Programme[] = [];
+        const seenSlugs = new Set<string>();
+        rawPrograms.forEach(p => {
+          const key = (p.slug || slugify(p.title) || p.id || '').toLowerCase().trim();
+          if (!seenSlugs.has(key)) {
+            seenSlugs.add(key);
+            uniquePrograms.push(p);
+          }
+        });
+        programs = uniquePrograms;
         setProgrammesList(programs);
         setDiagProgrammes(programs.length);
         setDiagSlugs(programs.map(p => p.slug || slugify(p.title) || 'no-slug'));
@@ -123,7 +134,16 @@ export default function Programmes() {
   const filteredProgrammes = (Array.isArray(programmesList) ? (
     selectedCategory === 'All Programmes' 
       ? programmesList 
-      : programmesList.filter(p => p.formatType?.toLowerCase().includes(selectedCategory.toLowerCase()) || p.tagline?.toLowerCase().includes(selectedCategory.toLowerCase()))
+      : programmesList.filter(p => {
+          const categoryClean = selectedCategory.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const formatTypeClean = (p.formatType || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const taglineClean = (p.tagline || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const titleClean = (p.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          
+          return formatTypeClean.includes(categoryClean) || 
+                 taglineClean.includes(categoryClean) ||
+                 titleClean.includes(categoryClean);
+        })
   ) : []);
 
   return (
@@ -176,7 +196,7 @@ export default function Programmes() {
           </div>
         ) : (
           filteredProgrammes.map(prog => {
-            const isComingSoon = prog.status === 'inactive';
+            const isComingSoon = prog.status === 'inactive' || !videoCounts[prog.id] || videoCounts[prog.id] === 0;
             return (
               <section key={prog.id} className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-b border-outline-variant pb-unit-xl last:border-0 last:pb-0">
               <div className="grid lg:grid-cols-12 gap-gutter mb-unit-lg">
