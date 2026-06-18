@@ -146,6 +146,53 @@ export default function AdminSiteSettings() {
               className="w-full px-3 py-2 border border-outline focus:border-primary focus:ring-0 rounded text-sm bg-transparent" 
             />
           </div>
+          <div className="md:col-span-2 border-t pt-4">
+            <h3 className="font-semibold text-primary mb-2 text-sm font-bold">SEO, Newsletter & GA4 Tracking</h3>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Newsletter Signup URL</label>
+            <input 
+              type="text" 
+              placeholder="https://campaigns.zoho.com/..."
+              value={localSettings.newsletterSignupUrl || ''} 
+              onChange={(e) => setLocalSettings({ ...localSettings, newsletterSignupUrl: e.target.value })} 
+              className="w-full px-3 py-2 border border-outline focus:border-primary focus:ring-0 rounded text-sm bg-transparent font-mono text-xs text-slate-800" 
+            />
+            <p className="text-[10px] text-gray-500 mt-1">
+              Used in buttons, custom call-to-actions, and referenced in administrative campaigns.
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Zoho Campaigns Newsletter Enclosure Form Embed Script</label>
+            <textarea 
+              rows={4}
+              placeholder="<script type='text/javascript'>...</script>"
+              value={localSettings.zohoElectionSignupEmbed || ''} 
+              onChange={(e) => setLocalSettings({ ...localSettings, zohoElectionSignupEmbed: e.target.value })} 
+              className="w-full px-3 py-2 border border-outline focus:border-primary focus:ring-0 rounded text-sm bg-transparent font-mono text-xs text-slate-800" 
+            />
+            <p className="text-[10px] text-gray-500 mt-1">
+              Paste the Zoho campaign inline iframe form subscription snippet. This propagates across user homepage, program pages, and the dedicated Election Matters system.
+            </p>
+          </div>
+
+          <div className="md:col-span-2 bg-slate-50 border border-slate-200/80 rounded-lg p-5 space-y-3 font-sans">
+            <h4 className="text-xs uppercase tracking-wider font-bold text-slate-700">📌 Administrative checklist & configuration notes</h4>
+            <div className="space-y-2 text-xs text-slate-600 leading-relaxed">
+              <div className="flex gap-2 items-start">
+                <span className="text-primary font-bold">✓</span>
+                <p>
+                  <strong>YouTube External Descriptions:</strong> YouTube video summaries must be updated manually via YouTube Studio. Remember to embed the active <strong>Newsletter Signup URL</strong> in every published video detail, including Election Matters Episode 1.
+                </p>
+              </div>
+              <div className="flex gap-2 items-start">
+                <span className="text-primary font-bold">✓</span>
+                <p>
+                  <strong>Google Analytics 4:</strong> GA4 tracking activates when <code>VITE_GA4_MEASUREMENT_ID</code> is configured in variables. State updates are automatically tracked on route changes if initialized.
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="md:col-span-2">
             <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Footer Copyright/Disclaimer text</label>
             <input 

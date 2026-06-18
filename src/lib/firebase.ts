@@ -3,6 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import { 
   getFirestore, 
+  initializeFirestore,
   collection, 
   doc, 
   getDoc, 
@@ -55,7 +56,9 @@ if (MEASUREMENT_ID) {
 }
 
 const app = initializeApp(resolvedConfig);
-export const db = getFirestore(app, FIRESTORE_DATABASE_ID || undefined); /* CRITICAL */
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, FIRESTORE_DATABASE_ID || undefined); /* CRITICAL */
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 

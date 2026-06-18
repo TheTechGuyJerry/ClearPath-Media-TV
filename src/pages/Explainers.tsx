@@ -4,6 +4,7 @@ import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Explainer, ExplainerItem } from '../types';
 import { formatFirestoreDate, renderSafe } from '../utils/formatters';
+import SEO from '../components/SEO';
 
 const fallbackExplainers: Explainer[] = [
   {
@@ -125,6 +126,10 @@ export default function Explainers() {
 
   return (
     <div className="w-full">
+      <SEO 
+        title="Evergreen Explainers — Clearpath Media TV" 
+        description="Foundational data-driven explainers on the democratic processes, civic structures, and federal mechanics shaping Nigeria and Africa." 
+      />
       {activeVideoId && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 font-sans animate-fade-in" onClick={() => setActiveVideoId(null)}>
           <div className="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden border border-white/10" onClick={(e) => e.stopPropagation()}>

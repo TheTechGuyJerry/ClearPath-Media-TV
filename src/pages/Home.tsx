@@ -19,6 +19,8 @@ import {
   slugify
 } from '../services/publicContentService';
 import { formatFirestoreDate, renderSafe } from '../utils/formatters';
+import SEO from '../components/SEO';
+import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
 
 export default function Home() {
   const playerRef = useRef<any>(null);
@@ -271,6 +273,7 @@ export default function Home() {
 
   return (
     <div className="w-full flex-grow flex flex-col font-sans">
+      <SEO />
       <section className="relative w-full min-h-[80vh] flex items-center border-b border-outline-variant overflow-hidden bg-slate-950">
         <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
           <div 
@@ -285,7 +288,7 @@ export default function Home() {
               Clear context <br/>for public life.
             </h1>
             <p className="font-body-lg text-body-lg text-white/90 max-w-2xl mt-unit-sm leading-relaxed">
-              Clearpath Media is a public-intellectual platform explaining power, policy, elections, and society in Africa — calmly, clearly, and with evidence.
+              Clearpath Media TV is a public-intellectual media platform focused on Nigeria and West Africa. We explain elections, governance, and political risk through evidence-based analysis for serious audiences. Intelligence, not advocacy.
             </p>
           </div>
         </div>
@@ -477,6 +480,9 @@ export default function Home() {
           Partner with Clearpath
         </Link>
       </section>
+
+      {/* Zoho campaigns newsletter embed */}
+      <ZohoSignupEmbed />
 
       {/* Preview diagnostics block */}
       {(process.env.NODE_ENV !== 'production' || window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost')) && (

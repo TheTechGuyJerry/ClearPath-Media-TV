@@ -1,4 +1,4 @@
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Programme, ProgrammeVideo, Explainer } from '../types';
 import { formatFirestoreDate } from '../utils/formatters';
@@ -146,18 +146,60 @@ export function enrichProgramme(p: Programme): Programme {
 export async function getActiveProgrammes(): Promise<Programme[]> {
   try {
     const snap = await getDocs(collection(db, 'programmes'));
-    if (snap.empty) return [];
+    let list: Programme[] = [];
     
-    const list = snap.docs.map(doc => {
-      const data = doc.data();
-      const rawProg = { 
-        id: doc.id, 
-        ...data,
-        createdAtLabel: formatFirestoreDate(data.createdAt),
-        updatedAtLabel: formatFirestoreDate(data.updatedAt)
-      } as Programme;
-      return enrichProgramme(rawProg);
-    });
+    if (!snap.empty) {
+      list = snap.docs.map(doc => {
+        const data = doc.data();
+        const rawProg = { 
+          id: doc.id, 
+          ...data,
+          createdAtLabel: formatFirestoreDate(data.createdAt),
+          updatedAtLabel: formatFirestoreDate(data.updatedAt)
+        } as Programme;
+        return enrichProgramme(rawProg);
+      });
+    }
+
+    const hasElectionMatters = list.some(p => (p.slug || '').toLowerCase().trim() === 'election-matters');
+    if (!hasElectionMatters) {
+      const seedProg: Programme = {
+        id: 'election-matters',
+        title: 'Election Matters',
+        slug: 'election-matters',
+        shortDescription: 'Data-led election intelligence on democratic processes, political risk, and institutional accountability.',
+        fullDescription: 'Election Matters explains electoral systems, democratic accountability, campaign signals, voter behaviour, and the institutions that shape political outcomes.',
+        tagline: 'Data-led election intelligence on democratic processes, political risk, and institutional accountability.',
+        hostName: 'ClearPath Elections Desk',
+        formatType: 'analysis',
+        coverageArea: 'Nigeria & Africa',
+        topicFocus: ['elections', 'governance', 'risk'],
+        scheduleText: 'Weekly',
+        youtubePlaylistUrl: '',
+        coverImage: '',
+        thumbnailImage: '',
+        status: 'active',
+        isFeatured: true,
+        sortOrder: 10,
+        seoTitle: 'Election Matters — Data-led election intelligence',
+        seoDescription: 'Data-led election intelligence on democratic processes, political risk, and institutional accountability.',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        authorName: 'ClearPath Elections Desk',
+        authorTitle: 'Election Intelligence Desk',
+        authorRoleLabel: 'Election Intelligence',
+        authorBio: 'Election Matters explains electoral systems, democratic accountability, campaign signals, voter behaviour, and the institutions that shape political outcomes.',
+        comingSoon: false
+      };
+      
+      list.push(seedProg);
+      
+      // Save in Firestore background silently
+      setDoc(doc(db, 'programmes', 'election-matters'), seedProg).catch(err => {
+        console.error('[publicContentService] SetDoc seed error:', err);
+      });
+    }
+
     const active = list.filter(p => p.status === 'active');
     
     // Deduplicate by slug or slugified title to ensure each program is unique

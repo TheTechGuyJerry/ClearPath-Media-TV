@@ -2,6 +2,7 @@ import { Megaphone, FileText, BookOpen, MessageSquare, CheckCircle2 } from 'luci
 import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import SEO from '../components/SEO';
 
 export default function Partner() {
   const [name, setName] = useState('');
@@ -47,6 +48,10 @@ export default function Partner() {
 
   return (
     <div className="w-full">
+      <SEO 
+        title="Partner with Clearpath — Institutional Collaboration" 
+        description="Collaborate with Clearpath Media to build robust, evidence-backed public explanations of national risk, policy changes, and institutional dynamics." 
+      />
       <main className="flex-grow w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto py-unit-xl">
         <section className="max-w-[720px] mx-auto text-center mb-unit-xl md:mb-[96px]">
           <h1 className="font-display-lg text-display-lg text-primary mb-unit-md">Partner With Us</h1>

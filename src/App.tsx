@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
@@ -40,6 +41,34 @@ function AppRoutes() {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
 
+  useEffect(() => {
+    const gaId = import.meta.env.VITE_GA4_MEASUREMENT_ID;
+    if (gaId && gaId.startsWith('G-')) {
+      // Initialize if script not already present
+      const scriptId = 'google-analytics-gtag';
+      let script = document.getElementById(scriptId) as HTMLScriptElement;
+      if (!script) {
+        script = document.createElement('script');
+        script.id = scriptId;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+        script.async = true;
+        document.head.appendChild(script);
+
+        (window as any).dataLayer = (window as any).dataLayer || [];
+        (window as any).gtag = function () {
+          (window as any).dataLayer.push(arguments);
+        };
+        (window as any).gtag('js', new Date());
+      }
+      
+      // Send page view event
+      (window as any).gtag('config', gaId, {
+        page_path: location.pathname + location.search,
+        page_title: document.title
+      });
+    }
+  }, [location.pathname, location.search]);
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-on-surface font-body-md antialiased selection:bg-secondary-container selection:text-on-secondary-container">
       {!isAdminPath && <Navbar />}
@@ -52,6 +81,7 @@ function AppRoutes() {
             
             {/* Dynamic Programme routes mapped directly to the universal Programme Detail component */}
             <Route path="/programmes/:slug" element={<ThreeThings />} />
+            <Route path="/election-matters" element={<ThreeThings forcedSlug="election-matters" />} />
             
             <Route path="/briefing" element={<Briefing />} />
             <Route path="/explainers" element={<Explainers />} />

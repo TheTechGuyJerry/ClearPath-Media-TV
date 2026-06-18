@@ -11,6 +11,7 @@ import {
   slugify,
   safeArray
 } from '../services/publicContentService';
+import SEO from '../components/SEO';
 
 const fallbackProgrammes: Programme[] = [
   {
@@ -125,7 +126,7 @@ export default function Programmes() {
   const categories = [
     'All Programmes',
     'Interview',
-    'Daily Brief',
+    'Daily Brief with Annabel',
     'Analysis',
     'Documentary',
     'Commentary'
@@ -141,13 +142,20 @@ export default function Programmes() {
           const titleClean = (p.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
           
           return formatTypeClean.includes(categoryClean) || 
+                 categoryClean.includes(formatTypeClean) ||
                  taglineClean.includes(categoryClean) ||
-                 titleClean.includes(categoryClean);
+                 categoryClean.includes(taglineClean) ||
+                 titleClean.includes(categoryClean) ||
+                 categoryClean.includes(titleClean);
         })
   ) : []);
 
   return (
     <div className="w-full">
+      <SEO 
+        title="Programmes — Clearpath Media TV" 
+        description="Explore Clearpath Media's series of structured programs on African policy, power, governance, and democratic accountability." 
+      />
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-unit-xl">
         <section className="mb-unit-xl max-w-3xl">
           <h1 className="font-display-lg text-display-lg text-primary mb-unit-sm font-semibold">Programmes</h1>

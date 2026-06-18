@@ -12,6 +12,9 @@ import {
   slugify
 } from '../services/publicContentService';
 import { formatFirestoreDate, renderSafe } from '../utils/formatters';
+import SEO from '../components/SEO';
+import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
+import LiteYouTube from '../components/LiteYouTube';
 
 const fallbackProgramGrid: ProgrammeVideo[] = [
   {
@@ -185,6 +188,11 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
 
   return (
     <div className="w-full">
+      <SEO 
+        title={shownProg.title} 
+        description={shownProg.tagline || shownProg.shortDescription || shownProg.fullDescription}
+        image={shownProg.coverImage}
+      />
       <header className="mb-unit-xl border-b border-outline-variant pb-unit-lg px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto pt-unit-xl">
         <div className="max-w-[800px] font-sans">
           <span className="font-label-sm text-label-sm uppercase tracking-widest text-primary mb-unit-sm block font-bold">Program Series</span>
@@ -208,26 +216,17 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
             </div>
           ) : (
             <>
-              <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-outline-variant shadow-sm group font-sans">
-                {activeVideoId ? (
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    src={`https://www.youtube.com/embed/${activeVideoId}?rel=0&autoplay=1`} 
-                    title={activeTitle} 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                    className="absolute inset-0 w-full h-full"
-                  ></iframe>
-                ) : (
+              {activeVideoId ? (
+                <LiteYouTube videoId={activeVideoId} title={activeTitle} />
+              ) : (
+                <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-outline-variant shadow-sm group font-sans">
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-container-high text-on-surface-variant p-6 text-center">
                     <Play className="w-12 h-12 text-outline/50 mb-3" />
                     <span className="font-semibold text-sm">No videos published for this programme yet</span>
                     <p className="text-xs text-outline mt-1">Please seed or approve discovered videos in the admin console first.</p>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
               <div className="mt-4 bg-white p-4 border rounded-lg shadow-xs font-sans">
                 <h2 className="font-semibold text-lg text-primary">{activeTitle || 'No Video Available'}</h2>
                 {activeVideoId && videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription && (
@@ -359,6 +358,9 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
           )}
         </section>
       )}
+
+      {/* Zoho campaigns newsletter embed */}
+      <ZohoSignupEmbed />
 
       {/* Preview diagnostics block */}
       {(process.env.NODE_ENV !== 'production' || window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost')) && (

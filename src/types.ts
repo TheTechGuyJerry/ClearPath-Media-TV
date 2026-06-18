@@ -192,6 +192,8 @@ export interface SiteSettings {
   newsletterDescription: string;
   footerText: string;
   updatedAt: string;
+  zohoElectionSignupEmbed?: string;
+  newsletterSignupUrl?: string;
 }
 
 export interface PartnerRequest {
