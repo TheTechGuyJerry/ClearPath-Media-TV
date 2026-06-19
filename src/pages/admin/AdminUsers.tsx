@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useAdmin } from './AdminContext';
 import CMSForm from '../../components/admin/CMSForm';
-import { db } from '../../lib/firebase';
+import { db, resolvedConfig } from '../../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { Plus, Trash2 } from 'lucide-react';
 
 export default function AdminUsers() {
@@ -55,6 +57,12 @@ export default function AdminUsers() {
       return;
     }
 
+    const isNewUser = !editingItem.id;
+    if (isNewUser && !editingItem.password) {
+      alert('Password is required when creating a new administrator.');
+      return;
+    }
+
     const emailKey = editingItem.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
     const dataToSave = { 
       ...editingItem, 
@@ -62,8 +70,27 @@ export default function AdminUsers() {
     };
 
     try {
+      // 1. If it's a new user, register them in Firebase Authentication
+      if (isNewUser && editingItem.password) {
+        const appName = "SecondaryCreatorApp_" + Date.now();
+        const secApp = initializeApp(resolvedConfig, appName);
+        const secAuth = getAuth(secApp);
+        try {
+          await createUserWithEmailAndPassword(secAuth, editingItem.email, editingItem.password);
+          console.log("Firebase Auth Account successfully registered for: " + editingItem.email);
+        } catch (authErr: any) {
+          console.warn("Auth warning or existing account: ", authErr.message);
+          if (authErr.code !== 'auth/email-already-in-use') {
+            throw new Error("Failed to register Firebase Auth credential: " + authErr.message);
+          }
+        } finally {
+          await deleteApp(secApp);
+        }
+      }
+
+      // 2. Save the metadata structure in Firestore
       await handleSaveItem('users', dataToSave);
-      alert('Administrator credentials updated successfully!');
+      alert(isNewUser ? 'Administrator created and registered successfully!' : 'Administrator credentials updated successfully!');
       setEditingItem(null);
       await refreshCollections();
     } catch (err: any) {
@@ -189,7 +216,7 @@ export default function AdminUsers() {
               const isDisabled = a.disabled === true || a.status === 'disabled';
 
               return (
-                <tr key={a.uid || a.email || i} className="hover:bg-surface-container-low transition-colors">
+                <tr key={a.id || (a.uid ? `uid_${a.uid}_${i}` : '') || a.email || `idx_${i}`} className="hover:bg-surface-container-low transition-colors">
                   <td className="p-4 text-left">
                     <p className="font-bold text-primary flex items-center gap-1.5">
                       {a.name || 'Staff Operator'}

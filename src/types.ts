@@ -87,6 +87,9 @@ export interface ProgrammeVideo {
   publishedAtLabel?: string;
   createdAtLabel?: string;
   updatedAtLabel?: string;
+  sortDate?: string;
+  hiddenFromPublic?: boolean;
+  needsUrl?: boolean;
 }
 
 export interface Explainer {

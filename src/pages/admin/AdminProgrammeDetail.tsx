@@ -237,7 +237,6 @@ export default function AdminProgrammeDetail() {
                       <td className="p-3">
                         <p className="font-bold text-primary">{v.title}</p>
                         <span className="text-[10px] text-on-surface-variant flex items-center gap-1.5 mt-0.5">
-                          <span>Duration: {v.duration || 'N/A'}</span>
                           {v.isFeatured && <span className="bg-amber-100 text-amber-850 text-[8px] font-bold px-1 rounded">FEATURED</span>}
                         </span>
                       </td>

@@ -150,6 +150,20 @@ export default function Programmes() {
         })
   ) : []);
 
+  const displayedProgrammes = [...filteredProgrammes].sort((a, b) => {
+    const aActive = a.status === 'active';
+    const bActive = b.status === 'active';
+    if (aActive && !bActive) return -1;
+    if (!aActive && bActive) return 1;
+
+    // Secondary sorting: sortOrder priority, followed by alphabetical order of titles
+    const aOrder = a.sortOrder !== undefined ? a.sortOrder : 999;
+    const bOrder = b.sortOrder !== undefined ? b.sortOrder : 999;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    return (a.title || '').localeCompare(b.title || '');
+  });
+
   return (
     <div className="w-full">
       <SEO 
@@ -198,12 +212,12 @@ export default function Programmes() {
             <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-2"></div>
             <p className="text-xs text-on-surface-variant font-mono">Gathering programmes...</p>
           </div>
-        ) : filteredProgrammes.length === 0 ? (
+        ) : displayedProgrammes.length === 0 ? (
           <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop p-12 text-center text-on-surface-variant bg-surface-container-low rounded border border-outline-variant shadow-xs">
             No programmes available yet.
           </div>
         ) : (
-          filteredProgrammes.map(prog => {
+          displayedProgrammes.map(prog => {
             const isComingSoon = prog.status === 'inactive' || !videoCounts[prog.id] || videoCounts[prog.id] === 0;
             return (
               <section key={prog.id} className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-b border-outline-variant pb-unit-xl last:border-0 last:pb-0">

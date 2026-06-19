@@ -316,7 +316,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
       // Admins
       const administratorsSnap = await getDocs(query(collection(db, 'users')));
-      setAdminUsers(administratorsSnap.docs.map(d => d.data()));
+      setAdminUsers(administratorsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) {
       console.error("Error fetching admin data: ", e);
     } finally {

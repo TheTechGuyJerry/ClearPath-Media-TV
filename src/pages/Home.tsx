@@ -8,7 +8,7 @@ import {
   doc
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { SiteSettings, Briefing, Programme } from '../types';
+import { SiteSettings, Briefing, Programme, ProgrammeVideo } from '../types';
 import {
   getActiveProgrammes,
   getActiveExplainers,
@@ -32,7 +32,7 @@ export default function Home() {
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
 
   // Core content states from Firestore
-  const [todayBriefing, setTodayBriefing] = useState<Briefing | null>(null);
+  const [todayFeaturedVideo, setTodayFeaturedVideo] = useState<ProgrammeVideo | null>(null);
   const [latestFeed, setLatestFeed] = useState<any[]>([]);
   const [activeProgrammes, setActiveProgrammes] = useState<Programme[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -136,41 +136,44 @@ export default function Home() {
           };
         });
         setLatestFeed(mapped.slice(0, 4));
+
+        // Today's Featured Programme Video Logic
+        const filteredForFeatured = loadedVideos.filter((video: any) => {
+          return video.status === 'published' &&
+                 video.hiddenFromPublic !== true &&
+                 video.needsUrl !== true &&
+                 video.youtubeVideoId;
+        });
+
+        const getDateVal = (item: any, key: string) => {
+          const val = item[key];
+          if (!val) return 0;
+          if (val.seconds) return val.seconds * 1000;
+          const parsed = Date.parse(val);
+          return isNaN(parsed) ? 0 : parsed;
+        };
+
+        filteredForFeatured.sort((a: any, b: any) => {
+          const sortDateA = getDateVal(a, 'sortDate');
+          const sortDateB = getDateVal(b, 'sortDate');
+          if (sortDateA !== sortDateB) return sortDateB - sortDateA;
+
+          const pubA = getDateVal(a, 'publishedAt');
+          const pubB = getDateVal(b, 'publishedAt');
+          if (pubA !== pubB) return pubB - pubA;
+
+          const createA = getDateVal(a, 'createdAt');
+          const createB = getDateVal(b, 'createdAt');
+          return createB - createA;
+        });
+
+        setTodayFeaturedVideo(filteredForFeatured[0] || null);
       } else {
         console.error('[Diagnostics - Home] Videos Load Error: ', results[3].reason);
         setDiagError(prev => (prev ? prev + '; ' : '') + 'Videos load error');
       }
 
-      // 5. Briefings result (Client-side fail-safe logic)
-      if (results[4].status === 'fulfilled') {
-        try {
-          const briefingSnap = results[4].value;
-          const briefings = briefingSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Briefing));
-          const publishedBriefings = briefings.filter((b: any) => b.status === 'published');
-          
-          if (siteSettingsConfig?.featuredBriefingId) {
-            const featured = briefings.find((b: any) => b.id === siteSettingsConfig.featuredBriefingId);
-            if (featured) {
-              setTodayBriefing(featured);
-            } else {
-              setTodayBriefing(publishedBriefings[0] || null);
-            }
-          } else {
-            publishedBriefings.sort((a: any, b: any) => {
-              const dateA = new Date(a.publishedAt || a.createdAt || 0).getTime();
-              const dateB = new Date(b.publishedAt || b.createdAt || 0).getTime();
-              return dateB - dateA;
-            });
-            setTodayBriefing(publishedBriefings[0] || null);
-          }
-        } catch (briefingErr) {
-          console.error('[Diagnostics - Home] Parsing briefings list failed, proceeding safely:', briefingErr);
-        }
-      } else {
-        console.error('[Diagnostics - Home] Briefing query getDocs failed: ', results[4].reason);
-        setDiagError(prev => (prev ? prev + '; ' : '') + 'Briefing getDocs failed');
-      }
-
+      // 5. Briefings result (Client-side fail-safe logic skipped for Featured display)
       setLoading(false);
     }
 
@@ -262,14 +265,25 @@ export default function Home() {
 
   const renderedProgrammes = activeProgrammes;
 
-  // Key blocks for Today's Briefing
-  const points = todayBriefing?.keyPoints 
-    ? todayBriefing.keyPoints.split('&#15;').flatMap(p => p.split('\n'))
+  // Render fallbacks for Today's Featured Video
+  const fallbackVideo: any = {
+    title: "Election Matters Episode 1: INEC, Civic Structures and National Governance",
+    programmeTitle: "Election Matters",
+    publishedAt: new Date().toISOString(),
+    displayDate: "Recent",
+    shortSummary: "Exploring constitutional designs, public accountability, and the operational logistics of West African democratic processes.",
+    youtubeVideoId: "3H95x0BV9nA",
+  };
+
+  const featuredVideo = todayFeaturedVideo || fallbackVideo;
+
+  const featuredPoints = featuredVideo?.keyPoints
+    ? String(featuredVideo.keyPoints).split('\n').map(p => p.trim()).filter(Boolean)
     : [];
 
-  const block1 = String(points[0] || 'The core events and facts established, stripped of sensationalism.');
-  const block2 = String(points[1] || 'The context, structural implications, and underlying dynamics driving the story.');
-  const block3 = String(points[2] || 'Key indicators and future developments to monitor as the situation evolves.');
+  const featBlock1 = featuredPoints[0] || featuredVideo?.shortSummary || 'The core events and facts established, stripped of sensationalism.';
+  const featBlock2 = featuredPoints[1] || 'The context, structural implications, and underlying dynamics driving the story.';
+  const featBlock3 = featuredPoints[2] || 'Key indicators and future developments to monitor as the situation evolves.';
 
   return (
     <div className="w-full flex-grow flex flex-col font-sans">
@@ -296,9 +310,18 @@ export default function Home() {
 
       <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto border-b border-outline-variant">
         <div className="mb-unit-lg">
-          <h2 className="font-headline-lg text-3xl font-bold text-primary mb-2">Today's Briefing</h2>
+          <h2 className="font-headline-lg text-3xl font-bold text-primary mb-2">Today's Featured</h2>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
-            {todayBriefing ? todayBriefing.excerpt : "A calm, structured explanation of what matters today — and why."}
+            {featuredVideo ? (
+              <span className="flex flex-wrap items-center gap-2 text-sm text-primary font-bold tracking-wide uppercase mb-1">
+                <span>{featuredVideo.programmeTitle || 'Clearpath Media'}</span>
+                <span className="text-secondary">•</span>
+                <span className="text-on-surface-variant font-normal font-mono normal-case">{featuredVideo.displayDate || formatFirestoreDate(featuredVideo.publishedAt) || 'Recent'}</span>
+              </span>
+            ) : null}
+            <span className="block mt-1 font-display font-bold text-xl text-slate-900 leading-tight">
+              {featuredVideo?.title}
+            </span>
           </p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter items-start">
@@ -307,8 +330,8 @@ export default function Home() {
               <iframe 
                 width="100%" 
                 height="100%" 
-                src={`https://www.youtube.com/embed/${todayBriefing?.youtubeVideoId || '3H95x0BV9nA'}?rel=0`} 
-                title="Today's Briefing" 
+                src={`https://www.youtube.com/embed/${featuredVideo?.youtubeVideoId || '3H95x0BV9nA'}?rel=0`} 
+                title={featuredVideo?.title || "Today's Featured Video"} 
                 frameBorder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowFullScreen
@@ -316,19 +339,19 @@ export default function Home() {
               ></iframe>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-unit-md mt-unit-sm">
-              <Link to="/briefing" className="w-full sm:w-auto bg-primary text-white font-bold text-xs uppercase px-8 py-4 rounded hover:bg-primary-container transition-colors text-center tracking-wider shadow-sm">
-                Watch today's brief
+              <Link to={`/programmes/${slugify(featuredVideo?.programmeTitle || 'election-matters')}`} className="w-full sm:w-auto bg-primary text-white font-bold text-xs uppercase px-8 py-4 rounded hover:bg-primary-container transition-colors text-center tracking-wider shadow-sm">
+                Watch full series
               </Link>
-              <Link to="/briefing" className="w-full sm:w-auto border border-outline text-on-surface font-bold text-xs uppercase px-8 py-4 rounded hover:bg-surface-container transition-colors text-center tracking-wider">
-                View all briefings
+              <Link to="/programmes" className="w-full sm:w-auto border border-outline text-on-surface font-bold text-xs uppercase px-8 py-4 rounded hover:bg-surface-container transition-colors text-center tracking-wider">
+                View all programmes
               </Link>
             </div>
           </div>
           <div className="flex flex-col gap-unit-md">
             {[
-              { title: 'What happened', text: block1.replace(/^- /, '') },
-              { title: 'Why it matters', text: block2.replace(/^- /, '') },
-              { title: 'What to watch next', text: block3.replace(/^- /, '') }
+              { title: 'Overview', text: featBlock1.replace(/^- /, '') },
+              { title: 'The context', text: featBlock2.replace(/^- /, '') },
+              { title: 'What to monitor next', text: featBlock3.replace(/^- /, '') }
             ].map(item => (
               <div key={item.title} className="bg-white border border-outline-variant rounded p-unit-lg hover:bg-surface-container-low transition-colors duration-300 shadow-xs">
                 <h3 className="font-headline-md text-headline-md text-primary font-bold mb-unit-sm text-base uppercase tracking-wider">{item.title}</h3>

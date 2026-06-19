@@ -243,7 +243,7 @@ export default function CMSForm({
                 className="w-full px-3 py-2 border border-outline rounded text-sm font-mono bg-transparent" 
               />
             </div>
-            <div>
+            <div className="hidden">
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Duration</label>
               <input type="text" value={data.duration || ''} onChange={(e) => setField('duration', e.target.value)} placeholder="e.g. 08:30" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
             </div>
@@ -548,6 +548,20 @@ export default function CMSForm({
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Registry Email Address *</label>
               <input type="email" required value={data.email || ''} onChange={(e) => setField('email', e.target.value.toLowerCase())} placeholder="operator@clearpath.media" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">
+                {data.id ? 'Change Password (Optional)' : 'Operator Password *'}
+              </label>
+              <input 
+                type="password" 
+                required={!data.id}
+                minLength={6}
+                value={data.password || ''} 
+                onChange={(e) => setField('password', e.target.value)} 
+                placeholder={data.id ? "Leave empty to keep existing password" : "Min 6 characters required"} 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent font-mono" 
+              />
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Access Role Privilege</label>

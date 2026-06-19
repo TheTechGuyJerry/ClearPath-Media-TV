@@ -36,7 +36,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center justify-center gap-unit-md h-full pt-1 absolute left-1/2 -translate-x-1/2">
             <Link to="/" className={getLinkClass('/')}>Home</Link>
             <Link to="/programmes" className={getLinkClass('/programmes')}>Programmes</Link>
-            <Link to="/briefing" className={getLinkClass('/briefing')}>Briefing</Link>
+            <Link to="/programmes/election-matters" className={getLinkClass('/programmes/election-matters')}>Election Matters</Link>
             <Link to="/explainers" className={getLinkClass('/explainers')}>Explainers</Link>
             <Link to="/about" className={getLinkClass('/about')}>About</Link>
           </div>
@@ -113,7 +113,7 @@ export default function Navbar() {
             <div className="flex flex-col py-2">
               <Link to="/" className={getLinkClass('/', true)} onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
               <Link to="/programmes" className={getLinkClass('/programmes', true)} onClick={() => setIsMobileMenuOpen(false)}>Programmes</Link>
-              <Link to="/briefing" className={getLinkClass('/briefing', true)} onClick={() => setIsMobileMenuOpen(false)}>Briefing</Link>
+              <Link to="/programmes/election-matters" className={getLinkClass('/programmes/election-matters', true)} onClick={() => setIsMobileMenuOpen(false)}>Election Matters</Link>
               <Link to="/explainers" className={getLinkClass('/explainers', true)} onClick={() => setIsMobileMenuOpen(false)}>Explainers</Link>
               <Link to="/about" className={getLinkClass('/about', true)} onClick={() => setIsMobileMenuOpen(false)}>About</Link>
             </div>

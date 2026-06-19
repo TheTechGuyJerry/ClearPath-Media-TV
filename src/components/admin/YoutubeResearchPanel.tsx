@@ -418,6 +418,128 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const [overwriteMetadata, setOverwriteMetadata] = useState<boolean>(false);
 
+  // Live YouTube API configurations
+  const [apiKey, setApiKey] = useState<string>(import.meta.env.VITE_YOUTUBE_API_KEY || '');
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [testResult, setTestResult] = useState<string>('');
+  const [playlistId, setPlaylistId] = useState<string>('UU1QO1vOnL5T6h7D4XWbS8dQ'); // uploads playlist ID
+
+  const testApiConnection = async () => {
+    if (!apiKey.trim()) {
+      setTestStatus('error');
+      setTestResult('Please enter a YouTube API key first.');
+      return;
+    }
+    setTestStatus('testing');
+    setErrorStatus(null);
+    setTestResult('');
+    try {
+      const url = `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=UC1QO1vOnL5T6h7D4XWbS8dQ&key=${encodeURIComponent(apiKey.trim())}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error?.message || `HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      if (data.items && data.items.length > 0) {
+        const title = data.items[0].snippet?.title || 'Unknown Channel';
+        setTestStatus('success');
+        setTestResult(`Successfully connected! Validated Channel: "${title}" (ClearPath Media TV).`);
+      } else {
+        setTestStatus('error');
+        setTestResult('API key is valid, but the target Channel ID was not found.');
+      }
+    } catch (err: any) {
+      setTestStatus('error');
+      setTestResult(`Connection failed: ${err.message || err}`);
+    }
+  };
+
+  const fetchLiveYoutubeVideos = async () => {
+    if (!apiKey.trim()) {
+      setErrorStatus('Please enter a YouTube API key.');
+      return;
+    }
+    setLoading(true);
+    setErrorStatus(null);
+    setStatusMessage('Querying YouTube Data API...');
+    try {
+      // Get existing videos from firestore
+      const existingSnap = await getDocs(collection(db, 'programmeVideos'));
+      const existingVideoIds = new Set(existingSnap.docs.map(doc => doc.data().youtubeVideoId));
+
+      const targetPlaylist = playlistId.trim() || 'UU1QO1vOnL5T6h7D4XWbS8dQ';
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${encodeURIComponent(targetPlaylist)}&maxResults=50&key=${encodeURIComponent(apiKey.trim())}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error?.message || `HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      if (!data.items || data.items.length === 0) {
+        setStatusMessage('No videos returned from the YouTube playlist.');
+        return;
+      }
+
+      const rawItems = data.items;
+      const parsed: DiscoveredVideo[] = [];
+      let skippedCount = 0;
+
+      for (const item of rawItems) {
+        const snip = item.snippet;
+        const vidId = snip?.resourceId?.videoId;
+        if (!vidId) continue;
+
+        // Skip duplicates!
+        if (existingVideoIds.has(vidId)) {
+          skippedCount++;
+          continue;
+        }
+
+        const title = snip.title || 'Untitled YouTube Video';
+        const description = snip.description || '';
+        const combinedText = (title + ' ' + description).toLowerCase();
+
+        // Implement automatic program mapping based on title/desc keywords!
+        let suggestedProgramme = 'Election Matters'; // Default
+        if (combinedText.includes('annabel') || combinedText.includes('daily brief') || combinedText.includes('daily briefing')) {
+          suggestedProgramme = 'Daily Brief with Annabel';
+        } else if (combinedText.includes('osita') || combinedText.includes('chidoka') || combinedText.includes('insights')) {
+          suggestedProgramme = 'Osita Insights';
+        } else if (combinedText.includes('three things') || combinedText.includes('mekaria')) {
+          suggestedProgramme = 'Mekaria Series';
+        } else if (combinedText.includes('clearpath insights') || combinedText.includes('explainer') || combinedText.includes('explainers')) {
+          suggestedProgramme = 'Clearpath Insights';
+        } else if (combinedText.includes('neighbours') || combinedText.includes('neighbors') || combinedText.includes('neighbour')) {
+          suggestedProgramme = 'Nigeria & Neighbours';
+        } else if (combinedText.includes('election matters') || combinedText.includes('election')) {
+          suggestedProgramme = 'Election Matters';
+        }
+
+        parsed.push({
+          title,
+          youtubeUrl: `https://www.youtube.com/watch?v=${vidId}`,
+          youtubeVideoId: vidId,
+          suggestedProgramme,
+          confidenceLevel: 'HIGH',
+          evidenceText: snip.description || 'Imported from YouTube playlist.',
+          suggestedTopicTags: ['YouTube'],
+          suggestedSummary: description.slice(0, 150) + (description.length > 150 ? '...' : '')
+        });
+      }
+
+      setDiscoveredVideos(parsed);
+      setSelectedIds(new Set(parsed.map(v => v.youtubeVideoId)));
+      setStatusMessage(`Found ${data.items.length} videos from playlist. Loaded ${parsed.length} new drafts into view (${skippedCount} duplicates skipped!).`);
+      onVideoApproved();
+    } catch (err: any) {
+      setErrorStatus(`API Fetch Error: ${err.message || err}`);
+      setStatusMessage('');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const startAnalysis = async () => {
     setLoading(true);
     setErrorStatus(null);
@@ -587,7 +709,7 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
       youtubeVideoId: video.youtubeVideoId,
       embedUrl: `https://www.youtube.com/embed/${video.youtubeVideoId}`,
       thumbnailUrl: `https://img.youtube.com/vi/${video.youtubeVideoId}/hqdefault.jpg`,
-      duration: '08:00', // standard default
+      duration: '', // omitted from UI
       presenters: progId === 'osita-insights' ? 'Osita Chidoka' : (progId === 'daily-brief' || progId === 'daily-brief-with-annabel') ? 'Annabel K.' : 'Clearpath Analyst',
       guests: '',
       transcript: video.evidenceText,
@@ -595,7 +717,7 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
       sourceLinks: 'https://clearpath.media',
       topicTags: video.suggestedTopicTags || ['CIVICS'],
       coverageArea: (progId === 'daily-brief' || progId === 'daily-brief-with-annabel') ? 'Nigeria & Africa' : 'Nigeria',
-      status: 'published',
+      status: 'draft',
       isFeatured: false,
       importMethod: 'verified_static_seed',
       source: 'verified_clearpath_youtube_library',
@@ -658,35 +780,102 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
 
   return (
     <div className="space-y-6 animate-fade-in text-on-surface">
-      <div className="bg-white p-6 border border-outline-variant rounded-lg shadow-xs">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div>
-            <span className="text-xs uppercase text-primary font-bold font-mono tracking-wider bg-secondary px-2.5 py-0.5 rounded">Clearpath Media Core Seeder</span>
-            <h1 className="font-display font-semibold text-2xl text-primary mt-1">Pending YouTube Research</h1>
-            <p className="text-sm text-on-surface-variant max-w-xl">
-              Seed the verified static playlist assets directly back into your programs. This bypasses live web scrapers to provide reliable video catalogs and previews immediately.
-            </p>
-          </div>
-          <div className="flex flex-col items-start md:items-end gap-2 shrink-0">
-            <button
-              onClick={startAnalysis}
-              disabled={loading}
-              className="bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors disabled:opacity-50"
-            >
-              <Search className="w-4 h-4" /> 
-              {loading ? 'Populating data...' : 'Load Verified ClearPath Video Library'}
-            </button>
-            <div className="flex items-center gap-2 mt-1">
-              <input 
-                type="checkbox" 
-                id="overwriteMetadata"
-                checked={overwriteMetadata} 
-                onChange={(e) => setOverwriteMetadata(e.target.checked)}
-                className="cursor-pointer rounded border-outline"
+      <div className="bg-white p-6 border border-outline-variant rounded-lg shadow-sm">
+        <span className="text-[10px] uppercase text-primary font-bold font-mono tracking-wider bg-secondary px-2.5 py-0.5 rounded">Clearpath Media TV API Discovery</span>
+        <h1 className="font-display font-semibold text-2xl text-primary mt-1.5 mb-2">YouTube Video Discovery Integration</h1>
+        <p className="text-sm text-on-surface-variant max-w-2xl mb-6">
+          Query live video assets directly from the official YouTube Data API. Map them dynamically into program folders, filter duplicates automatically, and save as drafts for final validation.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-surface-container-low p-5 rounded-lg border border-outline-variant mb-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">YouTube API Key</label>
+              <input
+                type="password"
+                placeholder="Enter YouTube V3 API Key"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="w-full text-xs font-mono p-2.5 bg-white border border-outline rounded focus:outline-primary"
               />
-              <label htmlFor="overwriteMetadata" className="text-xs font-medium text-on-surface-variant cursor-pointer select-none">
-                Overwrite existing video metadata / overrides
-              </label>
+              <p className="text-[10px] text-on-surface-variant mt-1.5 leading-relaxed">
+                Reads from VITE_YOUTUBE_API_KEY environment variable if preconfigured.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Source Playlist ID (Default: Channel Uploads)</label>
+              <input
+                type="text"
+                placeholder="Playlist ID (e.g. UU1QO1vOnL5T6h7D4XWbS8dQ)"
+                value={playlistId}
+                onChange={(e) => setPlaylistId(e.target.value)}
+                className="w-full text-xs font-mono p-2.5 bg-white border border-outline rounded focus:outline-primary"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-between space-y-4">
+            <div>
+              <span className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Discovery Diagnostics Center</span>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={testApiConnection}
+                    disabled={testStatus === 'testing'}
+                    className="bg-secondary hover:bg-secondary-container text-primary text-[11px] font-semibold px-4 py-2 rounded transition-colors"
+                  >
+                    {testStatus === 'testing' ? 'Testing...' : 'Test YouTube API Connection'}
+                  </button>
+                  
+                  {testStatus === 'success' && <span className="text-[10px] font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded">✓ Connection Active</span>}
+                  {testStatus === 'error' && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded">✗ Connection Failed</span>}
+                  {testStatus === 'testing' && <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded animate-pulse">Checking credentials...</span>}
+                </div>
+
+                {testResult && (
+                  <p className={`p-2.5 rounded text-[11px] font-mono leading-relaxed border ${
+                    testStatus === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
+                  }`}>
+                    {testResult}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-outline-variant flex flex-wrap gap-3 items-center justify-between">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="overwriteMetadata"
+                  checked={overwriteMetadata} 
+                  onChange={(e) => setOverwriteMetadata(e.target.checked)}
+                  className="cursor-pointer rounded border-outline"
+                />
+                <label htmlFor="overwriteMetadata" className="text-[11px] font-medium text-on-surface-variant cursor-pointer select-none">
+                  Overwrite existing video metadata / overrides
+                </label>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={startAnalysis}
+                  disabled={loading}
+                  className="bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline px-4 py-2.5 rounded text-xs font-semibold cursor-pointer transition-colors"
+                  title="Fall back to the predefined seed list"
+                >
+                  Load Predefined Seed List
+                </button>
+
+                <button
+                  onClick={fetchLiveYoutubeVideos}
+                  disabled={loading}
+                  className="bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors"
+                >
+                  <Search className="w-4 h-4" /> 
+                  {loading ? 'Fetching...' : 'Fetch Latest Videos'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

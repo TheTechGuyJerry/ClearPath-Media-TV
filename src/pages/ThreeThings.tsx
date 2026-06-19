@@ -283,7 +283,6 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
                 </div>
                 <div>
                   <h3 className="font-headline-md text-headline-md !text-lg font-bold text-primary">{shownProg.authorName || 'ClearPath Editorial Team'}</h3>
-                  <p className="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold">{shownProg.authorRoleLabel || 'Programme Host'}</p>
                   {shownProg.authorTitle && (
                     <p className="text-xs text-on-surface-variant/80 italic mt-0.5">{shownProg.authorTitle}</p>
                   )}
@@ -339,9 +338,6 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
                     <span className="font-label-sm text-label-sm text-outline font-mono text-xs">
                       {item.publishedAtLabel || formatFirestoreDate(item.publishedAt || item.createdAt, 'Recent')}
                     </span>
-                    {item.duration && (
-                      <span className="flex items-center gap-1 text-[10px] bg-gray-100 font-bold px-1.5 py-0.5 rounded border"><Clock className="w-3 h-3" /> {item.duration}</span>
-                    )}
                   </div>
                   <h4 className="font-headline-md text-xl font-semibold text-primary mb-2 group-hover:text-primary-container transition-colors leading-snug">{item.title}</h4>
                   <p className="font-label-md text-label-md text-secondary mb-unit-md flex items-center gap-1.5 text-xs font-semibold"><Users className="w-3.5 h-3.5" /> {item.presenters || 'Osita Insights'}</p>
