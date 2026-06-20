@@ -24,41 +24,25 @@ function isRouteAllowed(role: string, pathname: string): boolean {
   const cleanPath = pathname.replace(/\/$/, '') || '/admin';
   if (cleanPath === '/admin') return true;
 
-  if (role === 'admin_manager') {
-    return cleanPath.startsWith('/admin/users');
+  if (role === 'admin') {
+    // admin gets everything EXCEPT user management
+    return !cleanPath.startsWith('/admin/users');
   }
 
   if (role === 'content_admin') {
+    // content_admin gets Programmes, Videos, Explainers, Daily Briefs, YouTube Research
     return (
       cleanPath.startsWith('/admin/programmes') ||
       cleanPath.startsWith('/admin/videos') ||
-      cleanPath === '/admin/briefing' ||
       cleanPath.startsWith('/admin/explainers') ||
-      cleanPath === '/admin/youtube-research'
+      cleanPath.startsWith('/admin/briefing') ||
+      cleanPath.startsWith('/admin/youtube-research')
     );
   }
 
-  if (role === 'editor') {
-    return (
-      cleanPath.startsWith('/admin/videos') ||
-      cleanPath === '/admin/briefing' ||
-      cleanPath === '/admin/explainers'
-    );
-  }
-
-  if (role === 'partnerships_admin') {
-    return (
-      cleanPath.startsWith('/admin/partnerships') ||
-      cleanPath.startsWith('/admin/contact-messages')
-    );
-  }
-
-  if (role === 'subscriber_admin') {
-    return cleanPath.startsWith('/admin/subscribers');
-  }
-
-  if (role === 'viewer') {
-    return false; // viewer only gets /admin, handled above
+  if (role === 'viewer_admin') {
+    // viewer_admin gets read-only access to everything EXCEPT user management
+    return !cleanPath.startsWith('/admin/users');
   }
 
   return false;
@@ -183,13 +167,15 @@ export default function AdminLayout() {
           </div>
 
           {/* Programmes category */}
-          {(userRole === 'super_admin' || userRole === 'content_admin') && (
+          {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'content_admin' || userRole === 'viewer_admin') && (
             <div className="space-y-1">
               <div className="flex justify-between items-center text-white/40 px-3 text-[10px] uppercase tracking-wider font-bold">
                 <Link to="/admin/programmes" className="hover:text-white transition-colors">Programmes</Link>
-                <Link to="/admin/programmes?new=true" className="hover:text-white p-0.5" title="Add New Programme">
-                  <Plus className="w-3.5 h-3.5" />
-                </Link>
+                {userRole !== 'viewer_admin' && (
+                  <Link to="/admin/programmes?new=true" className="hover:text-white p-0.5" title="Add New Programme">
+                    <Plus className="w-3.5 h-3.5" />
+                  </Link>
+                )}
               </div>
               <div className="space-y-0.5 pt-1 border-l border-white/10 ml-2 pl-2">
                 {programmes.map((p) => (
@@ -209,7 +195,7 @@ export default function AdminLayout() {
           )}
 
           {/* All Programme Videos shortcut */}
-          {(userRole === 'super_admin' || userRole === 'content_admin' || userRole === 'editor') && (
+          {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'content_admin' || userRole === 'viewer_admin') && (
             <div className="space-y-1">
               <Link
                 to="/admin/videos"
@@ -229,11 +215,11 @@ export default function AdminLayout() {
           )}
 
           {/* Explainers category */}
-          {(userRole === 'super_admin' || userRole === 'content_admin' || userRole === 'editor') && (
+          {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'content_admin' || userRole === 'viewer_admin') && (
             <div className="space-y-1">
               <div className="flex justify-between items-center text-white/40 px-3 text-[10px] uppercase tracking-wider font-bold">
                 <Link to="/admin/explainers" className="hover:text-white transition-colors">Explainers</Link>
-                {(userRole === 'super_admin' || userRole === 'content_admin') && (
+                {userRole !== 'viewer_admin' && (
                   <Link to="/admin/explainers?new=true" className="hover:text-white p-0.5" title="Add New Explainer">
                     <Plus className="w-3.5 h-3.5" />
                   </Link>
@@ -258,7 +244,7 @@ export default function AdminLayout() {
 
           {/* Main system views */}
           <div className="space-y-1 pt-2 border-t border-white/10">
-            {(userRole === 'super_admin' || userRole === 'content_admin' || userRole === 'editor') && (
+            {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'content_admin' || userRole === 'viewer_admin') && (
               <Link
                 to="/admin/briefing"
                 className={getLinkClass('/admin/briefing')}
@@ -275,7 +261,7 @@ export default function AdminLayout() {
               </Link>
             )}
 
-            {(userRole === 'super_admin' || userRole === 'partnerships_admin') && (
+            {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'viewer_admin') && (
               <Link
                 to="/admin/partnerships"
                 className={getLinkClass('/admin/partnerships')}
@@ -292,7 +278,7 @@ export default function AdminLayout() {
               </Link>
             )}
 
-            {(userRole === 'super_admin' || userRole === 'subscriber_admin') && (
+            {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'viewer_admin') && (
               <Link
                 to="/admin/subscribers"
                 className={getLinkClass('/admin/subscribers')}
@@ -309,7 +295,7 @@ export default function AdminLayout() {
               </Link>
             )}
 
-            {(userRole === 'super_admin' || userRole === 'partnerships_admin') && (
+            {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'viewer_admin') && (
               <Link
                 to="/admin/contact-messages"
                 className={getLinkClass('/admin/contact-messages')}
@@ -326,7 +312,7 @@ export default function AdminLayout() {
               </Link>
             )}
 
-            {(userRole === 'super_admin' || userRole === 'admin_manager') && (
+            {userRole === 'super_admin' && (
               <Link
                 to="/admin/users"
                 className={getLinkClass('/admin/users')}
@@ -338,7 +324,7 @@ export default function AdminLayout() {
               </Link>
             )}
 
-            {userRole === 'super_admin' && (
+            {(userRole === 'super_admin' || userRole === 'admin') && (
               <Link
                 to="/admin/settings"
                 className={getLinkClass('/admin/settings')}
@@ -350,7 +336,7 @@ export default function AdminLayout() {
               </Link>
             )}
 
-            {(userRole === 'super_admin' || userRole === 'content_admin') && (
+            {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'content_admin') && (
               <Link
                 to="/admin/youtube-research"
                 className={getLinkClass('/admin/youtube-research')}

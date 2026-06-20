@@ -200,7 +200,7 @@ export async function getActiveProgrammes(): Promise<Programme[]> {
       });
     }
 
-    const active = list.filter(p => p.status === 'active');
+    const active = list; // Retrieve all programmes (both active and inactive) so they can be sorted client-side on the programmes page
     
     // Deduplicate by slug or slugified title to ensure each program is unique
     const uniqueActive: Programme[] = [];

@@ -7,6 +7,7 @@ export default function AdminSiteSettings() {
   const { 
     siteSettings, 
     programmes, 
+    programmeVideos = [],
     explainers, 
     handleUpdateSiteSettings, 
     loading,
@@ -45,8 +46,20 @@ export default function AdminSiteSettings() {
       alert('Access Denied: Read-only viewers cannot modify site parameters.');
       return;
     }
+
+    let updatedSettings = { ...localSettings };
+    if (localSettings.overrideFeaturedVideoId) {
+      const days = Number(localSettings.overrideFeaturedDays) || 7;
+      const untilDate = new Date();
+      untilDate.setDate(untilDate.getDate() + days);
+      updatedSettings.overrideFeaturedUntil = untilDate.toISOString();
+    } else {
+      updatedSettings.overrideFeaturedUntil = '';
+      updatedSettings.overrideFeaturedDays = 0;
+    }
+
     try {
-      await handleUpdateSiteSettings(localSettings);
+      await handleUpdateSiteSettings(updatedSettings);
       alert('Global settings saved successfully!');
     } catch (err: any) {
       alert('Saving settings failed: ' + err.message);
@@ -107,6 +120,55 @@ export default function AdminSiteSettings() {
               ))}
             </select>
           </div>
+
+          <div className="md:col-span-2 border-t pt-4">
+            <h3 className="font-semibold text-primary mb-1 text-sm font-bold text-amber-700">Homepage "Today's Featured" Override</h3>
+            <p className="text-xs text-on-surface-variant mb-2">By default, the homepage automatically displays the newest uploaded video. You can pin a specific video here for a user-specified number of days.</p>
+          </div>
+          <div>
+            <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Override Today's Featured Video</label>
+            <select 
+              value={localSettings.overrideFeaturedVideoId || ''} 
+              onChange={(e) => setLocalSettings({ ...localSettings, overrideFeaturedVideoId: e.target.value })} 
+              className="w-full px-3 py-2 border border-outline focus:border-primary focus:ring-0 rounded text-sm bg-transparent font-medium"
+            >
+              <option value="">-- No Override (Show Newest Video) --</option>
+              {programmeVideos.map(v => {
+                const prog = programmes.find(p => p.id === v.programmeId || p.slug === v.programmeId);
+                const progTitle = prog ? prog.title : (v.programmeTitle || 'Clearpath Media');
+                return (
+                  <option key={v.id} value={v.id}>
+                    [{progTitle}] {v.title}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Pin Duration (Days)</label>
+            <input 
+              type="number" 
+              min={1} 
+              max={365}
+              placeholder="e.g. 7"
+              value={localSettings.overrideFeaturedDays || ''} 
+              onChange={(e) => setLocalSettings({ ...localSettings, overrideFeaturedDays: e.target.value ? Number(e.target.value) : undefined })} 
+              className="w-full px-3 py-2 border border-outline focus:border-primary focus:ring-0 rounded text-sm bg-transparent" 
+            />
+          </div>
+
+          {localSettings.overrideFeaturedVideoId && localSettings.overrideFeaturedUntil && (
+            <div className="md:col-span-2 bg-amber-50 border border-amber-200 rounded p-4 text-xs text-amber-800 flex flex-col gap-1.5 shadow-sm">
+              <span className="font-bold flex items-center gap-1">⚠️ Active Override Enforced</span>
+              <span>
+                Today's Featured Section is currently forced to show video ID: <code className="font-mono bg-amber-100 px-1 py-0.5 rounded">{localSettings.overrideFeaturedVideoId}</code>.
+              </span>
+              <span>
+                This pin is active and will expire automatically on: <strong>{new Date(localSettings.overrideFeaturedUntil).toLocaleString()}</strong>.
+              </span>
+            </div>
+          )}
+
           <div className="md:col-span-2 border-t pt-4">
             <h3 className="font-semibold text-primary mb-2 text-sm font-bold">Site Contact Coordinates</h3>
           </div>

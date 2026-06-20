@@ -25,7 +25,7 @@ const fallbackProgrammes: Programme[] = [
     formatType: 'interview',
     coverageArea: 'Nigeria',
     topicFocus: ['governance', 'leadership'],
-    scheduleText: 'Twice Monthly',
+    scheduleText: 'Twice Weekly',
     youtubePlaylistUrl: '',
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0',
     thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0',
@@ -38,6 +38,17 @@ const fallbackProgrammes: Programme[] = [
     updatedAt: new Date().toISOString()
   }
 ];
+
+function getProgrammeImageUrl(p: Programme): string {
+  if (p.cardImageUrl) return p.cardImageUrl;
+  if (p.coverImageUrl) return p.coverImageUrl;
+  if (p.thumbnailUrl) return p.thumbnailUrl;
+  if (p.imageUrl) return p.imageUrl;
+  if (p.coverImage) return p.coverImage;
+  if (p.thumbnailImage) return p.thumbnailImage;
+  if (p.latestVideoThumbnail) return p.latestVideoThumbnail;
+  return 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0'; // Fallback branded image
+}
 
 export default function Programmes() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,13 +90,9 @@ export default function Programmes() {
           }
         });
         programs = uniquePrograms;
-        setProgrammesList(programs);
-        setDiagProgrammes(programs.length);
-        setDiagSlugs(programs.map(p => p.slug || slugify(p.title) || 'no-slug'));
       } else {
         console.error('[Diagnostics - Programmes] Failed loading programmes:', results[0].reason);
         setErrorStatus('Failed to load active programmes.');
-        setProgrammesList(fallbackProgrammes);
         programs = fallbackProgrammes;
       }
 
@@ -97,19 +104,68 @@ export default function Programmes() {
         console.error('[Diagnostics - Programmes] Failed loading videos for counts:', results[1].reason);
       }
 
+      // Enrich programmes with latest video thumbnail and title
+      const enrichedPrograms = programs.map(prog => {
+        const filteredVideos = videos.filter(video => {
+          const belongsToProg = video.programmeId === prog.id || 
+                                video.programmeId === prog.slug || 
+                                (video.programmeTitle && prog.title && video.programmeTitle.trim().toLowerCase() === prog.title.trim().toLowerCase());
+          const isPublished = video.status === 'published';
+          const notHidden = video.hiddenFromPublic !== true;
+          const noNeedUrl = video.needsUrl !== true;
+          return belongsToProg && isPublished && notHidden && noNeedUrl;
+        });
+
+        let latestVideo: any = null;
+        if (filteredVideos.length > 0) {
+          const getDateVal = (item: any, key: string) => {
+            const val = item[key];
+            if (!val) return 0;
+            if (val.seconds) return val.seconds * 1000;
+            const parsed = Date.parse(val);
+            return isNaN(parsed) ? 0 : parsed;
+          };
+
+          filteredVideos.sort((a: any, b: any) => {
+            const sortDateA = getDateVal(a, 'sortDate');
+            const sortDateB = getDateVal(b, 'sortDate');
+            if (sortDateA !== sortDateB) return sortDateB - sortDateA;
+
+            const pubA = getDateVal(a, 'publishedAt');
+            const pubB = getDateVal(b, 'publishedAt');
+            if (pubA !== pubB) return pubB - pubA;
+
+            const createA = getDateVal(a, 'createdAt');
+            const createB = getDateVal(b, 'createdAt');
+            return createB - createA;
+          });
+          latestVideo = filteredVideos[0];
+        }
+
+        return {
+          ...prog,
+          latestVideoTitle: latestVideo ? latestVideo.title : undefined,
+          latestVideoThumbnail: latestVideo ? latestVideo.thumbnailUrl || (latestVideo.youtubeVideoId ? `https://img.youtube.com/vi/${latestVideo.youtubeVideoId}/hqdefault.jpg` : '') : undefined
+        };
+      });
+
+      setProgrammesList(enrichedPrograms);
+      setDiagProgrammes(enrichedPrograms.length);
+      setDiagSlugs(enrichedPrograms.map(p => p.slug || slugify(p.title) || 'no-slug'));
+
       // Safely aggregate video counts
       const counts: Record<string, number> = {};
-      programs.forEach(prog => {
+      enrichedPrograms.forEach(prog => {
         counts[prog.id] = 0;
       });
 
       videos.forEach(video => {
-        let matched = programs.find(p => p.id === video.programmeId || (p.slug && p.slug === video.programmeId));
+        let matched = enrichedPrograms.find(p => p.id === video.programmeId || (p.slug && p.slug === video.programmeId));
         if (!matched && video.programmeTitle) {
-          matched = programs.find(p => p.title && p.title.trim().toLowerCase() === video.programmeTitle.trim().toLowerCase());
+          matched = enrichedPrograms.find(p => p.title && p.title.trim().toLowerCase() === video.programmeTitle.trim().toLowerCase());
         }
         if (!matched && video.programmeTitle) {
-          matched = programs.find(p => slugify(p.title) === slugify(video.programmeTitle));
+          matched = enrichedPrograms.find(p => slugify(p.title) === slugify(video.programmeTitle));
         }
 
         if (matched) {
@@ -150,17 +206,30 @@ export default function Programmes() {
         })
   ) : []);
 
+  const isProgActive = (prog: Programme) => {
+    return prog.status === 'active' || prog.isActive === true;
+  };
+
   const displayedProgrammes = [...filteredProgrammes].sort((a, b) => {
-    const aActive = a.status === 'active';
-    const bActive = b.status === 'active';
+    const aActive = isProgActive(a);
+    const bActive = isProgActive(b);
+    
+    // 1. Active programmes first, inactive programmes after active
     if (aActive && !bActive) return -1;
     if (!aActive && bActive) return 1;
 
-    // Secondary sorting: sortOrder priority, followed by alphabetical order of titles
-    const aOrder = a.sortOrder !== undefined ? a.sortOrder : 999;
-    const bOrder = b.sortOrder !== undefined ? b.sortOrder : 999;
-    if (aOrder !== bOrder) return aOrder - bOrder;
+    // Within each group, sort by:
+    // 1. sortOrder ascending
+    const orderA = a.sortOrder !== undefined && a.sortOrder !== null ? Number(a.sortOrder) : 999;
+    const orderB = b.sortOrder !== undefined && b.sortOrder !== null ? Number(b.sortOrder) : 999;
+    if (orderA !== orderB) return orderA - orderB;
 
+    // 2. fallback to createdAt ascending
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    if (timeA !== timeB) return timeA - timeB;
+
+    // 3. fallback to title alphabetically
     return (a.title || '').localeCompare(b.title || '');
   });
 
@@ -218,7 +287,10 @@ export default function Programmes() {
           </div>
         ) : (
           displayedProgrammes.map(prog => {
-            const isComingSoon = prog.status === 'inactive' || !videoCounts[prog.id] || videoCounts[prog.id] === 0;
+            const active = isProgActive(prog);
+            const isComingSoon = !active || !videoCounts[prog.id] || videoCounts[prog.id] === 0;
+            const badgeLabel = !active ? "Inactive" : "Coming Soon";
+            const imageUrl = getProgrammeImageUrl(prog);
             return (
               <section key={prog.id} className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-b border-outline-variant pb-unit-xl last:border-0 last:pb-0">
               <div className="grid lg:grid-cols-12 gap-gutter mb-unit-lg">
@@ -226,7 +298,7 @@ export default function Programmes() {
                   <div className="mb-unit-md relative">
                     {isComingSoon && (
                       <span className="absolute top-0 right-0 bg-secondary/10 text-secondary text-[11px] font-bold px-3 py-1 rounded-sm uppercase tracking-wider">
-                        Coming Soon
+                        {badgeLabel}
                       </span>
                     )}
                     <span className="text-label-sm font-label-md uppercase tracking-wider text-primary mb-2 block font-bold">{prog.tagline || 'SYSTEM SHOWS'}</span>
@@ -239,19 +311,19 @@ export default function Programmes() {
                       onClick={() => setIsModalOpen(true)}
                       className="aspect-[16/9] bg-surface-container-high flex flex-col items-center justify-center rounded overflow-hidden relative group cursor-pointer border border-outline-variant mt-12 bg-gradient-to-b from-surface-container-low to-surface-container-high"
                     >
-                      <img src={prog.coverImage || prog.thumbnailImage} alt={prog.title} className="w-full h-full object-cover opacity-30 grayscale group-hover:scale-105 transition-transform duration-700" />
+                      <img src={imageUrl} alt={prog.title} className="w-full h-full object-cover opacity-30 grayscale group-hover:scale-105 transition-transform duration-700" />
                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white p-6 text-center">
                         <div className="w-16 h-16 bg-white/10 backdrop-blur text-white rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-xl">
                           <Bell className="w-6 h-6 animate-pulse" />
                         </div>
-                        <span className="font-display-sm text-lg uppercase tracking-[0.2em] font-bold">Coming Soon</span>
+                        <span className="font-display-sm text-lg uppercase tracking-[0.2em] font-bold">{badgeLabel}</span>
                         <p className="text-xs text-white/80 mt-2 max-w-sm leading-relaxed">This programme is currently in pre-production. Tap to subscribe and get notified on launch.</p>
                       </div>
                     </div>
                   ) : (
                     <div className="aspect-[16/9] bg-surface-container-highest flex items-center justify-center rounded overflow-hidden relative group cursor-pointer border border-outline-variant mt-12 animate-fade-in shadow-xs">
                       <div className="absolute -top-10 left-0 text-label-sm font-label-md uppercase tracking-widest text-on-surface-variant font-bold">Latest Release</div>
-                      <img src={prog.coverImage || prog.thumbnailImage} alt={prog.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity" />
+                      <img src={imageUrl} alt={prog.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity" />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Link to={`/programmes/${prog.slug || slugify(prog.title)}`} className="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
                           <Play className="w-10 h-10 fill-current ml-1 animate-pulse text-white" />

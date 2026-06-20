@@ -1,4 +1,4 @@
-import { X, Youtube, Twitter, Podcast, CheckCircle2 } from 'lucide-react';
+import { X, Youtube, Podcast, CheckCircle2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -54,27 +54,32 @@ export default function JoinModal({ isOpen, onClose }: JoinModalProps) {
     const fetchProgrammes = async () => {
       try {
         const progSnap = await getDocs(collection(db, 'programmes'));
-        const activeProgs = progSnap.docs
+        const rawProgs = progSnap.docs
           .map(d => d.data() as any)
           .filter(p => p.status === 'active')
-          .map(p => p.title);
+          .map(p => (p.title || '').trim())
+          .filter(Boolean);
+        
+        const activeProgs = Array.from(new Set(rawProgs));
         
         const finalProgs = activeProgs.length > 0 ? activeProgs : [
           'Osita Insights', 'Daily Brief with Annabel', 'Clearpath Insights', 
           'Nigeria & Neighbours', 'Election Matters', 'Mekaria Series'
         ];
 
-        setActiveProgrammes(finalProgs);
+        const deduplicatedProgs = Array.from(new Set(finalProgs));
+
+        setActiveProgrammes(deduplicatedProgs);
 
         const initialChecked: { [key: string]: boolean } = {};
-        finalProgs.forEach(title => {
+        deduplicatedProgs.forEach(title => {
           initialChecked[title] = title.includes('Osita') || title.includes('Annabel');
         });
         setCheckedBriefings(initialChecked);
       } catch (err) {
         console.error('Error fetching programmes for subscribe list:', err);
         const fallbacks = [
-          'Osita Insights', 'Daily Brief with Annader', 'Clearpath Insights', 
+          'Osita Insights', 'Daily Brief with Annabel', 'Clearpath Insights', 
           'Nigeria & Neighbours', 'Election Matters', 'Mekaria Series'
         ];
         setActiveProgrammes(fallbacks);
@@ -335,8 +340,10 @@ export default function JoinModal({ isOpen, onClose }: JoinModalProps) {
                 <span className="underline decoration-primary/30 hover:decoration-primary">Podcasts</span>
               </a>
               <a href="https://x.com/ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors">
-                <Twitter className="w-4 h-4 text-[#1da1f2]" /> 
-                <span className="underline decoration-primary/30 hover:decoration-primary">Twitter</span>
+                <svg className="w-4 h-4 text-slate-800 dark:text-slate-100 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                <span className="underline decoration-primary/30 hover:decoration-primary">X</span>
               </a>
             </div>
             <div className="text-outline font-bold text-[10px] tracking-widest">

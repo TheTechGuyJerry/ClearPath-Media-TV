@@ -119,6 +119,18 @@ export default function CMSForm({
               <input type="text" value={data.thumbnailImage || ''} onChange={(e) => setField('thumbnailImage', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
             </div>
             <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Programme Card Image URL</label>
+              <input type="text" value={data.cardImageUrl || ''} onChange={(e) => setField('cardImageUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Programme Cover Image URL</label>
+              <input type="text" value={data.coverImageUrl || ''} onChange={(e) => setField('coverImageUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+            </div>
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Programme Thumbnail URL</label>
+              <input type="text" value={data.thumbnailUrl || ''} onChange={(e) => setField('thumbnailUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+            </div>
+            <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">YouTube Playlist URL</label>
               <input type="text" value={data.youtubePlaylistUrl || ''} onChange={(e) => setField('youtubePlaylistUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
             </div>
@@ -543,38 +555,66 @@ export default function CMSForm({
           <div className="grid grid-cols-1 gap-4 font-sans max-w-xl">
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Administrator Full Name *</label>
-              <input type="text" required value={data.name || ''} onChange={(e) => setField('name', e.target.value)} placeholder="e.g. Annabel K." className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
-            </div>
-            <div>
-              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Registry Email Address *</label>
-              <input type="email" required value={data.email || ''} onChange={(e) => setField('email', e.target.value.toLowerCase())} placeholder="operator@clearpath.media" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
-            </div>
-            <div>
-              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">
-                {data.id ? 'Change Password (Optional)' : 'Operator Password *'}
-              </label>
               <input 
-                type="password" 
-                required={!data.id}
-                minLength={6}
-                value={data.password || ''} 
-                onChange={(e) => setField('password', e.target.value)} 
-                placeholder={data.id ? "Leave empty to keep existing password" : "Min 6 characters required"} 
-                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent font-mono" 
+                type="text" 
+                required 
+                value={data.name || data.displayName || ''} 
+                onChange={(e) => onChange({ ...data, name: e.target.value, displayName: e.target.value })} 
+                placeholder="e.g. Annabel K." 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" 
               />
             </div>
             <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Registry Email Address *</label>
+              <input 
+                type="email" 
+                required 
+                value={data.email || ''} 
+                onChange={(e) => setField('email', e.target.value.toLowerCase())} 
+                placeholder="operator@clearpath.media" 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" 
+              />
+            </div>
+            {!data.id && (
+              <div>
+                <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">
+                  Operator Password *
+                </label>
+                <input 
+                  type="password" 
+                  required 
+                  minLength={6}
+                  value={data.password || ''} 
+                  onChange={(e) => setField('password', e.target.value)} 
+                  placeholder="Min 6 characters required" 
+                  className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent font-mono" 
+                />
+              </div>
+            )}
+            <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Access Role Privilege</label>
-              <select value={data.role || 'editor'} onChange={(e) => setField('role', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent">
-                <option value="super_admin">Super Administrator (Full Access + User Management)</option>
-                <option value="editor">Editor (Content Modifications only)</option>
-                <option value="viewer">Viewer (Read-Only auditing)</option>
+              <select 
+                value={data.role || 'viewer_admin'} 
+                onChange={(e) => {
+                  const r = e.target.value;
+                  onChange({
+                    ...data,
+                    role: r,
+                    isSuperAdmin: r === 'super_admin'
+                  });
+                }} 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent"
+              >
+                <option value="super_admin">Super Admin (Full Access + User Management)</option>
+                <option value="admin">Admin (Settings & Content)</option>
+                <option value="content_admin">Content Admin (Content management only)</option>
+                <option value="viewer_admin">Viewer Admin (Read-only browsing)</option>
               </select>
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Account Active Status</label>
               <select 
-                value={data.status || (data.disabled ? 'disabled' : 'active')} 
+                value={data.status || 'active'} 
                 onChange={(e) => {
                   const val = e.target.value;
                   onChange({
@@ -585,9 +625,34 @@ export default function CMSForm({
                 }} 
                 className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent"
               >
-                <option value="active">Active (Access Allowed)</option>
-                <option value="disabled">Disabled (Lockout/Blocked)</option>
+                <option value="active">active (Access Allowed)</option>
+                <option value="disabled">disabled (Lockout/Blocked)</option>
               </select>
+            </div>
+            
+            <div className="flex items-center gap-3 py-2 border-t border-outline-variant mt-2">
+              <input 
+                type="checkbox" 
+                id="canPublishContent"
+                checked={data.role === 'super_admin' || data.role === 'admin' || !!data.canPublishContent} 
+                disabled={data.role === 'super_admin' || data.role === 'admin' || data.role === 'viewer_admin'}
+                onChange={(e) => setField('canPublishContent', e.target.checked)}
+                className="w-4 h-4 text-primary bg-transparent border-outline rounded cursor-pointer disabled:opacity-50"
+              />
+              <label htmlFor="canPublishContent" className="text-xs uppercase font-bold text-on-surface-variant cursor-pointer select-none">
+                Allow content publishing (For Content Admins)
+              </label>
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Operator Notes</label>
+              <textarea 
+                value={data.notes || ''} 
+                onChange={(e) => setField('notes', e.target.value)} 
+                rows={3} 
+                placeholder="Optional notes or context about this operator account..." 
+                className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent"
+              />
             </div>
           </div>
         )}

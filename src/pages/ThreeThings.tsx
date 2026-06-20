@@ -195,7 +195,7 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
       />
       <header className="mb-unit-xl border-b border-outline-variant pb-unit-lg px-margin-mobile md:px-margin-desktop max-w-[1280px] mx-auto pt-unit-xl">
         <div className="max-w-[800px] font-sans">
-          <span className="font-label-sm text-label-sm uppercase tracking-widest text-primary mb-unit-sm block font-bold">Program Series</span>
+          <span className="font-label-sm text-label-sm uppercase tracking-widest text-primary mb-unit-sm block font-bold">Programme Series</span>
           <h1 className="font-display-lg text-display-lg text-primary mb-unit-sm font-semibold">{shownProg.title}</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-[720px] leading-relaxed">
             {shownProg.tagline || 'System investigations.'}
@@ -239,7 +239,7 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
 
         <aside className="lg:col-span-4 space-y-unit-lg">
           <div className="p-unit-lg bg-surface-container-low border border-outline-variant rounded shadow-xs">
-            <h3 className="font-headline-md text-[20px] text-primary mb-unit-sm font-semibold">About the Program</h3>
+            <h3 className="font-headline-md text-[20px] text-primary mb-unit-sm font-semibold">About the Programme</h3>
             <p className="font-body-md text-body-md text-on-surface-variant mb-unit-md leading-relaxed">
               {shownProg.fullDescription}
             </p>

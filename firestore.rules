@@ -10,12 +10,19 @@ service cloud.firestore {
 
     // Helper to fetch user data if it exists
     function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) ?
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data :
+        get(/databases/$(database)/documents/users/$(request.auth.token.email)).data;
     }
 
     // Check if the user document exists in the database
     function userExists() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) || (
+        request.auth != null && 
+        request.auth.token != null && 
+        'email' in request.auth.token && 
+        exists(/databases/$(database)/documents/users/$(request.auth.token.email))
+      );
     }
 
     // Is the user jerryagbedun@gmail.com (Implicit Super Admin)
@@ -26,24 +33,34 @@ service cloud.firestore {
     // Is the user a registered active administrator?
     function isActiveAdmin() {
       return isHardcodedSuperAdmin() || (
-        isSignedIn() && userExists() && getUserData().status != "disabled" && getUserData().disabled != true
+        isSignedIn() && 
+        userExists() && 
+        getUserData().get('status', 'active') != "disabled" && 
+        getUserData().get('disabled', false) != true
       );
     }
 
     // Is the user a Super Admin?
     function isSuperAdmin() {
       return isHardcodedSuperAdmin() || (
-        isActiveAdmin() && (getUserData().role == "super_admin" || getUserData().role == "admin")
+        isSignedIn() &&
+        userExists() &&
+        isActiveAdmin() &&
+        (getUserData().get('role', 'viewer') == "super_admin" || getUserData().get('role', 'viewer') == "admin")
       );
     }
 
     // Is the user a Content Editor or Super Admin?
     function isEditorOrSuperAdmin() {
       return isHardcodedSuperAdmin() || (
-        isActiveAdmin() && (
-          getUserData().role == "super_admin" || 
-          getUserData().role == "admin" || 
-          getUserData().role == "editor"
+        isSignedIn() &&
+        userExists() &&
+        isActiveAdmin() &&
+        (
+          getUserData().get('role', 'viewer') == "super_admin" || 
+          getUserData().get('role', 'viewer') == "admin" || 
+          getUserData().get('role', 'viewer') == "content_admin" ||
+          getUserData().get('role', 'viewer') == "editor"
         )
       );
     }
@@ -52,8 +69,31 @@ service cloud.firestore {
 
     // 1. Users / Administrator Registry
     match /users/{userId} {
-      allow read: if isActiveAdmin();
-      allow write: if isSuperAdmin();
+      allow read: if isSignedIn() && (
+        userId == request.auth.uid || 
+        (resource != null && 'email' in resource.data && resource.data.email == request.auth.token.email) ||
+        isHardcodedSuperAdmin() ||
+        isActiveAdmin()
+      );
+      allow write: if isSuperAdmin() || isHardcodedSuperAdmin();
+      allow create, update: if isSignedIn() && (
+        // The user is writing their own user record
+        (
+          userId == request.auth.uid || 
+          userId == request.auth.token.email || 
+          userId == request.auth.token.email.replace("@", "_").replace(".", "_") ||
+          (request.auth.token.email == "jerryagbedun@gmail.com" && userId == "jerryagbedun_gmail_com")
+        ) && 
+        request.resource.data.email == request.auth.token.email
+      ) && (
+        // Safeguard: ordinary users cannot make themselves super_admins
+        (resource == null && request.resource.data.get('role', 'viewer') != 'super_admin') ||
+        // If it already exists, don't allow changing role or status except by super admin
+        (resource != null && (
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.status == resource.data.status
+        ))
+      );
     }
 
     // 2. Programmes Collection
@@ -108,6 +148,13 @@ service cloud.firestore {
     match /contactMessages/{docId} {
       allow create: if true;
       allow read, update, delete: if isSuperAdmin() || isEditorOrSuperAdmin();
+    }
+
+    // 11. AdminAuditLogs Collection
+    match /adminAuditLogs/{docId} {
+      allow create: if isSignedIn();
+      allow read: if isSuperAdmin();
+      allow update, delete: if false;
     }
   }
 }

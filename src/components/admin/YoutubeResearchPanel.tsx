@@ -422,7 +422,7 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
   const [apiKey, setApiKey] = useState<string>(import.meta.env.VITE_YOUTUBE_API_KEY || '');
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testResult, setTestResult] = useState<string>('');
-  const [playlistId, setPlaylistId] = useState<string>('UU1QO1vOnL5T6h7D4XWbS8dQ'); // uploads playlist ID
+  const [playlistId, setPlaylistId] = useState<string>('UCqzz74rtbB7Nnvj4NTfprgg'); // uploads playlist ID
 
   const testApiConnection = async () => {
     if (!apiKey.trim()) {
@@ -434,7 +434,12 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
     setErrorStatus(null);
     setTestResult('');
     try {
-      const url = `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=UC1QO1vOnL5T6h7D4XWbS8dQ&key=${encodeURIComponent(apiKey.trim())}`;
+      let targetPlaylist = playlistId.trim() || 'UCqzz74rtbB7Nnvj4NTfprgg';
+      if (targetPlaylist.startsWith('UC') && targetPlaylist.length === 24) {
+        targetPlaylist = 'UU' + targetPlaylist.substring(2);
+      }
+      
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${encodeURIComponent(targetPlaylist)}&maxResults=1&key=${encodeURIComponent(apiKey.trim())}`;
       const res = await fetch(url);
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -442,12 +447,12 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
       }
       const data = await res.json();
       if (data.items && data.items.length > 0) {
-        const title = data.items[0].snippet?.title || 'Unknown Channel';
+        const channelTitle = data.items[0].snippet?.channelTitle || 'YouTube Feed';
         setTestStatus('success');
-        setTestResult(`Successfully connected! Validated Channel: "${title}" (ClearPath Media TV).`);
+        setTestResult(`Successfully connected! Validated Feed Source: "${channelTitle}" uploads playlist.`);
       } else {
-        setTestStatus('error');
-        setTestResult('API key is valid, but the target Channel ID was not found.');
+        setTestStatus('success');
+        setTestResult(`Successfully connected! Validated Feed Source, but the playlist contains 0 videos currently.`);
       }
     } catch (err: any) {
       setTestStatus('error');
@@ -468,7 +473,11 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
       const existingSnap = await getDocs(collection(db, 'programmeVideos'));
       const existingVideoIds = new Set(existingSnap.docs.map(doc => doc.data().youtubeVideoId));
 
-      const targetPlaylist = playlistId.trim() || 'UU1QO1vOnL5T6h7D4XWbS8dQ';
+      let targetPlaylist = playlistId.trim() || 'UCqzz74rtbB7Nnvj4NTfprgg';
+      if (targetPlaylist.startsWith('UC') && targetPlaylist.length === 24) {
+        targetPlaylist = 'UU' + targetPlaylist.substring(2);
+      }
+      
       const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${encodeURIComponent(targetPlaylist)}&maxResults=50&key=${encodeURIComponent(apiKey.trim())}`;
       const res = await fetch(url);
       if (!res.ok) {
@@ -531,7 +540,6 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
       setDiscoveredVideos(parsed);
       setSelectedIds(new Set(parsed.map(v => v.youtubeVideoId)));
       setStatusMessage(`Found ${data.items.length} videos from playlist. Loaded ${parsed.length} new drafts into view (${skippedCount} duplicates skipped!).`);
-      onVideoApproved();
     } catch (err: any) {
       setErrorStatus(`API Fetch Error: ${err.message || err}`);
       setStatusMessage('');
@@ -552,7 +560,6 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
       setDiscoveredVideos(VERIFIED_VIDEOS);
       setSelectedIds(new Set(VERIFIED_VIDEOS.map(r => r.youtubeVideoId)));
       setStatusMessage(`Successfully aligned programs and loaded ${VERIFIED_VIDEOS.length} verified ClearPath video structures into local view!`);
-      onVideoApproved();
     } catch (err: any) {
       setErrorStatus(err?.message || 'Failure loading verified static library or repairing programs.');
       setStatusMessage('');
@@ -793,21 +800,26 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
               <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">YouTube API Key</label>
               <input
                 type="password"
-                placeholder="Enter YouTube V3 API Key"
+                placeholder={apiKey ? "••••••••••••••••••••••••••••••••••••" : "No API key configured. Enter YouTube V3 API Key..."}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 className="w-full text-xs font-mono p-2.5 bg-white border border-outline rounded focus:outline-primary"
               />
-              <p className="text-[10px] text-on-surface-variant mt-1.5 leading-relaxed">
-                Reads from VITE_YOUTUBE_API_KEY environment variable if preconfigured.
-              </p>
+              <div className="flex justify-between items-center mt-1.5">
+                <p className="text-[10px] text-on-surface-variant leading-relaxed">
+                  Reads from VITE_YOUTUBE_API_KEY environment variable if preconfigured.
+                </p>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${apiKey ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  API Key Detected: {apiKey ? 'Yes' : 'No'}
+                </span>
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-1.5">Source Playlist ID (Default: Channel Uploads)</label>
               <input
                 type="text"
-                placeholder="Playlist ID (e.g. UU1QO1vOnL5T6h7D4XWbS8dQ)"
+                placeholder="Playlist ID (e.g. UCqzz74rtbB7Nnvj4NTfprgg)"
                 value={playlistId}
                 onChange={(e) => setPlaylistId(e.target.value)}
                 className="w-full text-xs font-mono p-2.5 bg-white border border-outline rounded focus:outline-primary"
@@ -821,7 +833,8 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={testApiConnection}
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); testApiConnection(); }}
                     disabled={testStatus === 'testing'}
                     className="bg-secondary hover:bg-secondary-container text-primary text-[11px] font-semibold px-4 py-2 rounded transition-colors"
                   >
@@ -859,7 +872,8 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
 
               <div className="flex gap-2">
                 <button
-                  onClick={startAnalysis}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); startAnalysis(); }}
                   disabled={loading}
                   className="bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline px-4 py-2.5 rounded text-xs font-semibold cursor-pointer transition-colors"
                   title="Fall back to the predefined seed list"
@@ -868,7 +882,8 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
                 </button>
 
                 <button
-                  onClick={fetchLiveYoutubeVideos}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); fetchLiveYoutubeVideos(); }}
                   disabled={loading}
                   className="bg-primary hover:bg-primary-container text-white px-5 py-2.5 rounded text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors"
                 >
@@ -908,7 +923,8 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
               )}
             </div>
             <button
-              onClick={approveSelected}
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); approveSelected(); }}
               disabled={loading || selectedIds.size === 0}
               className="bg-green-700 hover:bg-green-800 text-white font-semibold text-xs px-4 py-2 rounded flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
@@ -1093,15 +1109,17 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
                           ) : isEditing ? (
                             <div className="inline-flex gap-1.5">
                               <button
-                                onClick={saveEdit}
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); saveEdit(); }}
                                 className="bg-primary hover:bg-primary-container text-white p-1 rounded font-semibold text-[10px] cursor-pointer"
                                 title="Save current modifications"
                               >
                                 <Save className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => setEditingIndex(null)}
-                                className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-1 rounded font-semibold text-[10px] cursor-pointer"
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingIndex(null); }}
+                                className="bg-gray-100 hover:bg-gray-250 text-gray-700 p-1 rounded font-semibold text-[10px] cursor-pointer"
                                 title="Cancel editing"
                               >
                                 <X className="w-3.5 h-3.5" />
@@ -1110,14 +1128,16 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
                           ) : (
                             <div className="inline-flex gap-1.5 pt-1">
                               <button
-                                onClick={() => startEdit(idx)}
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); startEdit(idx); }}
                                 className="text-gray-400 hover:text-primary p-1 cursor-pointer"
                                 title="Edit suggested metadata"
                               >
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => approveIndividual(idx)}
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); approveIndividual(idx); }}
                                 className="bg-green-100 hover:bg-green-200 text-green-800 font-bold px-2.5 py-1 rounded text-[10px] cursor-pointer"
                                 title="Approve & Persist directly"
                               >

@@ -29,7 +29,7 @@ export default function AdminUsers() {
       id: '',
       name: '',
       email: '',
-      role: 'editor',
+      role: 'viewer_admin',
       status: 'active',
       disabled: false,
       createdAt: '',
@@ -52,8 +52,12 @@ export default function AdminUsers() {
       alert('Access Denied: Super-admin permissions required.');
       return;
     }
-    if (!editingItem.name || !editingItem.email) {
-      alert('Name and Email are required properties.');
+    if (!editingItem.email) {
+      alert('Email address is a required property.');
+      return;
+    }
+    if (!editingItem.name && !editingItem.displayName) {
+      alert('Administrator name is a required property.');
       return;
     }
 
@@ -66,7 +70,9 @@ export default function AdminUsers() {
     const emailKey = editingItem.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
     const dataToSave = { 
       ...editingItem, 
-      id: emailKey
+      id: emailKey,
+      status: editingItem.status || 'active',
+      role: editingItem.role || 'viewer_admin'
     };
 
     try {
@@ -76,8 +82,12 @@ export default function AdminUsers() {
         const secApp = initializeApp(resolvedConfig, appName);
         const secAuth = getAuth(secApp);
         try {
-          await createUserWithEmailAndPassword(secAuth, editingItem.email, editingItem.password);
-          console.log("Firebase Auth Account successfully registered for: " + editingItem.email);
+          const userCredential = await createUserWithEmailAndPassword(secAuth, editingItem.email, editingItem.password);
+          const registeredUid = userCredential.user.uid;
+          if (registeredUid) {
+            dataToSave.uid = registeredUid;
+          }
+          console.log("Firebase Auth Account successfully registered for: " + editingItem.email + " (uid: " + registeredUid + ")");
         } catch (authErr: any) {
           console.warn("Auth warning or existing account: ", authErr.message);
           if (authErr.code !== 'auth/email-already-in-use') {
@@ -110,7 +120,7 @@ export default function AdminUsers() {
     }
 
     const emailKey = user.email ? user.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : '';
-    if (confirm(`Are you sure you want to permanently remove administrator credentials for "${user.name}" (${user.email})?`)) {
+    if (confirm(`Are you sure you want to permanently remove administrator credentials for "${user.name || user.displayName}" (${user.email})?`)) {
       try {
         await handleDeleteItem('users', emailKey || user.id);
         alert('Credentials deleted successfully.');
@@ -132,16 +142,15 @@ export default function AdminUsers() {
       return;
     }
 
-    const emailKey = user.email ? user.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : '';
     const isDisabled = user.disabled === true || user.status === 'disabled';
     const nextStatus = isDisabled ? 'active' : 'disabled';
 
-    if (confirm(`Are you sure you want to ${isDisabled ? 'activate' : 'disable'} ${user.name || 'this administrator'}?`)) {
+    if (confirm(`Are you sure you want to ${isDisabled ? 'activate' : 'disable'} ${user.name || user.displayName || 'this administrator'}?`)) {
       try {
-        await updateDoc(doc(db, 'users', emailKey), { 
-          status: nextStatus, 
-          disabled: nextStatus === 'disabled',
-          updatedAt: new Date().toISOString()
+        await handleSaveItem('users', {
+          ...user,
+          status: nextStatus,
+          disabled: nextStatus === 'disabled'
         });
         alert(`Account successfully ${isDisabled ? 'activated' : 'disabled'}!`);
         await refreshCollections();
@@ -227,10 +236,17 @@ export default function AdminUsers() {
                   <td className="p-4 text-left">
                     <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide inline-block ${
                       a.role === 'super_admin' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
-                      a.role === 'editor' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                      a.role === 'admin' ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' :
+                      a.role === 'content_admin' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
                       'bg-gray-100 text-gray-700 border border-gray-200'
                     }`}>
-                      {a.role || 'admin'}
+                      {
+                        a.role === 'super_admin' ? 'Super Admin' :
+                        a.role === 'admin' ? 'Admin' :
+                        a.role === 'content_admin' ? 'Content Admin' :
+                        a.role === 'viewer_admin' ? 'Viewer Admin' :
+                        a.role || 'Viewer Admin'
+                      }
                     </span>
                   </td>
                   <td className="p-4 text-left">

@@ -277,7 +277,7 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       formatType: 'daily-brief',
       coverageArea: 'Nigeria & Africa',
       topicFocus: ['policy', 'economy', 'macro-finance', 'trade'],
-      scheduleText: 'Weekdays at 7:00 AM WAT',
+      scheduleText: 'Weekdays at 9:00 AM WAT',
       youtubePlaylistUrl: 'https://www.youtube.com/playlist?list=PL3H95x0BV9nA',
       coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM',
       thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM',

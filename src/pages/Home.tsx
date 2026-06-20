@@ -22,6 +22,17 @@ import { formatFirestoreDate, renderSafe } from '../utils/formatters';
 import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
 
+function getProgrammeImageUrl(p: Programme): string {
+  if (p.cardImageUrl) return p.cardImageUrl;
+  if (p.coverImageUrl) return p.coverImageUrl;
+  if (p.thumbnailUrl) return p.thumbnailUrl;
+  if (p.imageUrl) return p.imageUrl;
+  if (p.latestVideoThumbnail) return p.latestVideoThumbnail;
+  if (p.coverImage) return p.coverImage;
+  if (p.thumbnailImage) return p.thumbnailImage;
+  return 'https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM'; // Branded fallback
+}
+
 export default function Home() {
   const playerRef = useRef<any>(null);
 
@@ -30,6 +41,11 @@ export default function Home() {
   const [heroStart, setHeroStart] = useState<number>(14);
   const [heroEnd, setHeroEnd] = useState<number>(21);
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
+
+  // Lazy loading state for Today's Featured Video
+  const [isFeaturedLoaded, setIsFeaturedLoaded] = useState<boolean>(false);
+  const [isFeaturedPlayClicked, setIsFeaturedPlayClicked] = useState<boolean>(false);
+  const featuredVideoRef = useRef<HTMLDivElement>(null);
 
   // Core content states from Firestore
   const [todayFeaturedVideo, setTodayFeaturedVideo] = useState<ProgrammeVideo | null>(null);
@@ -98,7 +114,6 @@ export default function Home() {
       // 2. Programmes result
       if (results[1].status === 'fulfilled') {
         loadedProgrammes = safeArray(results[1].value);
-        setActiveProgrammes(loadedProgrammes.slice(0, 2));
         setDiagProgrammes(loadedProgrammes.length);
       } else {
         console.error('[Diagnostics - Home] Programmes Load Error: ', results[1].reason);
@@ -138,46 +153,154 @@ export default function Home() {
         setLatestFeed(mapped.slice(0, 4));
 
         // Today's Featured Programme Video Logic
-        const filteredForFeatured = loadedVideos.filter((video: any) => {
-          return video.status === 'published' &&
-                 video.hiddenFromPublic !== true &&
-                 video.needsUrl !== true &&
-                 video.youtubeVideoId;
-        });
+        let featured: any = null;
+        let isOverridden = false;
 
-        const getDateVal = (item: any, key: string) => {
-          const val = item[key];
-          if (!val) return 0;
-          if (val.seconds) return val.seconds * 1000;
-          const parsed = Date.parse(val);
-          return isNaN(parsed) ? 0 : parsed;
-        };
+        const overrideVideoId = siteSettingsConfig?.overrideFeaturedVideoId;
+        const overrideUntilStr = siteSettingsConfig?.overrideFeaturedUntil;
 
-        filteredForFeatured.sort((a: any, b: any) => {
-          const sortDateA = getDateVal(a, 'sortDate');
-          const sortDateB = getDateVal(b, 'sortDate');
-          if (sortDateA !== sortDateB) return sortDateB - sortDateA;
+        if (overrideVideoId && overrideUntilStr) {
+          const now = new Date();
+          const untilDate = new Date(overrideUntilStr);
+          if (now < untilDate) {
+            const matchedOverride = loadedVideos.find((v: any) => v.id === overrideVideoId || v.youtubeVideoId === overrideVideoId);
+            if (matchedOverride) {
+              featured = matchedOverride;
+              isOverridden = true;
+            }
+          }
+        }
 
-          const pubA = getDateVal(a, 'publishedAt');
-          const pubB = getDateVal(b, 'publishedAt');
-          if (pubA !== pubB) return pubB - pubA;
+        if (!isOverridden) {
+          const filteredForFeatured = loadedVideos.filter((video: any) => {
+            return video.status === 'published' &&
+                   video.hiddenFromPublic !== true &&
+                   video.needsUrl !== true &&
+                   video.youtubeVideoId;
+          });
 
-          const createA = getDateVal(a, 'createdAt');
-          const createB = getDateVal(b, 'createdAt');
-          return createB - createA;
-        });
+          const getDateVal = (item: any, key: string) => {
+            const val = item[key];
+            if (!val) return 0;
+            if (val.seconds) return val.seconds * 1000;
+            const parsed = Date.parse(val);
+            return isNaN(parsed) ? 0 : parsed;
+          };
 
-        setTodayFeaturedVideo(filteredForFeatured[0] || null);
+          filteredForFeatured.sort((a: any, b: any) => {
+            const sortDateA = getDateVal(a, 'sortDate');
+            const sortDateB = getDateVal(b, 'sortDate');
+            if (sortDateA !== sortDateB) return sortDateB - sortDateA;
+
+            const pubA = getDateVal(a, 'publishedAt');
+            const pubB = getDateVal(b, 'publishedAt');
+            if (pubA !== pubB) return pubB - pubA;
+
+            const createA = getDateVal(a, 'createdAt');
+            const createB = getDateVal(b, 'createdAt');
+            return createB - createA;
+          });
+
+          featured = filteredForFeatured[0] || null;
+        }
+
+        setTodayFeaturedVideo(featured);
       } else {
         console.error('[Diagnostics - Home] Videos Load Error: ', results[3].reason);
         setDiagError(prev => (prev ? prev + '; ' : '') + 'Videos load error');
       }
 
       // 5. Briefings result (Client-side fail-safe logic skipped for Featured display)
+      const isProgActive = (p: Programme) => p.status === 'active' || p.isActive === true;
+      const activeProgsOnly = loadedProgrammes.filter(isProgActive);
+      
+      activeProgsOnly.sort((a, b) => {
+        const sortA = a.sortOrder !== undefined && a.sortOrder !== null ? Number(a.sortOrder) : 999;
+        const sortB = b.sortOrder !== undefined && b.sortOrder !== null ? Number(b.sortOrder) : 999;
+        if (sortA !== sortB) return sortA - sortB;
+        
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (timeA !== timeB) return timeA - timeB;
+        
+        return (a.title || '').localeCompare(b.title || '');
+      });
+
+      const activeWithVideos = activeProgsOnly.map(prog => {
+        const filteredVideos = loadedVideos.filter(video => {
+          const belongsToProg = video.programmeId === prog.id || 
+                                video.programmeId === prog.slug || 
+                                (video.programmeTitle && prog.title && video.programmeTitle.trim().toLowerCase() === prog.title.trim().toLowerCase());
+          const isPublished = video.status === 'published';
+          const notHidden = video.hiddenFromPublic !== true;
+          const noNeedUrl = video.needsUrl !== true;
+          return belongsToProg && isPublished && notHidden && noNeedUrl;
+        });
+
+        let latestVideo: ProgrammeVideo | null = null;
+        if (filteredVideos.length > 0) {
+          const getDateVal = (item: any, key: string) => {
+            const val = item[key];
+            if (!val) return 0;
+            if (val.seconds) return val.seconds * 1000;
+            const parsed = Date.parse(val);
+            return isNaN(parsed) ? 0 : parsed;
+          };
+
+          filteredVideos.sort((a: any, b: any) => {
+            const sortDateA = getDateVal(a, 'sortDate');
+            const sortDateB = getDateVal(b, 'sortDate');
+            if (sortDateA !== sortDateB) return sortDateB - sortDateA;
+
+            const pubA = getDateVal(a, 'publishedAt');
+            const pubB = getDateVal(b, 'publishedAt');
+            if (pubA !== pubB) return pubB - pubA;
+
+            const createA = getDateVal(a, 'createdAt');
+            const createB = getDateVal(b, 'createdAt');
+            return createB - createA;
+          });
+          latestVideo = filteredVideos[0];
+        }
+
+        return {
+          ...prog,
+          latestVideoTitle: latestVideo ? latestVideo.title : undefined,
+          latestVideoThumbnail: latestVideo ? latestVideo.thumbnailUrl || (latestVideo.youtubeVideoId ? `https://img.youtube.com/vi/${latestVideo.youtubeVideoId}/hqdefault.jpg` : '') : undefined
+        };
+      }).filter(prog => prog.latestVideoTitle !== undefined);
+
+      setActiveProgrammes(activeWithVideos);
       setLoading(false);
     }
 
     loadHomepageData();
+  }, []);
+
+  // IntersectionObserver to lazy load "Today's Featured" video iframe
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      setIsFeaturedLoaded(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsFeaturedLoaded(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '250px' } // Pre-trigger 250px before screen exposure
+    );
+
+    if (featuredVideoRef.current) {
+      observer.observe(featuredVideoRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   // 2. Play background loop once settings loaded or default used
@@ -311,34 +434,56 @@ export default function Home() {
       <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto border-b border-outline-variant">
         <div className="mb-unit-lg">
           <h2 className="font-headline-lg text-3xl font-bold text-primary mb-2">Today's Featured</h2>
-          <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
-            {featuredVideo ? (
-              <span className="flex flex-wrap items-center gap-2 text-sm text-primary font-bold tracking-wide uppercase mb-1">
-                <span>{featuredVideo.programmeTitle || 'Clearpath Media'}</span>
-                <span className="text-secondary">•</span>
-                <span className="text-on-surface-variant font-normal font-mono normal-case">{featuredVideo.displayDate || formatFirestoreDate(featuredVideo.publishedAt) || 'Recent'}</span>
-              </span>
-            ) : null}
-            <span className="block mt-1 font-display font-bold text-xl text-slate-900 leading-tight">
-              {featuredVideo?.title}
-            </span>
-          </p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter items-start">
           <div className="flex flex-col gap-unit-md">
-            <div className="aspect-video bg-surface-container-high rounded-xl border border-outline-variant relative overflow-hidden group shadow-sm">
-              <iframe 
-                width="100%" 
-                height="100%" 
-                src={`https://www.youtube.com/embed/${featuredVideo?.youtubeVideoId || '3H95x0BV9nA'}?rel=0`} 
-                title={featuredVideo?.title || "Today's Featured Video"} 
-                frameBorder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowFullScreen
-                className="absolute inset-0 w-full h-full"
-              ></iframe>
+            <div 
+              ref={featuredVideoRef}
+              className="aspect-video bg-surface-container-high rounded-xl border border-outline-variant relative overflow-hidden shadow-sm group cursor-pointer"
+              onClick={() => setIsFeaturedPlayClicked(true)}
+            >
+              {isFeaturedPlayClicked ? (
+                <iframe 
+                  width="100%" 
+                  height="100%" 
+                  src={`https://www.youtube.com/embed/${featuredVideo?.youtubeVideoId || '3H95x0BV9nA'}?rel=0&autoplay=1`} 
+                  title={featuredVideo?.title || "Today's Featured Video"} 
+                  frameBorder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                ></iframe>
+              ) : (
+                <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-900">
+                  <img 
+                    src={featuredVideo?.thumbnailUrl || `https://img.youtube.com/vi/${featuredVideo?.youtubeVideoId || '3H95x0BV9nA'}/hqdefault.jpg`} 
+                    alt={featuredVideo?.title} 
+                    className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/25" />
+                  <div className="w-16 h-16 bg-white/15 backdrop-blur-md text-white rounded-full flex items-center justify-center group-hover:scale-110 group-hover:bg-primary transition-all duration-300 shadow-xl relative z-10">
+                    <Play className="w-6 h-6 fill-current ml-1" />
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-unit-md mt-unit-sm">
+
+            {featuredVideo ? (
+              <div className="mt-2 font-sans">
+                <span className="flex flex-wrap items-center gap-2 text-sm text-primary font-bold tracking-wide uppercase mb-1">
+                  <span>{featuredVideo.programmeTitle || 'Clearpath Media'}</span>
+                  <span className="text-secondary">•</span>
+                  <span className="text-on-surface-variant font-normal font-mono normal-case">{featuredVideo.displayDate || formatFirestoreDate(featuredVideo.publishedAt) || 'Recent'}</span>
+                </span>
+                <span className="block mt-1 font-display font-bold text-xl text-slate-900 leading-tight">
+                  {featuredVideo?.title}
+                </span>
+              </div>
+            ) : null}
+
+            <div className="flex flex-col sm:flex-row items-center gap-unit-md mt-2">
               <Link to={`/programmes/${slugify(featuredVideo?.programmeTitle || 'election-matters')}`} className="w-full sm:w-auto bg-primary text-white font-bold text-xs uppercase px-8 py-4 rounded hover:bg-primary-container transition-colors text-center tracking-wider shadow-sm">
                 Watch full series
               </Link>
@@ -429,15 +574,36 @@ export default function Home() {
             No programmes available yet.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-unit-md max-w-4xl">
-            {renderedProgrammes.map(prog => (
-              <div key={prog.title} className="bg-white border border-outline-variant rounded p-unit-lg flex flex-col shadow-xs">
-                <h3 className="font-headline-md text-xl font-bold text-primary mb-unit-xs">{prog.title}</h3>
-                <span className="font-label-sm text-on-surface-variant text-xs uppercase tracking-wider font-semibold text-primary mb-unit-sm block">{prog.tagline || 'Governance Overview'}</span>
-                <p className="font-body-md text-on-surface-variant flex-grow mb-unit-md leading-relaxed">{prog.shortDescription}</p>
-                <Link to={`/programmes/${prog.slug}`} className="text-primary font-bold border border-primary px-5 py-2.5 rounded self-start hover:bg-primary/5 transition-colors uppercase tracking-wider text-xs">View Library</Link>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unit-md w-full">
+            {renderedProgrammes.map(prog => {
+              const imageUrl = getProgrammeImageUrl(prog);
+              return (
+                <div key={prog.id} className="bg-white border border-outline-variant rounded overflow-hidden flex flex-col hover:bg-surface-container-low transition-all duration-300 group shadow-xs">
+                  <div className="aspect-[16/10] bg-surface-container-high relative overflow-hidden flex-shrink-0">
+                    <img 
+                      src={imageUrl} 
+                      alt={prog.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      referrerPolicy="no-referrer" 
+                    />
+                  </div>
+                  <div className="p-unit-lg flex flex-col flex-grow text-left">
+                    <span className="font-label-sm text-xs font-bold text-primary uppercase tracking-wider mb-unit-xs block">{prog.tagline || 'Governance Overview'}</span>
+                    <h3 className="font-headline-md text-xl font-bold text-on-surface mb-unit-sm group-hover:text-primary transition-colors leading-tight">{prog.title}</h3>
+                    <p className="font-body-md text-sm text-on-surface-variant flex-grow mb-unit-md leading-relaxed line-clamp-3">{prog.shortDescription}</p>
+                    
+                    {prog.latestVideoTitle && (
+                      <div className="bg-slate-50 border border-slate-100/80 rounded p-3 mb-unit-md text-left text-xs animate-fade-in mt-auto">
+                        <span className="block text-[10px] uppercase font-bold text-primary tracking-wider mb-1">Latest Episode</span>
+                        <span className="font-semibold text-slate-800 line-clamp-1">{prog.latestVideoTitle}</span>
+                      </div>
+                    )}
+
+                    <Link to={`/programmes/${prog.slug || slugify(prog.title)}`} className="text-center text-primary font-bold border border-primary px-5 py-2.5 rounded hover:bg-primary/5 transition-colors uppercase tracking-wider text-xs w-full mt-2">View Library</Link>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

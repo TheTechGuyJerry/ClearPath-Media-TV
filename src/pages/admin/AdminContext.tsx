@@ -16,7 +16,9 @@ import {
   setDoc, 
   deleteDoc, 
   updateDoc, 
-  query 
+  query,
+  addDoc,
+  getDocFromCache
 } from 'firebase/firestore';
 import { 
   Programme, 
@@ -32,6 +34,71 @@ import { seedProductionDatabase, repairClearPathProgrammesAndVideoLinks } from '
 
 const provider = new GoogleAuthProvider();
 
+// Safe document getter that checks cache first (for instant loading & offline resilience) before doing a server request
+async function getResilientDoc(docRef: any): Promise<any> {
+  try {
+    const cacheSnap = await getDocFromCache(docRef);
+    if (cacheSnap.exists()) {
+      return cacheSnap;
+    }
+  } catch (e) {
+    // Expected on cache miss or unsupported environment, just fall back
+    console.debug('Resilient doc cache-miss or offline: ', e);
+  }
+  return await getDoc(docRef);
+}
+
+// ==========================================
+// 1. Standalone Permission Helpers
+// ==========================================
+
+export function isProtectedOwner(targetUser: any): boolean {
+  if (!targetUser) return false;
+  const email = (targetUser.email || '').toLowerCase().trim();
+  return email === 'jerryagbedun@gmail.com';
+}
+
+export function canViewRoute(role: string, pathname: string): boolean {
+  if (role === 'super_admin') return true;
+  const cleanPath = pathname.replace(/\/$/, '') || '/admin';
+  if (cleanPath === '/admin') return true;
+
+  if (role === 'admin') {
+    return !cleanPath.startsWith('/admin/users');
+  }
+  
+  if (role === 'content_admin') {
+    return (
+      cleanPath.startsWith('/admin/programmes') ||
+      cleanPath.startsWith('/admin/videos') ||
+      cleanPath.startsWith('/admin/explainers') ||
+      cleanPath.startsWith('/admin/briefing') ||
+      cleanPath.startsWith('/admin/youtube-research')
+    );
+  }
+  
+  if (role === 'viewer_admin') {
+    return !cleanPath.startsWith('/admin/users');
+  }
+  
+  return false;
+}
+
+export async function logAdminAction(adminEmail: string, adminUid: string, action: string, targetEmail: string, details: any) {
+  try {
+    await addDoc(collection(db, 'adminAuditLogs'), {
+      adminEmail,
+      adminUid,
+      action,
+      targetEmail,
+      details,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error("Failed to write to adminAuditLogs: ", err);
+  }
+}
+
 export interface AdminContextType {
   user: User | null;
   isAdminUser: boolean;
@@ -41,6 +108,7 @@ export interface AdminContextType {
   loading: boolean;
   authError: string | null;
   setAuthError: (err: string | null) => void;
+  userDocData: any;
   
   // Collections
   programmes: Programme[];
@@ -64,6 +132,20 @@ export interface AdminContextType {
   handleUpdateStatus: (collectionName: string, id: string, newStatus: string) => Promise<void>;
   handleUpdateSiteSettings: (settings: SiteSettings) => Promise<void>;
   refreshCollections: () => Promise<void>;
+
+  // Action-specific Privilege Checkers
+  canCreateAdmin: (targetRole: string) => boolean;
+  canEditAdmin: (targetUser: any) => boolean;
+  canDisableAdmin: (targetUser: any) => boolean;
+  canEnableAdmin: (targetUser: any) => boolean;
+  canDeleteAdmin: (targetUser: any) => boolean;
+  canManageUsers: () => boolean;
+  canManageSettings: () => boolean;
+  canManageContent: () => boolean;
+  canPublishContent: (targetUserDoc?: any) => boolean;
+  canDeleteContent: () => boolean;
+  canUseYouTubeResearch: () => boolean;
+  isReadOnly: () => boolean;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -79,7 +161,8 @@ export function useAdmin() {
 export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<string>('viewer');
+  const [userRole, setUserRole] = useState<string>('viewer_admin');
+  const [userDocData, setUserDocData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
@@ -114,14 +197,34 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           try {
             const jerryDocId = 'jerryagbedun_gmail_com';
             const jerryRef = doc(db, 'users', jerryDocId);
-            const jerrySnap = await getDoc(jerryRef);
+            const jerryUidRef = doc(db, 'users', currentUser.uid);
+            
+            const jerrySnap = await getResilientDoc(jerryRef);
+            const jerryUidSnap = await getResilientDoc(jerryUidRef);
             
             const expectedProfile = {
               uid: currentUser.uid,
               email: 'jerryagbedun@gmail.com',
               name: currentUser.displayName || 'Jerry Agbedun',
+              displayName: currentUser.displayName || 'Jerry Agbedun',
               role: 'super_admin',
               status: 'active',
+              isProtectedOwner: true,
+              isSuperAdmin: true,
+              permissions: {
+                canManageUsers: true,
+                canCreateAdmins: true,
+                canEditAdmins: true,
+                canDisableAdmins: true,
+                canDeleteAdmins: true,
+                canManageRoles: true,
+                canManageSettings: true,
+                canManageProgrammes: true,
+                canManageVideos: true,
+                canUseYouTubeResearch: true,
+                canPublishContent: true,
+                canDeleteContent: true
+              },
               canCreateAdmins: true,
               canDeleteAdmins: true,
               canManageRoles: true,
@@ -129,37 +232,71 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
               canManageProgrammes: true,
               canManageForms: true,
               canManageSettings: true,
+              canPublishContent: true,
               updatedAt: new Date().toISOString()
             };
 
+            setUserDocData(expectedProfile);
+            try {
+              localStorage.setItem('cached_admin_profile', JSON.stringify({
+                isAdmin: true,
+                role: 'super_admin',
+                userDocData: expectedProfile,
+                timestamp: Date.now()
+              }));
+            } catch (errLocalStorage) {
+              console.warn('Silent local storage fail: ', errLocalStorage);
+            }
+
+            // 1. Repair/create the email ref
             if (!jerrySnap.exists()) {
               await setDoc(jerryRef, {
                 ...expectedProfile,
+                id: jerryDocId,
                 createdAt: new Date().toISOString()
               });
-              console.log('Jerry super admin profile created safely.');
+              console.log('Jerry email-based super admin profile created safely.');
             } else {
               const currentData = jerrySnap.data();
               if (
                 currentData.role !== 'super_admin' || 
                 currentData.status !== 'active' || 
                 currentData.uid !== currentUser.uid ||
-                !currentData.canCreateAdmins
+                !currentData.isProtectedOwner ||
+                !currentData.permissions?.canManageUsers
               ) {
                 await updateDoc(jerryRef, {
-                  role: 'super_admin',
-                  status: 'active',
-                  uid: currentUser.uid,
-                  canCreateAdmins: true,
-                  canDeleteAdmins: true,
-                  canManageRoles: true,
-                  canManageVideos: true,
-                  canManageProgrammes: true,
-                  canManageForms: true,
-                  canManageSettings: true,
+                  ...expectedProfile,
+                  id: jerryDocId,
                   updatedAt: new Date().toISOString()
                 });
-                console.log('Jerry super admin profile repaired safely.');
+                console.log('Jerry email-based super admin profile repaired safely.');
+              }
+            }
+
+            // 2. Repair/create the UID ref (CRITICAL for Firestore Rule userExists() check)
+            if (!jerryUidSnap.exists()) {
+              await setDoc(jerryUidRef, {
+                ...expectedProfile,
+                id: currentUser.uid,
+                createdAt: new Date().toISOString()
+              });
+              console.log('Jerry uid-based super admin profile created safely for security checks.');
+            } else {
+              const currentData = jerryUidSnap.data();
+              if (
+                currentData.role !== 'super_admin' || 
+                currentData.status !== 'active' || 
+                currentData.uid !== currentUser.uid ||
+                !currentData.isProtectedOwner ||
+                !currentData.permissions?.canManageUsers
+              ) {
+                await updateDoc(jerryUidRef, {
+                  ...expectedProfile,
+                  id: currentUser.uid,
+                  updatedAt: new Date().toISOString()
+                });
+                console.log('Jerry uid-based super admin profile repaired safely.');
               }
             }
           } catch (er) {
@@ -170,35 +307,110 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           try {
             const emailClean = currentUser.email?.toLowerCase().trim() || '';
             const finalDocId = emailClean.replace(/[^a-zA-Z0-9]/g, '_');
-            const userDoc = await getDoc(doc(db, 'users', finalDocId));
             
+            // 1. Check uid doc first
+            let userDoc = await getResilientDoc(doc(db, 'users', currentUser.uid));
+            
+            // 2. Fall back to email doc if uid doc doesn't exist
+            if (!userDoc.exists()) {
+              // Try reading the direct email-based doc first
+              let sourceDoc = await getResilientDoc(doc(db, 'users', emailClean));
+              if (!sourceDoc.exists()) {
+                // Fallback to legacy underscore-based doc
+                sourceDoc = await getResilientDoc(doc(db, 'users', finalDocId));
+              }
+              
+              if (sourceDoc.exists()) {
+                const data = sourceDoc.data();
+                // Retroactively sync/create uid doc
+                const syncedData = {
+                  ...data,
+                  uid: currentUser.uid,
+                  id: currentUser.uid,
+                  updatedAt: new Date().toISOString()
+                };
+                try {
+                  // Write both UID copy and ensure both direct email and legacy underscore keys exist and reference the UID
+                  await setDoc(doc(db, 'users', currentUser.uid), syncedData);
+                  await setDoc(doc(db, 'users', emailClean), { ...data, uid: currentUser.uid, id: emailClean, updatedAt: new Date().toISOString() });
+                  await setDoc(doc(db, 'users', finalDocId), { ...data, uid: currentUser.uid, updatedAt: new Date().toISOString() });
+                  console.log("Retroactively synced newly authorized admin to uid and email documents.");
+                } catch (syncErr) {
+                  console.warn("Could not sync uid document: ", syncErr);
+                }
+              }
+            }
+            
+            // Re-read userDoc from db if synchronized
+            userDoc = await getResilientDoc(doc(db, 'users', currentUser.uid));
+            if (!userDoc.exists()) {
+              userDoc = await getResilientDoc(doc(db, 'users', emailClean));
+              if (!userDoc.exists()) {
+                userDoc = await getResilientDoc(doc(db, 'users', finalDocId));
+              }
+            }
+
             if (userDoc.exists()) {
               const data = userDoc.data();
               const isBlocked = data.disabled === true || data.status === 'disabled';
               if (isBlocked) {
                 setIsAdminUser(false);
-                setUserRole('viewer');
+                setUserRole('viewer_admin');
+                setUserDocData(null);
                 setAuthError('This administrator registry account has been locked or disabled.');
               } else {
                 setIsAdminUser(true);
-                setUserRole(data.role || 'viewer');
+                setUserRole(data.role || 'viewer_admin');
+                setUserDocData(data);
+                
+                // Cache user status for offline session recovery
+                try {
+                  localStorage.setItem('cached_admin_profile', JSON.stringify({
+                    isAdmin: true,
+                    role: data.role || 'viewer_admin',
+                    userDocData: data,
+                    timestamp: Date.now()
+                  }));
+                } catch (errLocalStorage) {
+                  console.warn('Silent local storage fail: ', errLocalStorage);
+                }
               }
             } else {
               // Not in database, not authorized
               setIsAdminUser(false);
-              setUserRole('viewer');
+              setUserRole('viewer_admin');
+              setUserDocData(null);
+              setAuthError('Access Denied: This account is not registered in the Operator Registry.');
             }
           } catch (e: any) {
-            console.error('Check role error: ', e);
+            console.error('Check role error, trying cached backup:', e);
+            const backup = localStorage.getItem('cached_admin_profile');
+            if (backup) {
+              try {
+                const parsed = JSON.parse(backup);
+                // Allow a generous offline/failover session valid for up to 7 days
+                if (Date.now() - parsed.timestamp < 7 * 24 * 60 * 60 * 1000) {
+                  setIsAdminUser(parsed.isAdmin);
+                  setUserRole(parsed.role);
+                  setUserDocData(parsed.userDocData);
+                  setAuthError(null);
+                  setLoading(false);
+                  return;
+                }
+              } catch (_) {}
+            }
             setIsAdminUser(false);
-            setUserRole('viewer');
+            setUserRole('viewer_admin');
+            setUserDocData(null);
+            setAuthError('Access Denied: verification check failed.');
           } finally {
             setLoading(false);
           }
         }
       } else {
         setIsAdminUser(false);
-        setUserRole('viewer');
+        setUserRole('viewer_admin');
+        setUserDocData(null);
         setLoading(false);
       }
     });
@@ -316,7 +528,57 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
       // Admins
       const administratorsSnap = await getDocs(query(collection(db, 'users')));
-      setAdminUsers(administratorsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const rawUsers = administratorsSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      
+      // Auto-migrate legacy entries (converting user_domain_com keys to direct email keys)
+      const uEmailClean = user?.email?.toLowerCase().trim() || '';
+      const isPrivilegedAdmin = uEmailClean === 'jerryagbedun@gmail.com' || userRole === 'super_admin';
+      
+      if (isPrivilegedAdmin) {
+        for (const u of rawUsers) {
+          if (!u.email) continue;
+          const uEmailCleanVal = u.email.toLowerCase().trim();
+          const uLegacyId = uEmailCleanVal.replace(/[^a-zA-Z0-9]/g, '_');
+          
+          if (u.id === uLegacyId) {
+            // Check if the direct-email document exists
+            const hasDirectDoc = rawUsers.some(existingUser => existingUser.id === uEmailCleanVal);
+            if (!hasDirectDoc) {
+              console.log(`Auto-repairing legacy registry document for ${u.email}`);
+              try {
+                await setDoc(doc(db, 'users', uEmailCleanVal), {
+                  ...u,
+                  id: uEmailCleanVal,
+                  updatedAt: new Date().toISOString()
+                });
+              } catch (migrateErr) {
+                console.warn(`Failed to auto-migrate ${u.email}: `, migrateErr);
+              }
+            }
+          }
+        }
+      }
+
+      const deduplicatedMap = new Map<string, any>();
+      for (const u of rawUsers) {
+        if (!u.email) continue;
+        const normEmail = u.email.toLowerCase().trim();
+        const existing = deduplicatedMap.get(normEmail);
+        if (!existing) {
+          deduplicatedMap.set(normEmail, u);
+        } else {
+          const merged = { ...existing, ...u };
+          if (u.uid) merged.uid = u.uid;
+          if (u.id && u.id.includes('_')) merged.id = u.id; // Prefer email-key as id for deletion if possible
+          if (u.role && u.role !== 'viewer_admin') merged.role = u.role;
+          if (u.disabled === true || existing.disabled === true) {
+            merged.disabled = true;
+            merged.status = 'disabled';
+          }
+          deduplicatedMap.set(normEmail, merged);
+        }
+      }
+      setAdminUsers(Array.from(deduplicatedMap.values()));
     } catch (e) {
       console.error("Error fetching admin data: ", e);
     } finally {
@@ -376,15 +638,155 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ==========================================
+  // Privilege Checkers
+  // ==========================================
+
+  const isReadOnly = () => {
+    return userRole === 'viewer_admin';
+  };
+
+  const canManageUsers = () => {
+    return userRole === 'super_admin';
+  };
+
+  const canCreateAdmin = (targetRole: string) => {
+    if (userRole !== 'super_admin') return false;
+    return ['super_admin', 'admin', 'content_admin', 'viewer_admin'].includes(targetRole);
+  };
+
+  const canEditAdmin = (targetUser: any) => {
+    if (userRole !== 'super_admin') return false;
+    if (!targetUser) return false;
+    
+    // Safety check: only Jerry can edit Jerry.
+    const isTargetJerry = isProtectedOwner(targetUser);
+    const isCurrentJerry = user?.email?.toLowerCase() === 'jerryagbedun@gmail.com';
+    if (isTargetJerry && !isCurrentJerry) return false;
+
+    return true;
+  };
+
+  const canDisableAdmin = (targetUser: any) => {
+    if (userRole !== 'super_admin') return false;
+    if (!targetUser) return false;
+    
+    // Safety check: No locking of Jerry!
+    if (isProtectedOwner(targetUser)) return false;
+
+    // Safety check: Cannot self-lock!
+    if (targetUser.uid === user?.uid || targetUser.email?.toLowerCase() === user?.email?.toLowerCase()) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  const canEnableAdmin = (targetUser: any) => {
+    if (userRole !== 'super_admin') return false;
+    if (!targetUser) return false;
+    return true;
+  };
+
+  const canDeleteAdmin = (targetUser: any) => {
+    if (userRole !== 'super_admin') return false;
+    if (!targetUser) return false;
+
+    // Safety check: No deletion of Jerry!
+    if (isProtectedOwner(targetUser)) return false;
+
+    // Safety check: Cannot self-delete!
+    if (targetUser.uid === user?.uid || targetUser.email?.toLowerCase() === user?.email?.toLowerCase()) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const canManageSettings = () => {
+    return userRole === 'super_admin' || userRole === 'admin';
+  };
+
+  const canManageContent = () => {
+    return ['super_admin', 'admin', 'content_admin'].includes(userRole);
+  };
+
+  const canPublishContent = (targetUserDoc?: any) => {
+    if (userRole === 'super_admin' || userRole === 'admin') return true;
+    if (userRole === 'content_admin') {
+      const docToCheck = targetUserDoc || userDocData;
+      return !!docToCheck?.canPublishContent;
+    }
+    return false;
+  };
+
+  const canDeleteContent = () => {
+    return userRole === 'super_admin' || userRole === 'admin';
+  };
+
+  const canUseYouTubeResearch = () => {
+    return ['super_admin', 'admin', 'content_admin'].includes(userRole);
+  };
+
   const handleSaveItem = async (type: string, data: any) => {
-    if (effectiveRole === 'viewer') {
+    if (isReadOnly()) {
       alert('Access Denied: Read-only viewers are not allowed to submit modifications.');
       return;
     }
-    if (type === 'users' && effectiveRole !== 'super_admin') {
-      alert('Access denied: Only Super Administrators can create/modify administrators.');
-      return;
+    
+    if (type === 'users') {
+      if (!canManageUsers()) {
+        alert('Access denied: Only Super Administrators can manage administrators.');
+        return;
+      }
+      
+      const targetEmail = (data.email || '').toLowerCase().trim();
+      
+      // Safety checks:
+      const targetUserObj = { email: targetEmail, uid: data.uid };
+      if (isProtectedOwner(targetUserObj)) {
+        const isCurrentJerry = user?.email?.toLowerCase() === 'jerryagbedun@gmail.com';
+        if (!isCurrentJerry) {
+          alert('Access Denied: Founder account brand is protected and cannot be edited by other administrators.');
+          return;
+        }
+      }
+      
+      // Prevent demoting of Jerry!
+      if (targetEmail === 'jerryagbedun@gmail.com') {
+        data.role = 'super_admin';
+        data.status = 'active';
+        data.disabled = false;
+        data.isProtectedOwner = true;
+        data.isSuperAdmin = true;
+      }
+      
+      // Target checks on disabling/locking self
+      if (data.email?.toLowerCase().trim() === user?.email?.toLowerCase()) {
+        if (data.status === 'disabled' || data.disabled === true) {
+          alert('Safety lock: You cannot disable your own active administrator account.');
+          return;
+        }
+        if (data.role !== 'super_admin') {
+          alert('Safety lock: You cannot demote yourself from Super Admin role.');
+          return;
+        }
+      }
+    } else {
+      // Content save checks
+      if (!canManageContent()) {
+        alert('Access Denied: Your administrator role prefix does not permit content management.');
+        return;
+      }
+      
+      // Publish vs save draft checks
+      const isPublishing = data.status === 'published' || data.status === 'active';
+      if (isPublishing && !canPublishContent()) {
+        alert('Access Denied: You do not have permissions to publish content assets. Please save as a draft or inactive status.');
+        return;
+      }
     }
+
     setLoading(true);
     try {
       let documentId = data.id || data.slug || data.uid;
@@ -396,7 +798,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         data.email = data.email.toLowerCase().trim();
-        documentId = data.email.replace(/[^a-zA-Z0-9]/g, '_');
+        documentId = data.email;
       }
 
       // Autocomplete YouTube parameters
@@ -435,7 +837,40 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         cleanData.createdAt = new Date().toISOString();
       }
 
+      // Perform write
       await setDoc(doc(db, type, documentId), cleanData);
+      if (type === 'users') {
+        const emailKey = data.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        if (emailKey !== documentId) {
+          await setDoc(doc(db, 'users', emailKey), cleanData);
+        }
+        if (cleanData.uid) {
+          await setDoc(doc(db, 'users', cleanData.uid), { ...cleanData, id: cleanData.uid });
+        }
+      }
+
+      // Log for audit
+      if (type === 'users') {
+        const isNewUser = !data.uid && !data.id;
+        const actionType = isNewUser ? 'create' : 'edit';
+        await logAdminAction(
+          user?.email || '',
+          user?.uid || '',
+          `${actionType}_admin`,
+          data.email || '',
+          { role: data.role, status: data.status, name: data.name }
+        );
+      } else {
+        const isNew = !data.id;
+        await logAdminAction(
+          user?.email || '',
+          user?.uid || '',
+          `${isNew ? 'create' : 'edit'}_${type}`,
+          'system',
+          { id: data.id || data.slug || 'unknown', title: data.title || 'unnamed' }
+        );
+      }
+
       setRefreshTrigger(prev => prev + 1);
     } catch (err: any) {
       handleFirestoreError(err, OperationType.WRITE, `${type}/${data.id || data.slug}`);
@@ -445,35 +880,117 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleDeleteItem = async (collectionName: string, docId: string) => {
-    if (effectiveRole === 'viewer') {
+    if (isReadOnly()) {
       alert('Access Denied: Read-only viewers are not allowed to delete resources.');
       return;
     }
-    if (collectionName === 'users' && effectiveRole !== 'super_admin') {
-      alert('Access denied: Only Super Administrators can remove administrators.');
-      return;
-    }
-    if (!confirm('Are you sure you want to delete this record permanently?')) return;
-    setLoading(true);
-    try {
-      await deleteDoc(doc(db, collectionName, docId));
-      setRefreshTrigger(prev => prev + 1);
-    } catch (err: any) {
-      handleFirestoreError(err, OperationType.DELETE, `${collectionName}/${docId}`);
-    } finally {
-      setLoading(false);
+    
+    if (collectionName === 'users') {
+      if (!canManageUsers()) {
+        alert('Access denied: Only Super Administrators can remove administrators.');
+        return;
+      }
+      
+      const userRef = doc(db, 'users', docId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const targetData = userSnap.data();
+        const targetUserObj = { email: targetData.email, uid: targetData.uid };
+        
+        if (isProtectedOwner(targetUserObj)) {
+          alert('Safety Lockout: The founder account cannot be deleted under any circumstances.');
+          return;
+        }
+        
+        if (targetData.uid === user?.uid || targetData.email?.toLowerCase() === user?.email?.toLowerCase()) {
+          alert('Safety Lockout: You cannot delete your own active operator account.');
+          return;
+        }
+        
+        if (!confirm('Are you sure you want to delete this administrator account permanently?')) return;
+        setLoading(true);
+        try {
+          await deleteDoc(userRef);
+          
+          // Delete secondary key references to be perfectly clean
+          if (targetData.uid && targetData.uid !== docId) {
+            await deleteDoc(doc(db, 'users', targetData.uid));
+          }
+          const emailKey = targetData.email ? targetData.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : '';
+          if (emailKey && emailKey !== docId) {
+            await deleteDoc(doc(db, 'users', emailKey));
+          }
+          
+          await logAdminAction(
+            user?.email || '',
+            user?.uid || '',
+            'delete_admin',
+            targetData.email || '',
+            { name: targetData.name }
+          );
+          setRefreshTrigger(prev => prev + 1);
+        } catch (err: any) {
+          handleFirestoreError(err, OperationType.DELETE, `${collectionName}/${docId}`);
+        } finally {
+          setLoading(false);
+        }
+      }
+    } else {
+      if (!canDeleteContent()) {
+        alert('Access Denied: Your administrator role prefix does not permit content deletion.');
+        return;
+      }
+      
+      if (!confirm('Are you sure you want to delete this content item permanently?')) return;
+      setLoading(true);
+      try {
+        await deleteDoc(doc(db, collectionName, docId));
+        await logAdminAction(
+          user?.email || '',
+          user?.uid || '',
+          `delete_${collectionName}`,
+          'system',
+          { id: docId }
+        );
+        setRefreshTrigger(prev => prev + 1);
+      } catch (err: any) {
+        handleFirestoreError(err, OperationType.DELETE, `${collectionName}/${docId}`);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const handleUpdateStatus = async (collectionName: string, id: string, newStatus: string) => {
-    if (effectiveRole === 'viewer') {
+    if (isReadOnly()) {
       alert('Access Denied: Read-only viewers cannot toggle publish status.');
       return;
     }
+    
+    // Content status changes vs Admin profile status changes
+    if (collectionName === 'users') {
+      alert('Access Denied: Please use the admin user-management panel to edit status.');
+      return;
+    }
+
+    if (newStatus === 'published' && !canPublishContent()) {
+      alert('Access Denied: You do not have permissions to publish content assets.');
+      return;
+    }
+
     try {
       const docRef = doc(db, collectionName, id);
       await updateDoc(docRef, { status: newStatus, updatedAt: new Date().toISOString() });
       
+      // Log update action
+      await logAdminAction(
+        user?.email || '',
+        user?.uid || '',
+        `update_status_${collectionName}`,
+        'system',
+        { id, status: newStatus }
+      );
+
       // Update local state immediately
       if (collectionName === 'partnerRequests') {
         setPartnerRequests(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
@@ -489,8 +1006,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleUpdateSiteSettings = async (settings: SiteSettings) => {
-    if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only viewers cannot update site settings.');
+    if (!canManageSettings()) {
+      alert('Access Denied: Your administrator role prefix does not permit updating site settings.');
       return;
     }
     setLoading(true);
@@ -509,6 +1026,15 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       settings.heroVideoId = getVideoIdFromUrl(settings.heroVideoUrl) || settings.heroVideoId;
       settings.updatedAt = new Date().toISOString();
       await setDoc(doc(db, 'siteSettings', 'primary'), settings);
+      
+      await logAdminAction(
+        user?.email || '',
+        user?.uid || '',
+        'update_site_settings',
+        'system',
+        { siteName: settings.siteName }
+      );
+
       setRefreshTrigger(prev => prev + 1);
     } catch (err: any) {
       handleFirestoreError(err, OperationType.WRITE, 'siteSettings/primary');
@@ -531,6 +1057,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       loading,
       authError,
       setAuthError,
+      userDocData,
       
       programmes,
       programmeVideos,
@@ -551,7 +1078,20 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       handleDeleteItem,
       handleUpdateStatus,
       handleUpdateSiteSettings,
-      refreshCollections
+      refreshCollections,
+
+      canCreateAdmin,
+      canEditAdmin,
+      canDisableAdmin,
+      canEnableAdmin,
+      canDeleteAdmin,
+      canManageUsers,
+      canManageSettings,
+      canManageContent,
+      canPublishContent,
+      canDeleteContent,
+      canUseYouTubeResearch,
+      isReadOnly
     }}>
       {children}
     </AdminContext.Provider>

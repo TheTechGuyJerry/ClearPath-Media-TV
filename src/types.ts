@@ -46,6 +46,15 @@ export interface Programme {
   comingSoon?: boolean;
   comingSoonTitle?: string;
   comingSoonMessage?: string;
+
+  // Optional image URLs
+  cardImageUrl?: string;
+  coverImageUrl?: string;
+  thumbnailUrl?: string;
+  imageUrl?: string;
+  isActive?: boolean;
+  latestVideoTitle?: string;
+  latestVideoThumbnail?: string;
 }
 
 export interface ProgrammeVideo {
@@ -197,6 +206,9 @@ export interface SiteSettings {
   updatedAt: string;
   zohoElectionSignupEmbed?: string;
   newsletterSignupUrl?: string;
+  overrideFeaturedVideoId?: string;
+  overrideFeaturedUntil?: string;
+  overrideFeaturedDays?: number;
 }
 
 export interface PartnerRequest {
