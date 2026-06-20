@@ -472,13 +472,13 @@ export default function Home() {
 
             {featuredVideo ? (
               <div className="mt-2 font-sans">
-                <span className="flex flex-wrap items-center gap-2 text-sm text-primary font-bold tracking-wide uppercase mb-1">
+                <span className="block font-display font-bold text-xl text-slate-900 leading-tight mb-2">
+                  {featuredVideo?.title}
+                </span>
+                <span className="flex flex-wrap items-center gap-2 text-sm text-primary font-bold tracking-wide uppercase">
                   <span>{featuredVideo.programmeTitle || 'Clearpath Media'}</span>
                   <span className="text-secondary">•</span>
                   <span className="text-on-surface-variant font-normal font-mono normal-case">{featuredVideo.displayDate || formatFirestoreDate(featuredVideo.publishedAt) || 'Recent'}</span>
-                </span>
-                <span className="block mt-1 font-display font-bold text-xl text-slate-900 leading-tight">
-                  {featuredVideo?.title}
                 </span>
               </div>
             ) : null}
