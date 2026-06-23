@@ -242,7 +242,7 @@ export default function Programmes() {
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-unit-xl">
         <section className="mb-unit-xl max-w-3xl">
           <h1 className="font-display-lg text-display-lg text-primary mb-unit-sm font-semibold">Programmes</h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">Clearpath publishes a deliberately limited or structured selection of programs. Each has a clear focus, schedule, and targeted professional coverage.</p>
+          <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">Clearpath publishes a deliberately limited or structured selection of programmes. Each has a clear focus, schedule, and targeted professional coverage.</p>
         </section>
       </div>
       
@@ -292,49 +292,55 @@ export default function Programmes() {
             const badgeLabel = !active ? "Inactive" : "Coming Soon";
             const imageUrl = getProgrammeImageUrl(prog);
             return (
-              <section key={prog.id} className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-b border-outline-variant pb-unit-xl last:border-0 last:pb-0">
-              <div className="grid lg:grid-cols-12 gap-gutter mb-unit-lg">
+              <section key={prog.id} className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-b border-outline-variant pb-12 md:pb-20 last:border-0 last:pb-0">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-10 lg:gap-gutter mb-unit-lg">
                 <div className="lg:col-span-8">
                   <div className="mb-unit-md relative">
-                    {isComingSoon && (
-                      <span className="absolute top-0 right-0 bg-secondary/10 text-secondary text-[11px] font-bold px-3 py-1 rounded-sm uppercase tracking-wider">
-                        {badgeLabel}
-                      </span>
-                    )}
-                    <span className="text-label-sm font-label-md uppercase tracking-wider text-primary mb-2 block font-bold">{prog.tagline || 'SYSTEM SHOWS'}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+                      <span className="text-label-sm font-label-md uppercase tracking-wider text-primary block font-bold">{prog.tagline || 'SYSTEM SHOWS'}</span>
+                      {isComingSoon && (
+                        <span className="bg-secondary/15 text-secondary text-[11px] font-bold px-3 py-1 rounded uppercase tracking-wider">
+                          {badgeLabel}
+                        </span>
+                      )}
+                    </div>
                     <h2 className="font-display-lg text-headline-lg text-primary mb-unit-sm font-bold">{prog.title}</h2>
                     <p className="font-body-lg text-body-lg text-on-surface-variant mb-unit-md leading-relaxed">{prog.shortDescription}</p>
                   </div>
 
                   {isComingSoon ? (
-                    <div 
-                      onClick={() => setIsModalOpen(true)}
-                      className="aspect-[16/9] bg-surface-container-high flex flex-col items-center justify-center rounded overflow-hidden relative group cursor-pointer border border-outline-variant mt-12 bg-gradient-to-b from-surface-container-low to-surface-container-high"
-                    >
-                      <img src={imageUrl} alt={prog.title} className="w-full h-full object-cover opacity-30 grayscale group-hover:scale-105 transition-transform duration-700" />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white p-6 text-center">
-                        <div className="w-16 h-16 bg-white/10 backdrop-blur text-white rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-xl">
-                          <Bell className="w-6 h-6 animate-pulse" />
+                    <div className="relative mt-6 md:mt-8">
+                      <div 
+                        onClick={() => setIsModalOpen(true)}
+                        className="aspect-[16/9] bg-surface-container-high flex flex-col items-center justify-center rounded overflow-hidden relative group cursor-pointer border border-outline-variant bg-gradient-to-b from-surface-container-low to-surface-container-high"
+                      >
+                        <img src={imageUrl} alt={prog.title} className="w-full h-full object-cover opacity-30 grayscale group-hover:scale-105 transition-transform duration-700" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white p-6 text-center">
+                          <div className="w-16 h-16 bg-white/10 backdrop-blur text-white rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-xl">
+                            <Bell className="w-6 h-6 animate-pulse" />
+                          </div>
+                          <span className="font-display-sm text-lg uppercase tracking-[0.2em] font-bold">{badgeLabel}</span>
+                          <p className="text-xs text-white/80 mt-2 max-w-sm leading-relaxed">This programme is currently in pre-production. Tap to subscribe and get notified on launch.</p>
                         </div>
-                        <span className="font-display-sm text-lg uppercase tracking-[0.2em] font-bold">{badgeLabel}</span>
-                        <p className="text-xs text-white/80 mt-2 max-w-sm leading-relaxed">This programme is currently in pre-production. Tap to subscribe and get notified on launch.</p>
                       </div>
                     </div>
                   ) : (
-                    <div className="aspect-[16/9] bg-surface-container-highest flex items-center justify-center rounded overflow-hidden relative group cursor-pointer border border-outline-variant mt-12 animate-fade-in shadow-xs">
-                      <div className="absolute -top-10 left-0 text-label-sm font-label-md uppercase tracking-widest text-on-surface-variant font-bold">Latest Release</div>
-                      <img src={imageUrl} alt={prog.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Link to={`/programmes/${prog.slug || slugify(prog.title)}`} className="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
-                          <Play className="w-10 h-10 fill-current ml-1 animate-pulse text-white" />
-                        </Link>
+                    <div className="relative mt-10 md:mt-12">
+                      <div className="absolute -top-7 left-0 text-[10px] sm:text-xs font-mono uppercase tracking-widest text-on-surface-variant font-bold">Latest Release</div>
+                      <div className="aspect-[16/9] bg-surface-container-highest flex items-center justify-center rounded overflow-hidden relative group cursor-pointer border border-outline-variant animate-fade-in shadow-xs">
+                        <img src={imageUrl} alt={prog.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Link to={`/programmes/${prog.slug || slugify(prog.title)}`} className="w-20 h-20 bg-primary/90 text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl">
+                            <Play className="w-10 h-10 fill-current ml-1 animate-pulse text-white" />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
                 
                 <div className="lg:col-span-4 flex flex-col justify-center">
-                  <div className="bg-surface-container-low p-unit-lg rounded border border-outline-variant shadow-xs">
+                  <div className="bg-surface-container-low p-6 sm:p-8 rounded border border-outline-variant shadow-xs">
                     <h3 className="font-headline-md text-headline-md text-primary mb-4 font-semibold">About the Programme</h3>
                     <p className="font-body-md text-body-md text-on-surface-variant mb-6 leading-relaxed">{prog.fullDescription}</p>
                     <div className="space-y-4 border-t border-outline-variant pt-6 text-sm">

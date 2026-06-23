@@ -12,8 +12,8 @@ interface SEOProps {
 
 const DEFAULTS = {
   siteName: 'Clearpath Media TV',
-  title: 'Clearpath Media TV — Intelligence, not advocacy',
-  description: "Clearpath Media TV is Nigeria's election intelligence platform — delivering data-driven analysis of politics, governance, and democratic processes. Intelligence, not advocacy.",
+  title: 'Clearpath Media TV — Africa Explained',
+  description: "Clearpath Media TV is Nigeria's election intelligence platform — delivering data-driven analysis of politics, governance, and democratic processes. Africa Explained.",
   image: 'https://www.clearpathmediatv.com/og-clearpath.png',
   type: 'website',
   baseUrl: 'https://www.clearpathmediatv.com'

@@ -88,7 +88,7 @@ export default function About() {
               How Clearpath approaches public-intellectual journalism to build lasting public trust.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {principles.map((pr, idx) => (
               <div key={idx} className="bg-slate-900 border border-slate-800 rounded-lg p-6 flex flex-col gap-4 hover:border-slate-700 transition-colors">
                 <span className="text-3xl font-bold font-mono text-slate-600 block">
@@ -117,7 +117,7 @@ export default function About() {
             The serious voices translating policy, elections, and national governance.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {team.map((person, idx) => (
             <div key={idx} className="bg-white border border-slate-200/85 hover:border-slate-300 rounded-xl p-6 md:p-8 flex flex-col justify-between transition-all shadow-xs group relative overflow-hidden">
               <div className="flex flex-col gap-4">
