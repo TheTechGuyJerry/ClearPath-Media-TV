@@ -32,7 +32,7 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center p-6 font-sans">
       <div className="w-full max-w-md bg-white border border-outline-variant p-8 rounded-lg shadow-sm">
         <div className="text-center mb-8">
-          <h1 className="font-display font-semibold text-2xl text-primary mb-1">Clearpath Media</h1>
+          <h1 className="font-display font-semibold text-2xl text-primary mb-1">ClearPath Media</h1>
           <p className="text-xs text-on-surface-variant uppercase tracking-widest font-semibold font-mono">CMS Administrator login</p>
         </div>
 

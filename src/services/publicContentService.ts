@@ -1,7 +1,8 @@
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Programme, ProgrammeVideo, Explainer } from '../types';
-import { formatFirestoreDate } from '../utils/formatters';
+import { formatFirestoreDate, adjustObjectFormatting } from '../utils/formatters';
+import { COMPLETE_CATALOG_VIDEOS } from '../data/complete_catalog_data';
 
 // ==========================================
 // 1. Safe Helper Functions
@@ -63,9 +64,9 @@ export const DEFAULT_AUTHOR_CARDS: Record<string, Partial<Programme>> = {
   },
   'osita-insights': {
     authorName: 'Osita Chidoka',
-    authorTitle: 'Host, Osita Insights',
+    authorTitle: 'Host, OsitaInsight',
     authorRoleLabel: 'Programme Host',
-    authorBio: 'Osita Insights examines governance, public leadership, political institutions, and civic responsibility through calm, evidence-based commentary.',
+    authorBio: 'OsitaInsight examines governance, public leadership, political institutions, and civic responsibility through calm, evidence-based commentary.',
     showAuthorCard: true,
   },
   'clearpath-insights': {
@@ -216,7 +217,7 @@ export async function getActiveProgrammes(): Promise<Programme[]> {
     
     // Client-side sort order to avoid compound indexes
     uniqueActive.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-    return uniqueActive;
+    return uniqueActive.map(p => adjustObjectFormatting(p));
   } catch (error) {
     console.error('[publicContentService] Error in getActiveProgrammes:', error);
     return [];
@@ -240,7 +241,7 @@ export async function getActiveExplainers(): Promise<Explainer[]> {
     const active = list.filter(e => e.status === 'active');
     
     active.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-    return active;
+    return active.map(e => adjustObjectFormatting(e));
   } catch (error) {
     console.error('[publicContentService] Error in getActiveExplainers:', error);
     return [];
@@ -250,31 +251,47 @@ export async function getActiveExplainers(): Promise<Explainer[]> {
 export async function getPublishedProgrammeVideos(): Promise<ProgrammeVideo[]> {
   try {
     const snap = await getDocs(collection(db, 'programmeVideos'));
-    if (snap.empty) return [];
+    const list = !snap.empty
+      ? snap.docs.map(doc => {
+          const data = doc.data();
+          return { 
+            id: doc.id, 
+            ...data,
+            publishedAtLabel: data.displayDate || formatFirestoreDate(data.publishedAt || data.createdAt),
+            createdAtLabel: formatFirestoreDate(data.createdAt),
+            updatedAtLabel: formatFirestoreDate(data.updatedAt)
+          } as ProgrammeVideo;
+        })
+      : [];
     
-    const list = snap.docs.map(doc => {
-      const data = doc.data();
-      return { 
-        id: doc.id, 
-        ...data,
-        publishedAtLabel: formatFirestoreDate(data.publishedAt || data.createdAt),
-        createdAtLabel: formatFirestoreDate(data.createdAt),
-        updatedAtLabel: formatFirestoreDate(data.updatedAt)
-      } as ProgrammeVideo;
-    });
-    const published = list.filter(v => v.status === 'published');
+    // Merge with COMPLETE_CATALOG_VIDEOS for completeness and offline fallback
+    const mergedMap = new Map<string, ProgrammeVideo>();
     
-    // Sort in reverse chronological order safely client-side
+    // 1. Seed from local complete catalog data
+    for (const v of COMPLETE_CATALOG_VIDEOS) {
+      mergedMap.set(v.id, v);
+    }
+    
+    // 2. Overwrite/extend with Firestore videos
+    for (const v of list) {
+      mergedMap.set(v.id, v);
+    }
+    
+    const mergedList = Array.from(mergedMap.values());
+    const published = mergedList.filter(v => v.status === 'published');
+    
+    // Sort in reverse chronological order safely client-side, prioritizing designated displayDate if valid
     published.sort((a, b) => {
-      const dateA = safeDate(a.publishedAt) || safeDate(a.createdAt) || new Date(0);
-      const dateB = safeDate(b.publishedAt) || safeDate(b.createdAt) || new Date(0);
+      const dateA = safeDate(a.displayDate) || safeDate(a.publishedAt) || safeDate(a.createdAt) || new Date(0);
+      const dateB = safeDate(b.displayDate) || safeDate(b.publishedAt) || safeDate(b.createdAt) || new Date(0);
       return dateB.getTime() - dateA.getTime();
     });
     
-    return published;
+    return published.map(v => adjustObjectFormatting(v));
   } catch (error) {
-    console.error('[publicContentService] Error in getPublishedProgrammeVideos:', error);
-    return [];
+    console.error('[publicContentService] Error in getPublishedProgrammeVideos (falling back to local catalog):', error);
+    // On failure/offline, return local catalog fallback cleanly
+    return COMPLETE_CATALOG_VIDEOS.filter(v => v.status === 'published').map(v => adjustObjectFormatting(v));
   }
 }
 

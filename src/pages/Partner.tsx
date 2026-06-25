@@ -49,8 +49,8 @@ export default function Partner() {
   return (
     <div className="w-full">
       <SEO 
-        title="Partner with Clearpath — Institutional Collaboration" 
-        description="Collaborate with Clearpath Media to build robust, evidence-backed public explanations of national risk, policy changes, and institutional dynamics." 
+        title="Partner with ClearPath — Institutional Collaboration" 
+        description="Collaborate with ClearPath Media to build robust, evidence-backed public explanations of national risk, policy changes, and institutional dynamics." 
       />
       <main className="flex-grow w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto py-unit-xl">
         <section className="max-w-[720px] mx-auto text-center mb-unit-xl md:mb-[96px]">
@@ -86,7 +86,7 @@ export default function Partner() {
         <section className="max-w-[720px] mx-auto bg-surface-container p-gutter rounded border border-outline-variant mb-unit-xl md:mb-[96px] text-center">
           <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-unit-sm">Editorial Transparency</h3>
           <p className="font-body-md text-body-md text-on-surface">
-            Clearpath Media maintains strict editorial independence. While we value our partners, sponsorship does not influence our rigorous editorial process or dictate coverage. All supported content is clearly labelled to ensure transparency with our audience.
+            ClearPath Media maintains strict editorial independence. While we value our partners, sponsorship does not influence our rigorous editorial process or dictate coverage. All supported content is clearly labelled to ensure transparency with our audience.
           </p>
         </section>
 

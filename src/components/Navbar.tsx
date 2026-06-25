@@ -28,7 +28,7 @@ export default function Navbar() {
           {/* Left: Logo container to prevent touching/overlapping */}
           <div className="flex-shrink-0 w-44 md:w-56 h-full flex items-center z-10">
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center h-full py-2">
-              <img src="/logo.png" alt="Clearpath Media" className="h-[80px] md:h-[110px] w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left" />
+              <img src="/logo.png" alt="ClearPath Media" className="h-[80px] md:h-[110px] w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left" />
             </Link>
           </div>
 

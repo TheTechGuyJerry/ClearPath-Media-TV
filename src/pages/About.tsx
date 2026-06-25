@@ -31,12 +31,12 @@ export default function About() {
       name: 'Annabel Orji',
       title: 'Presenter, Daily Brief with Annabel',
       role: 'Daily Briefing Host',
-      bio: 'Annabel Orji hosts Clearpath Media’s signature weekday briefing series, delivering calm, highly structured overviews of primary policy developments, geopolitical, and economic updates.',
+      bio: 'Annabel Orji hosts ClearPath Media’s signature weekday briefing series, delivering calm, highly structured overviews of primary policy developments, geopolitical, and economic updates.',
       tag: 'DAILY BREIFINGS'
     },
     {
       name: 'Osita Chidoka',
-      title: 'Host, Osita Insights',
+      title: 'Host, OsitaInsight',
       role: 'Governance Commentator',
       bio: 'Osita Chidoka deconstructs governance, electoral frameworks, public sector performance, and institutions of accountability, drawing from decades of public leadership.',
       tag: 'GOVERNANCE'
@@ -53,8 +53,8 @@ export default function About() {
   return (
     <div className="w-full">
       <SEO 
-        title="About Clearpath — Institutional Intelligence" 
-        description="Clearpath Media TV is Nigeria's election intelligence platform — delivering data-driven, public-intellectual analysis of politics, governance, and democratic processes." 
+        title="About ClearPath — Institutional Intelligence" 
+        description="ClearPath Media TV is Nigeria's election intelligence platform — delivering data-driven, public-intellectual analysis of politics, governance, and democratic processes." 
       />
 
       {/* Hero Mandate Section */}
@@ -68,7 +68,7 @@ export default function About() {
               Intelligence, <br className="hidden sm:block"/>not advocacy.
             </h1>
             <p className="font-body-lg text-lg md:text-xl text-on-surface-variant max-w-[760px] mx-auto leading-relaxed text-slate-700">
-              Clearpath Media TV is Nigeria's election intelligence platform — delivering data-driven analysis of politics, governance, and democratic processes. We represent a public-intellectual platform focused on Nigeria and West Africa, constructing high-signal explainers and public briefings for serious audiences.
+              ClearPath Media TV is Nigeria's election intelligence platform — delivering data-driven analysis of politics, governance, and democratic processes. We represent a public-intellectual platform focused on Nigeria and West Africa, constructing high-signal explainers and public briefings for serious audiences.
             </p>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function About() {
               </h2>
             </div>
             <p className="text-slate-400 text-sm max-w-sm leading-relaxed">
-              How Clearpath approaches public-intellectual journalism to build lasting public trust.
+              How ClearPath approaches public-intellectual journalism to build lasting public trust.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -144,7 +144,7 @@ export default function About() {
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-400">{person.role}</span>
                 <span className="text-primary font-bold flex items-center gap-1 group-hover:underline">
-                  Clearpath Profile <ArrowUpRight className="w-3.5 h-3.5" />
+                  ClearPath Profile <ArrowUpRight className="w-3.5 h-3.5" />
                 </span>
               </div>
             </div>
@@ -166,10 +166,10 @@ export default function About() {
               </h2>
               <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
                 <p>
-                  Clearpath Media operates as the interpretative engine for primary policy research, maintaining a foundational collaboration with <strong>The Athena Centre for Policy and Leadership</strong>.
+                  ClearPath Media operates as the interpretative engine for primary policy research, maintaining a foundational collaboration with <strong>The Athena Centre for Policy and Leadership</strong>.
                 </p>
                 <p>
-                  While researchers and policy institutes build academic reports on institutional designs, Clearpath Media translates these findings into high-scannability briefings, daily podcasts, and structured YouTube libraries. This pipeline guarantees public understanding is built on verifiable truth rather than hearsay or emotional reaction.
+                  While researchers and policy institutes build academic reports on institutional designs, ClearPath Media translates these findings into high-scannability briefings, daily podcasts, and structured YouTube libraries. This pipeline guarantees public understanding is built on verifiable truth rather than hearsay or emotional reaction.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mt-8 pt-6 border-t border-slate-100 text-xs text-primary font-mono font-bold uppercase tracking-wider">

@@ -12,7 +12,7 @@ const fallbackExplainers: Explainer[] = [
     title: 'Explaining Nigeria',
     slug: 'explaining-nigeria',
     tagline: 'Understanding structural institutions beyond individuals.',
-    shortDescription: 'Establishing Clearpath as an authoritative interpreter of governance structures and federal dynamics.',
+    shortDescription: 'Establishing ClearPath as an authoritative interpreter of governance structures and federal dynamics.',
     fullDescription: 'Our framework details how exclusive list structures work, the boundaries of local authority, and the actual mechanics of state budgets.',
     coverageArea: 'Nigeria',
     topicFocus: ['federalism', 'institutions', 'legislation'],
@@ -127,7 +127,7 @@ export default function Explainers() {
   return (
     <div className="w-full">
       <SEO 
-        title="Evergreen Explainers — Clearpath Media TV" 
+        title="Evergreen Explainers — ClearPath Media TV" 
         description="Foundational data-driven explainers on the democratic processes, civic structures, and federal mechanics shaping Nigeria and Africa." 
       />
       {activeVideoId && (
@@ -149,7 +149,7 @@ export default function Explainers() {
       <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto border-b border-outline-variant">
         <div className="max-w-[800px] font-sans">
           <h1 className="font-display-lg text-display-lg text-primary mb-unit-md font-semibold font-display">Explainers Directory</h1>
-          <p className="font-headline-md text-headline-md text-on-surface mb-unit-sm font-bold text-primary">Clearpath’s explanatory work is designed as long-term public intelligence.</p>
+          <p className="font-headline-md text-headline-md text-on-surface mb-unit-sm font-bold text-primary">ClearPath’s explanatory work is designed as long-term public intelligence.</p>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-md">Focus: systems, not headlines.</p>
         </div>
       </section>

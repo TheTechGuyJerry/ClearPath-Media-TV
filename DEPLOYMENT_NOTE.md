@@ -1,4 +1,4 @@
-# Clearpath Media TV Production Deployment Note
+# ClearPath Media TV Production Deployment Note
 
 ## Staging vs. Production Preview
 

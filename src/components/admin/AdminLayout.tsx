@@ -149,7 +149,7 @@ export default function AdminLayout() {
           <LayoutDashboard className="w-6 h-6 text-secondary-container" />
           <div>
             <h1 className="font-headline-sm font-bold tracking-wide text-white">CMS Workspace</h1>
-            <p className="text-[10px] uppercase text-white/50 tracking-widest font-mono">Clearpath Control</p>
+            <p className="text-[10px] uppercase text-white/50 tracking-widest font-mono">ClearPath Control</p>
           </div>
         </div>
 

@@ -12,6 +12,7 @@ export default function AdminConsoleHome() {
     partnerRequests, 
     contactMessages,
     runSeeder,
+    runVideosSeeder,
     loading
   } = useAdmin();
   
@@ -25,6 +26,17 @@ export default function AdminConsoleHome() {
       alert('ClearPath Catalog seeded successfully!');
     } catch (err: any) {
       alert('Error seeding database: ' + err.message);
+    }
+  };
+
+  const handleSeedVideos = async () => {
+    const confirmMsg = 'Are you sure you want to seed/restore all 70 daily-briefs videos from the complete static catalog? This runs safely client-side in your browser.';
+    if (!confirm(confirmMsg)) return;
+    try {
+      await runVideosSeeder();
+      alert('Seeded 70 complete catalog videos successfully!');
+    } catch (err: any) {
+      alert('Error seeding videos: ' + err.message);
     }
   };
 
@@ -47,7 +59,14 @@ export default function AdminConsoleHome() {
             disabled={loading}
             className="bg-secondary text-primary font-semibold text-xs px-4 py-2 hover:bg-secondary-container transition-all flex items-center gap-2 rounded border border-primary/20 cursor-pointer disabled:opacity-50"
           >
-            <Database className="w-4 h-4" /> {loading ? 'Seeding...' : 'Seed Clearpath Catalog'}
+            <Database className="w-4 h-4" /> {loading ? 'Seeding...' : 'Seed ClearPath Catalog'}
+          </button>
+          <button 
+            onClick={handleSeedVideos}
+            disabled={loading}
+            className="bg-emerald-600 text-white font-semibold text-xs px-4 py-2 hover:bg-emerald-700 transition-all flex items-center gap-2 rounded cursor-pointer disabled:opacity-50"
+          >
+            <Database className="w-4 h-4" /> {loading ? 'Syncing...' : 'Sync 70 Complete Videos'}
           </button>
         </div>
       </div>

@@ -108,7 +108,7 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
             youtubeVideoId: renderSafe(video.youtubeVideoId, '3H95x0BV9nA'),
             shortSummary: renderSafe(video.shortSummary, ''),
             topicTags: safeArray(video.topicTags),
-            publishedAtLabel: formatFirestoreDate(video.publishedAt || video.createdAt, 'Recent')
+            publishedAtLabel: video.displayDate || formatFirestoreDate(video.publishedAt || video.createdAt, 'Recent')
           }));
 
           setVideos(formattedVideos);
@@ -340,7 +340,7 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
                     </span>
                   </div>
                   <h4 className="font-headline-md text-xl font-semibold text-primary mb-2 group-hover:text-primary-container transition-colors leading-snug">{item.title}</h4>
-                  <p className="font-label-md text-label-md text-secondary mb-unit-md flex items-center gap-1.5 text-xs font-semibold"><Users className="w-3.5 h-3.5" /> {item.presenters || 'Osita Insights'}</p>
+                  <p className="font-label-md text-label-md text-secondary mb-unit-md flex items-center gap-1.5 text-xs font-semibold"><Users className="w-3.5 h-3.5" /> {item.presenters || 'OsitaInsight'}</p>
                   <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3 mb-unit-lg flex-grow leading-relaxed">{item.shortSummary}</p>
                   <button 
                     onClick={() => selectEpisodeForPlayback(item.youtubeVideoId || '3H95x0BV9nA', item.title)}

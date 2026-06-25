@@ -1,5 +1,5 @@
 /**
- * Re-designed YouTube Utilities for Clearpath Media
+ * Re-designed YouTube Utilities for ClearPath Media
  * Contains purely helper utility functions. All legacy crawls, fallbacks and API hooks have been removed.
  */
 

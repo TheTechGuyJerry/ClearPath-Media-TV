@@ -35,17 +35,17 @@ interface YoutubeResearchPanelProps {
 
 const ALLOWED_PROGRAMMES = [
   "Daily Brief with Annabel",
-  "Osita Insights",
-  "Clearpath Insights",
+  "OsitaInsight",
+  "ClearPath Insights",
   "Nigeria & Neighbours",
   "Election Matters",
   "Mekaria Series"
 ];
 
 const STANDARD_PROGRAMMES: Record<string, Omit<Programme, 'createdAt' | 'updatedAt'>> = {
-  "Osita Insights": {
+  "OsitaInsight": {
     id: 'osita-insights',
-    title: 'Osita Insights',
+    title: 'OsitaInsight',
     slug: 'osita-insights',
     tagline: 'Reflective national choices and leadership pathways.',
     shortDescription: 'A structured conversation on executive judgment, responsibility, and choices.',
@@ -61,7 +61,7 @@ const STANDARD_PROGRAMMES: Record<string, Omit<Programme, 'createdAt' | 'updated
     status: 'active',
     isFeatured: true,
     sortOrder: 1,
-    seoTitle: 'Osita Insights - Clearpath Media',
+    seoTitle: 'OsitaInsight - ClearPath Media',
     seoDescription: 'Distilled conversations on leadership and choices with Osita Chidoka.'
   },
   "Daily Brief with Annabel": {
@@ -85,14 +85,14 @@ const STANDARD_PROGRAMMES: Record<string, Omit<Programme, 'createdAt' | 'updated
     seoTitle: 'Daily Brief with Annabel - Policydistill',
     seoDescription: 'A direct weekday morning digest explaining major economic and societal transformations.'
   },
-  "Clearpath Insights": {
+  "ClearPath Insights": {
     id: 'clearpath-insights',
-    title: 'Clearpath Insights',
+    title: 'ClearPath Insights',
     slug: 'clearpath-insights',
     tagline: 'Visual blueprints breaking down system structures.',
     shortDescription: 'Clear visual graphics translating complex state processes into clear understandings.',
     fullDescription: 'Evergreen dynamic explainers tracking public finance loops, civil service processes, and constitutional power allocations.',
-    hostName: 'Clearpath Team',
+    hostName: 'ClearPath Team',
     formatType: 'analysis',
     coverageArea: 'Nigeria',
     topicFocus: ['systems', 'civics', 'mechanics', 'state-structure'],
@@ -103,7 +103,7 @@ const STANDARD_PROGRAMMES: Record<string, Omit<Programme, 'createdAt' | 'updated
     status: 'active',
     isFeatured: true,
     sortOrder: 3,
-    seoTitle: 'Clearpath Insights - Civics Unmasked',
+    seoTitle: 'ClearPath Insights - Civics Unmasked',
     seoDescription: 'Explaining state machines and corporate procedures clearly.'
   },
   "Nigeria & Neighbours": {
@@ -113,7 +113,7 @@ const STANDARD_PROGRAMMES: Record<string, Omit<Programme, 'createdAt' | 'updated
     tagline: 'Regional diplomacy and Sahelian security.',
     shortDescription: 'Deep structural studies on West African regional trends and multi-lateral diplomacy.',
     fullDescription: 'Explores cross-border investments, maritime routes, ECOWAS initiatives, and security dynamics shaping West Africa.',
-    hostName: 'Clearpath Analyst Group',
+    hostName: 'ClearPath Analyst Group',
     formatType: 'documentary',
     coverageArea: 'Africa',
     topicFocus: ['diplomacy', 'geopolitics', 'Sahel', 'trade-routes'],
@@ -145,7 +145,7 @@ const STANDARD_PROGRAMMES: Record<string, Omit<Programme, 'createdAt' | 'updated
     status: 'active',
     isFeatured: false,
     sortOrder: 5,
-    seoTitle: 'Election Matters - Clearpath Media',
+    seoTitle: 'Election Matters - ClearPath Media',
     seoDescription: 'Objective tracking of institutional ballots policies.'
   },
   "Mekaria Series": {
@@ -180,7 +180,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "An analytical overview discussing the systemic challenges in Nigeria's power sector and its broader implications on governance and public administration.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["GOVERNANCE", "POWER", "INFRASTRUCTURE"]
   },
   {
@@ -190,7 +190,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A critical commentary on meritocracy, economic incentives, and the structural challenges facing workforce productivity in Nigeria.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["WORKFORCE", "ECONOMY", "LABOR"]
   },
   {
@@ -200,7 +200,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "An investigative discussion on public finance transparency, government expenditure, and the necessity of accountability.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["TRANSPARENCY", "FINANCE", "GOVERNANCE"]
   },
   {
@@ -210,7 +210,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A sensitive and detailed examination of the legal, ethical, and bureaucratic processes surrounding child adoption.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["SOCIETY", "LAW", "ADOPTION"]
   },
   {
@@ -220,7 +220,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A sober analysis of safety in educational institutions, security policies, and student protection frameworks.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["SECURITY", "EDUCATION", "SAFETY"]
   },
   {
@@ -230,7 +230,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A policy review evaluating the Joint Admissions and Matriculation Board's recent administrative reforms and trust levels.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["EDUCATION", "REFORM", "JAMB"]
   },
   {
@@ -240,7 +240,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "An analytical discourse on public leadership recruitment, political party systems, and credentialing in governance.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["LEADERSHIP", "POLITICS", "GOVERNANCE"]
   },
   {
@@ -250,7 +250,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A discussion surrounding statements from tech executives about talent acquisition, educational gaps, and workforce readiness.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["TECH", "TALENT", "EDUCATION"]
   },
   {
@@ -260,7 +260,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A health and social policy overview detailing the surge in substance abuse and regulatory responses in urban centers.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["HEALTH", "SOCIETY", "POLICY"]
   },
   {
@@ -270,7 +270,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A geopolitical and homeland security discussion concerning border patrol agency limits, trade smuggling, and regional safety.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["SECURITY", "BORDERS", "GEOPOLITICS"]
   },
   {
@@ -280,7 +280,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "An educational analysis on performance trends in national matriculation exams and systemic education shortfalls.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["EDUCATION", "UTME", "YOUTH"]
   },
   {
@@ -290,7 +290,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A commentary on electoral politics, representative inclusivity, and political movements in contemporary Nigeria.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["POLITICS", "OBI", "ELECTIONS"]
   },
   {
@@ -300,7 +300,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A public health briefing examining research updates, transmission vectors, and clinical concern around Hantavirus.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["HEALTH", "PANDEMIC", "RESEARCH"]
   },
   {
@@ -310,7 +310,7 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "An investigation of regional migration, diplomatic relations, and socioeconomic tensions underpinning domestic xenophobia.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["DIPLOMACY", "GLOBAL", "AFRICA"]
   },
   {
@@ -320,89 +320,89 @@ const VERIFIED_VIDEOS: DiscoveredVideo[] = [
     suggestedProgramme: "Daily Brief with Annabel",
     suggestedSummary: "A political update on administrative vetoes, legislative confirmations, and major party dynamics.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["POLITICS", "LEGISLATION", "APPOINTMENTS"]
   },
 
-  // Osita Insights
+  // OsitaInsight
   {
     title: "Nigeria Still Has No Stable Power",
     youtubeUrl: "https://www.youtube.com/watch?v=bOa95j2iHc4",
     youtubeVideoId: "bOa95j2iHc4",
-    suggestedProgramme: "Osita Insights",
+    suggestedProgramme: "OsitaInsight",
     suggestedSummary: "A structural assessment on power distribution, infrastructure investment delays, and legislative changes.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["POWER", "ENERGY", "INFRASTRUCTURE"]
   },
   {
     title: "AI Is Making Humans Irrelevant",
     youtubeUrl: "https://www.youtube.com/watch?v=W8zJo4xzWf0",
     youtubeVideoId: "W8zJo4xzWf0",
-    suggestedProgramme: "Osita Insights",
+    suggestedProgramme: "OsitaInsight",
     suggestedSummary: "A technical and sociological review exploring generative AI, labor market displacement, and future workforce transitions.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["TECH", "AI", "FUTURE"]
   },
   {
     title: "Why Good Ideas Don't Work in Nigeria",
     youtubeUrl: "https://www.youtube.com/watch?v=9512AmG0djI",
     youtubeVideoId: "9512AmG0djI",
-    suggestedProgramme: "Osita Insights",
+    suggestedProgramme: "OsitaInsight",
     suggestedSummary: "A policy implementation breakdown identifying the gap between policy design and field execution in executive agencies.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["POLICY", "GOVERNANCE", "EXECUTION"]
   },
   {
     title: "Nigeria's Trillion Naira Illusion",
     youtubeUrl: "https://www.youtube.com/watch?v=cxERxZ4t_ik",
     youtubeVideoId: "cxERxZ4t_ik",
-    suggestedProgramme: "Osita Insights",
+    suggestedProgramme: "OsitaInsight",
     suggestedSummary: "An economic analysis on national budgeting, currency valuation, and the realities of fiscal deficits.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["ECONOMY", "BUDGET", "FINANCE"]
   },
   {
     title: "The Hidden Cost of Online Banking in Nigeria",
     youtubeUrl: "https://www.youtube.com/watch?v=pwo-SFKe4QI",
     youtubeVideoId: "pwo-SFKe4QI",
-    suggestedProgramme: "Osita Insights",
+    suggestedProgramme: "OsitaInsight",
     suggestedSummary: "A financial analysis of electronic transaction fees, bank charges, cyber security, and consumer protection.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["FINANCE", "BANKING", "TECH"]
   },
   {
     title: "The 10 Companies Who Own Nigeria's Economy",
     youtubeUrl: "https://www.youtube.com/watch?v=hB91sq8MtDg",
     youtubeVideoId: "hB91sq8MtDg",
-    suggestedProgramme: "Osita Insights",
+    suggestedProgramme: "OsitaInsight",
     suggestedSummary: "A market concentration study looking at major conglomerates, industrial sectors, and corporate influence.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["ECONOMY", "CORPORATE", "MONOPOLY"]
   },
   {
     title: "Why Nigeria's Wealth Doesn't Reach Most People",
     youtubeUrl: "https://www.youtube.com/watch?v=Cthhn92_u1s",
     youtubeVideoId: "Cthhn92_u1s",
-    suggestedProgramme: "Osita Insights",
+    suggestedProgramme: "OsitaInsight",
     suggestedSummary: "A wealth inequality review discussing economic distribution models, resource allocation, and tax policy.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["ECONOMY", "INEQUALITY", "POLICY"]
   },
   {
     title: "See Where Your Money Goes",
     youtubeUrl: "https://www.youtube.com/watch?v=4OBqf8FKgAU",
     youtubeVideoId: "4OBqf8FKgAU",
-    suggestedProgramme: "Osita Insights",
+    suggestedProgramme: "OsitaInsight",
     suggestedSummary: "A citizen's guide to public expenditure, tracking tax utilization, and the structure of public revenue streams.",
     confidenceLevel: "HIGH",
-    evidenceText: "Verified on Clearpath Media channels.",
+    evidenceText: "Verified on ClearPath Media channels.",
     suggestedTopicTags: ["TAXES", "BUDGET", "CITIZENS"]
   }
 ];
@@ -514,11 +514,11 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
         if (combinedText.includes('annabel') || combinedText.includes('daily brief') || combinedText.includes('daily briefing')) {
           suggestedProgramme = 'Daily Brief with Annabel';
         } else if (combinedText.includes('osita') || combinedText.includes('chidoka') || combinedText.includes('insights')) {
-          suggestedProgramme = 'Osita Insights';
+          suggestedProgramme = 'OsitaInsight';
         } else if (combinedText.includes('three things') || combinedText.includes('mekaria')) {
           suggestedProgramme = 'Mekaria Series';
         } else if (combinedText.includes('clearpath insights') || combinedText.includes('explainer') || combinedText.includes('explainers')) {
-          suggestedProgramme = 'Clearpath Insights';
+          suggestedProgramme = 'ClearPath Insights';
         } else if (combinedText.includes('neighbours') || combinedText.includes('neighbors') || combinedText.includes('neighbour')) {
           suggestedProgramme = 'Nigeria & Neighbours';
         } else if (combinedText.includes('election matters') || combinedText.includes('election')) {
@@ -551,7 +551,7 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
   const startAnalysis = async () => {
     setLoading(true);
     setErrorStatus(null);
-    setStatusMessage('Loading Clearpath Media verified static video assets and running program alignment repair...');
+    setStatusMessage('Loading ClearPath Media verified static video assets and running program alignment repair...');
     try {
       // Run automatic repair of programmes and video links
       await repairClearPathProgrammesAndVideoLinks();
@@ -638,7 +638,7 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
       tagline: standard?.tagline || `Exploring ${title}.`,
       shortDescription: standard?.shortDescription || `An in-depth look at ${title}.`,
       fullDescription: standard?.fullDescription || `Welcome to ${title}, where we seek truth and clarity explaining system structures.`,
-      hostName: standard?.hostName || 'Clearpath Team',
+      hostName: standard?.hostName || 'ClearPath Team',
       formatType: standard?.formatType || 'analysis',
       coverageArea: standard?.coverageArea || 'Nigeria',
       topicFocus: standard?.topicFocus || ['governance'],
@@ -649,7 +649,7 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
       status: 'active',
       isFeatured: standard?.isFeatured !== undefined ? standard.isFeatured : false,
       sortOrder: standard?.sortOrder || 10,
-      seoTitle: standard?.seoTitle || `${title} - Clearpath`,
+      seoTitle: standard?.seoTitle || `${title} - ClearPath`,
       seoDescription: standard?.seoDescription || `Understanding ${title} policies clearly.`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -717,10 +717,10 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
       embedUrl: `https://www.youtube.com/embed/${video.youtubeVideoId}`,
       thumbnailUrl: `https://img.youtube.com/vi/${video.youtubeVideoId}/hqdefault.jpg`,
       duration: '', // omitted from UI
-      presenters: progId === 'osita-insights' ? 'Osita Chidoka' : (progId === 'daily-brief' || progId === 'daily-brief-with-annabel') ? 'Annabel K.' : 'Clearpath Analyst',
+      presenters: progId === 'osita-insights' ? 'Osita Chidoka' : (progId === 'daily-brief' || progId === 'daily-brief-with-annabel') ? 'Annabel K.' : 'ClearPath Analyst',
       guests: '',
       transcript: video.evidenceText,
-      keyPoints: '• Verified on Clearpath Media channels.',
+      keyPoints: '• Verified on ClearPath Media channels.',
       sourceLinks: 'https://clearpath.media',
       topicTags: video.suggestedTopicTags || ['CIVICS'],
       coverageArea: (progId === 'daily-brief' || progId === 'daily-brief-with-annabel') ? 'Nigeria & Africa' : 'Nigeria',
@@ -788,7 +788,7 @@ export default function YoutubeResearchPanel({ programmes, onVideoApproved, effe
   return (
     <div className="space-y-6 animate-fade-in text-on-surface">
       <div className="bg-white p-6 border border-outline-variant rounded-lg shadow-sm">
-        <span className="text-[10px] uppercase text-primary font-bold font-mono tracking-wider bg-secondary px-2.5 py-0.5 rounded">Clearpath Media TV API Discovery</span>
+        <span className="text-[10px] uppercase text-primary font-bold font-mono tracking-wider bg-secondary px-2.5 py-0.5 rounded">ClearPath Media TV API Discovery</span>
         <h1 className="font-display font-semibold text-2xl text-primary mt-1.5 mb-2">YouTube Video Discovery Integration</h1>
         <p className="text-sm text-on-surface-variant max-w-2xl mb-6">
           Query live video assets directly from the official YouTube Data API. Map them dynamically into program folders, filter duplicates automatically, and save as drafts for final validation.

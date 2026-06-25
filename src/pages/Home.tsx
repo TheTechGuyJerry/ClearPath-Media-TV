@@ -136,14 +136,14 @@ export default function Home() {
         setDiagVideos(loadedVideos.length);
         
         const mapped = loadedVideos.map((video: any) => {
-          const progTitle = safeText(video.programmeTitle, 'Clearpath Media');
+          const progTitle = safeText(video.programmeTitle, 'ClearPath Media');
           const videoProgSlug = getSlugFromTitleOrId(video.programmeId, progTitle, loadedProgrammes);
           
           return {
             tag: progTitle,
             title: safeText(video.title, 'Untitled video'),
             desc: safeText(video.shortSummary || video.fullDescription, ''),
-            date: formatFirestoreDate(video.publishedAt || video.createdAt, 'Recent'),
+            date: video.displayDate || formatFirestoreDate(video.publishedAt || video.createdAt, 'Recent'),
             action: 'Watch' as const,
             link: `/programmes/${videoProgSlug}`,
             thumbnail: video.thumbnailUrl || (video.youtubeVideoId ? `https://img.youtube.com/vi/${video.youtubeVideoId}/hqdefault.jpg` : ''),
@@ -180,6 +180,10 @@ export default function Home() {
           });
 
           const getDateVal = (item: any, key: string) => {
+            if (key === 'sortDate' && item.displayDate) {
+              const parsed = Date.parse(item.displayDate);
+              if (!isNaN(parsed)) return parsed;
+            }
             const val = item[key];
             if (!val) return 0;
             if (val.seconds) return val.seconds * 1000;
@@ -240,6 +244,10 @@ export default function Home() {
         let latestVideo: ProgrammeVideo | null = null;
         if (filteredVideos.length > 0) {
           const getDateVal = (item: any, key: string) => {
+            if (key === 'sortDate' && item.displayDate) {
+              const parsed = Date.parse(item.displayDate);
+              if (!isNaN(parsed)) return parsed;
+            }
             const val = item[key];
             if (!val) return 0;
             if (val.seconds) return val.seconds * 1000;
@@ -425,7 +433,7 @@ export default function Home() {
               Clear context <br/>for public life.
             </h1>
             <p className="font-body-lg text-body-lg text-white/90 max-w-2xl mt-unit-sm leading-relaxed">
-              Clearpath Media TV is a public-intellectual media platform focused on Nigeria and West Africa. We explain elections, governance, and political risk through evidence-based analysis for serious audiences. Intelligence, not advocacy.
+              ClearPath Media TV is a public-intellectual media platform focused on Nigeria and West Africa. We explain elections, governance, and political risk through evidence-based analysis for serious audiences. Intelligence, not advocacy.
             </p>
           </div>
         </div>
@@ -476,7 +484,7 @@ export default function Home() {
                   {featuredVideo?.title}
                 </span>
                 <span className="flex flex-wrap items-center gap-2 text-sm text-primary font-bold tracking-wide uppercase">
-                  <span>{featuredVideo.programmeTitle || 'Clearpath Media'}</span>
+                  <span>{featuredVideo.programmeTitle || 'ClearPath Media'}</span>
                   <span className="text-secondary">•</span>
                   <span className="text-on-surface-variant font-normal font-mono normal-case">{featuredVideo.displayDate || formatFirestoreDate(featuredVideo.publishedAt) || 'Recent'}</span>
                 </span>
@@ -566,7 +574,7 @@ export default function Home() {
         <div className="mb-unit-lg">
           <h2 className="font-headline-lg text-3xl font-bold text-primary mb-2">Our Programmes</h2>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
-            Clearpath publishes a limited set of programmes, each designed to serve a specific institutional purpose.
+            ClearPath publishes a limited set of programmes, each designed to serve a specific institutional purpose.
           </p>
         </div>
       {renderedProgrammes.length === 0 ? (
@@ -613,7 +621,7 @@ export default function Home() {
           <div>
             <h2 className="font-headline-lg text-3xl font-bold text-primary mb-2">Explainers</h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
-              Clearpath builds long-term explanatory assets designed to be revisited, cited, and trusted.
+              ClearPath builds long-term explanatory assets designed to be revisited, cited, and trusted.
             </p>
           </div>
         </div>
@@ -643,9 +651,9 @@ export default function Home() {
 
       <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto border-b border-outline-variant">
         <div className="mb-unit-lg text-center max-w-3xl mx-auto">
-          <h2 className="font-headline-lg text-3xl font-bold text-primary mb-unit-md">Why Clearpath</h2>
+          <h2 className="font-headline-lg text-3xl font-bold text-primary mb-unit-md">Why ClearPath</h2>
           <p className="font-body-lg text-body-lg text-on-surface-variant mb-unit-sm leading-relaxed">
-            Clearpath exists because serious ideas often fail to reach wider publics — not because they are weak, but because they are poorly explained.
+            ClearPath exists because serious ideas often fail to reach wider publics — not because they are weak, but because they are poorly explained.
           </p>
           <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
             We sit between journalism and academia, where public understanding is formed.
@@ -661,12 +669,12 @@ export default function Home() {
       </section>
 
       <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto text-center">
-        <h2 className="font-headline-lg text-3xl font-bold text-primary mb-unit-md">Partner with Clearpath</h2>
+        <h2 className="font-headline-lg text-3xl font-bold text-primary mb-unit-md">Partner with ClearPath</h2>
         <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-unit-lg leading-relaxed">
-          Clearpath works with institutions that value trust, clarity, and public understanding.
+          ClearPath works with institutions that value trust, clarity, and public understanding.
         </p>
         <Link to="/partner" className="inline-block bg-primary text-white font-bold px-8 py-4 rounded hover:bg-primary-container transition-colors tracking-wide text-sm uppercase shadow-sm">
-          Partner with Clearpath
+          Partner with ClearPath
         </Link>
       </section>
 

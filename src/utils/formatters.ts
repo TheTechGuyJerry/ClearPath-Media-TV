@@ -58,3 +58,49 @@ export function safeArray<T = any>(value: any): T[] {
 export function renderSafe(value: any, fallback = ""): string {
   return safeReactText(value, fallback);
 }
+
+export function adjustNameFormatting(text: any): string {
+  if (valueIsEmpty(text)) return "";
+  let str = String(text);
+  
+  // Replace "Osita Insights" (and variations) with "OsitaInsight"
+  str = str.replace(/\bOsita\s+Insights\b/gi, 'OsitaInsight');
+  str = str.replace(/\bOsitaInsights\b/gi, 'OsitaInsight');
+  str = str.replace(/\bositainsight\b/gi, 'OsitaInsight');
+  str = str.replace(/\bositainsights\b/gi, 'OsitaInsight');
+  
+  // Replace "Clearpath" or "clearpath" with "ClearPath" case-insensitively
+  str = str.replace(/\bClearpath\b/g, 'ClearPath');
+  str = str.replace(/\bclearpath\b/g, 'ClearPath');
+  str = str.replace(/\bCLEARPATH\b/g, 'ClearPath');
+  
+  return str;
+}
+
+function valueIsEmpty(val: any): boolean {
+  return val === null || val === undefined || String(val).trim() === '';
+}
+
+export function adjustObjectFormatting<T>(obj: T): T {
+  if (!obj || typeof obj !== 'object') return obj;
+  
+  // Handle Firestore Timestamp or special objects without traversing them recursively
+  if ('seconds' in obj && 'nanoseconds' in obj) {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => adjustObjectFormatting(item)) as unknown as T;
+  }
+  
+  const copy = { ...obj } as any;
+  for (const key of Object.keys(copy)) {
+    const val = copy[key];
+    if (typeof val === 'string') {
+      copy[key] = adjustNameFormatting(val);
+    } else if (typeof val === 'object' && val !== null) {
+      copy[key] = adjustObjectFormatting(val);
+    }
+  }
+  return copy as T;
+}

@@ -163,7 +163,7 @@ export default function SubscribeHover() {
                 You're in!
               </h4>
               <p className="font-body-md text-sm text-white/80 leading-relaxed">
-                Thank you for subscribing. Welcome to Clearpath Media.
+                Thank you for subscribing. Welcome to ClearPath Media.
               </p>
             </motion.div>
           )}

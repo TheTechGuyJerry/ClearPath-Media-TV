@@ -1,13 +1,14 @@
 import { db } from './firebase';
 import { doc, setDoc, collection, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Programme, Explainer, SiteSettings } from '../types';
+import { COMPLETE_CATALOG_VIDEOS } from '../data/complete_catalog_data';
 
 export async function seedProductionDatabase(currentUserUid: string, currentUserEmail: string, currentDisplayName: string): Promise<{ dailyBriefCount: number; ositaInsightsCount: number; errors?: string[] }> {
   // 1. Programmes
   const programmesToSeed: Programme[] = [
     {
       id: 'osita-insights',
-      title: 'Osita Insights',
+      title: 'OsitaInsight',
       slug: 'osita-insights',
       tagline: 'Reflective national choices and leadership pathways.',
       shortDescription: 'A structured conversation on executive judgment, responsibility, and choices.',
@@ -23,7 +24,7 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
       status: 'active',
       isFeatured: true,
       sortOrder: 1,
-      seoTitle: 'Osita Insights - Clearpath Media',
+      seoTitle: 'OsitaInsight - ClearPath Media',
       seoDescription: 'Distilled conversations on leadership and choices with Osita Chidoka.',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -53,12 +54,12 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
     },
     {
       id: 'clearpath-insights',
-      title: 'Clearpath Insights',
+      title: 'ClearPath Insights',
       slug: 'clearpath-insights',
       tagline: 'Visual blueprints breaking down system structures.',
       shortDescription: 'Clear visual graphics translating complex state processes into clear understandings.',
       fullDescription: 'Evergreen dynamic explainers tracking public finance loops, civil service processes, and constitutional power allocations.',
-      hostName: 'Clearpath Team',
+      hostName: 'ClearPath Team',
       formatType: 'analysis',
       coverageArea: 'Nigeria',
       topicFocus: ['systems', 'civics', 'mechanics', 'state-structure'],
@@ -69,7 +70,7 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
       status: 'active',
       isFeatured: true,
       sortOrder: 3,
-      seoTitle: 'Clearpath Insights - Civics Unmasked',
+      seoTitle: 'ClearPath Insights - Civics Unmasked',
       seoDescription: 'Explaining state machines and corporate procedures clearly.',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -81,7 +82,7 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
       tagline: 'Regional diplomacy and Sahelian security.',
       shortDescription: 'Deep structural studies on West African regional trends and multi-lateral diplomacy.',
       fullDescription: 'Explores cross-border investments, maritime routes, ECOWAS initiatives, and security dynamics shaping West Africa.',
-      hostName: 'Clearpath Analyst Group',
+      hostName: 'ClearPath Analyst Group',
       formatType: 'documentary',
       coverageArea: 'Africa',
       topicFocus: ['diplomacy', 'geopolitics', 'Sahel', 'trade-routes'],
@@ -115,7 +116,7 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
       status: 'active',
       isFeatured: false,
       sortOrder: 5,
-      seoTitle: 'Election Matters - Clearpath Media',
+      seoTitle: 'Election Matters - ClearPath Media',
       seoDescription: 'Objective tracking of institutional ballots policies.',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -156,7 +157,7 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
       title: 'Explaining Nigeria',
       slug: 'explaining-nigeria',
       tagline: 'Understanding structural institutions beyond individuals.',
-      shortDescription: 'Establishing Clearpath as an authoritative interpreter of governance structures and federal dynamics.',
+      shortDescription: 'Establishing ClearPath as an authoritative interpreter of governance structures and federal dynamics.',
       fullDescription: 'Our framework details how exclusive list structures work, the boundaries of local authority, and the actual mechanics of state budgets.',
       coverageArea: 'Nigeria',
       topicFocus: ['federalism', 'institutions', 'legislation', 'autonomy'],
@@ -198,9 +199,9 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
   // 3. Site Settings
   const defaultSettings: SiteSettings = {
     id: 'primary',
-    siteName: 'Clearpath Media',
+    siteName: 'ClearPath Media',
     siteTagline: 'Systems, Not Headlines',
-    heroTitle: 'Clearpath Media',
+    heroTitle: 'ClearPath Media',
     heroSubtitle: 'Public intelligence to interpret West African governance and policies without the noise.',
     heroVideoUrl: 'https://www.youtube.com/watch?v=3H95x0BV9nA',
     heroVideoId: '3H95x0BV9nA',
@@ -216,7 +217,7 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
     partnershipEmail: 'partnerships@clearpath.media',
     newsletterTitle: 'Subscribe to the Daily Brief',
     newsletterDescription: 'A weekday morning briefing to understand deep system design inside civil policies.',
-    footerText: '© 2026 Clearpath Media. All rights reserved.',
+    footerText: '© 2026 ClearPath Media. All rights reserved.',
     updatedAt: new Date().toISOString()
   };
 
@@ -245,7 +246,7 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
   const canonicalProgs: Programme[] = [
     {
       id: 'osita-insights',
-      title: 'Osita Insights',
+      title: 'OsitaInsight',
       slug: 'osita-insights',
       tagline: 'Reflective national choices and leadership pathways.',
       shortDescription: 'A structured conversation on executive judgment, responsibility, and choices.',
@@ -261,7 +262,7 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       status: 'active',
       isFeatured: true,
       sortOrder: 1,
-      seoTitle: 'Osita Insights - Clearpath Media',
+      seoTitle: 'OsitaInsight - ClearPath Media',
       seoDescription: 'Distilled conversations on leadership and choices with Osita Chidoka.',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -291,12 +292,12 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
     },
     {
       id: 'clearpath-insights',
-      title: 'Clearpath Insights',
+      title: 'ClearPath Insights',
       slug: 'clearpath-insights',
       tagline: 'Visual blueprints breaking down system structures.',
       shortDescription: 'Clear visual graphics translating complex state processes into clear understandings.',
       fullDescription: 'Evergreen dynamic explainers tracking public finance loops, civil service processes, and constitutional power allocations.',
-      hostName: 'Clearpath Team',
+      hostName: 'ClearPath Team',
       formatType: 'analysis',
       coverageArea: 'Nigeria',
       topicFocus: ['systems', 'civics', 'mechanics', 'state-structure'],
@@ -307,7 +308,7 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       status: 'active',
       isFeatured: true,
       sortOrder: 3,
-      seoTitle: 'Clearpath Insights - Civics Unmasked',
+      seoTitle: 'ClearPath Insights - Civics Unmasked',
       seoDescription: 'Explaining state machines and corporate procedures clearly.',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -319,7 +320,7 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       tagline: 'Regional diplomacy and Sahelian security.',
       shortDescription: 'Deep structural studies on West African regional trends and multi-lateral diplomacy.',
       fullDescription: 'Explores cross-border investments, maritime routes, ECOWAS initiatives, and security dynamics shaping West Africa.',
-      hostName: 'Clearpath Analyst Group',
+      hostName: 'ClearPath Analyst Group',
       formatType: 'documentary',
       coverageArea: 'Africa',
       topicFocus: ['diplomacy', 'geopolitics', 'Sahel', 'trade-routes'],
@@ -353,7 +354,7 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       status: 'active',
       isFeatured: false,
       sortOrder: 5,
-      seoTitle: 'Election Matters - Clearpath Media',
+      seoTitle: 'Election Matters - ClearPath Media',
       seoDescription: 'Objective tracking of institutional ballots policies.',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -430,7 +431,7 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       slug: 'explaining-nigeria',
       status: 'active' as const,
       tagline: 'Understanding structural institutions beyond individuals.',
-      shortDescription: 'Establishing Clearpath as an authoritative interpreter of governance structures and federal dynamics.',
+      shortDescription: 'Establishing ClearPath as an authoritative interpreter of governance structures and federal dynamics.',
       fullDescription: 'Our framework details how exclusive list structures work, the boundaries of local authority, and the actual mechanics of state budgets.',
       coverageArea: 'Nigeria' as const,
       topicFocus: ['federalism', 'institutions', 'legislation', 'autonomy'],
@@ -484,9 +485,9 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
     let targetProgSlug = '';
     let canonicalTitle = '';
 
-    if (normTitle === 'osita insights') {
+    if (normTitle === 'osita insights' || normTitle === 'ositainsight') {
       targetProgSlug = 'osita-insights';
-      canonicalTitle = 'Osita Insights';
+      canonicalTitle = 'OsitaInsight';
     } else if (
       normTitle === 'daily brief with annabel' ||
       normTitle === 'daily brief with annabel orji' ||
@@ -496,7 +497,7 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       canonicalTitle = 'Daily Brief with Annabel';
     } else if (normTitle === 'clearpath insights') {
       targetProgSlug = 'clearpath-insights';
-      canonicalTitle = 'Clearpath Insights';
+      canonicalTitle = 'ClearPath Insights';
     } else if (
       normTitle === 'nigeria & neighbours' ||
       normTitle === 'nigeria and neighbours' ||
@@ -528,4 +529,21 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
   }
 
   return { repairedProgrammesCount, repairedVideosCount };
+}
+
+export async function seedCompleteVideosCatalog(): Promise<{ seededCount: number; errors: string[] }> {
+  let seededCount = 0;
+  const errors: string[] = [];
+  
+  for (const video of COMPLETE_CATALOG_VIDEOS) {
+    try {
+      await setDoc(doc(db, 'programmeVideos', video.id), video, { merge: true });
+      seededCount++;
+    } catch (err: any) {
+      console.error(`Error seeding video ${video.id}:`, err);
+      errors.push(`Video ${video.id}: ${err.message || String(err)}`);
+    }
+  }
+  
+  return { seededCount, errors };
 }

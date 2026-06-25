@@ -2,6 +2,7 @@ import { X, Youtube, Podcast, CheckCircle2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { adjustNameFormatting } from '../utils/formatters';
 
 interface JoinModalProps {
   isOpen: boolean;
@@ -57,13 +58,13 @@ export default function JoinModal({ isOpen, onClose }: JoinModalProps) {
         const rawProgs = progSnap.docs
           .map(d => d.data() as any)
           .filter(p => p.status === 'active')
-          .map(p => (p.title || '').trim())
+          .map(p => adjustNameFormatting(p.title || '').trim())
           .filter(Boolean);
         
         const activeProgs = Array.from(new Set(rawProgs));
         
         const finalProgs = activeProgs.length > 0 ? activeProgs : [
-          'Osita Insights', 'Daily Brief with Annabel', 'Clearpath Insights', 
+          'OsitaInsight', 'Daily Brief with Annabel', 'ClearPath Insights', 
           'Nigeria & Neighbours', 'Election Matters', 'Mekaria Series'
         ];
 
@@ -79,7 +80,7 @@ export default function JoinModal({ isOpen, onClose }: JoinModalProps) {
       } catch (err) {
         console.error('Error fetching programmes for subscribe list:', err);
         const fallbacks = [
-          'Osita Insights', 'Daily Brief with Annabel', 'Clearpath Insights', 
+          'OsitaInsight', 'Daily Brief with Annabel', 'ClearPath Insights', 
           'Nigeria & Neighbours', 'Election Matters', 'Mekaria Series'
         ];
         setActiveProgrammes(fallbacks);
@@ -331,15 +332,15 @@ export default function JoinModal({ isOpen, onClose }: JoinModalProps) {
 
           <div className="flex flex-wrap items-center justify-between gap-unit-sm mt-6 pt-4 border-t border-outline-variant text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
             <div className="flex items-center gap-4">
-              <a href="https://www.youtube.com/@ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <a href="https://www.youtube.com/@ClearPathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors">
                 <Youtube className="w-4 h-4 text-[#ff0000]" /> 
                 <span className="underline decoration-primary/30 hover:decoration-primary">YouTube</span>
               </a>
-              <a href="https://www.youtube.com/@ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <a href="https://www.youtube.com/@ClearPathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors">
                 <Podcast className="w-4 h-4 text-purple-600" /> 
                 <span className="underline decoration-primary/30 hover:decoration-primary">Podcasts</span>
               </a>
-              <a href="https://x.com/ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <a href="https://x.com/ClearPathMediaTV" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors">
                 <svg className="w-4 h-4 text-slate-800 dark:text-slate-100 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>

@@ -35,13 +35,13 @@ export interface DiscoveredVideo {
 }
 
 /**
- * Searches and verifies real public YouTube videos from the Clearpath Media TV channel
+ * Searches and verifies real public YouTube videos from the ClearPath Media TV channel
  * using Google Search grounding via the gemini-3.5-flash model.
  */
 export async function discoverYouTubeVideos(): Promise<DiscoveredVideo[]> {
   const ai = getGeminiClient();
   
-  const prompt = `Perform extensive search using the Google Search tool to find real, active public YouTube videos from the official 'Clearpath Media TV' channel (often represented by /@ClearpathMediaTV or channel handle 'ClearpathMediaTV').
+  const prompt = `Perform extensive search using the Google Search tool to find real, active public YouTube videos from the official 'ClearPath Media TV' channel (often represented by /@ClearPathMediaTV or channel handle 'ClearPathMediaTV').
   
   Locate real video recordings. For each real public video you find, obtain:
   1. The exact video title.
@@ -51,15 +51,15 @@ export async function discoverYouTubeVideos(): Promise<DiscoveredVideo[]> {
   5. A high-fidelity, suggested 1-2 sentence visual and topical summary.
   6. Relevant topic tags (e.g. ["ECONOMY", "GOVERNANCE", "TRADE", "CIVICS", "REFORM"]).
   7. Map each video strictly to one of our six standard programme identifiers:
-     * "osita-insights" (for Osita Insights - usually features Osita Chidoka)
+     * "osita-insights" (for OsitaInsight - usually features Osita Chidoka)
      * "daily-brief" (for Daily Brief with Annabel - usually weekday morning digests, policy summaries, macrofinance)
-     * "clearpath-insights" (for Clearpath Insights - general civic explanations and visual breakdowns)
+     * "clearpath-insights" (for ClearPath Insights - general civic explanations and visual breakdowns)
      * "nigeria-neighbours" (for Nigeria & Neighbours - geopolitics, border trade, regional security, West Africa)
      * "election-matters" (for Election Matters - ballots, commission policies, voter biometric technologies)
      * "mekaria-series" (for Mekaria Series - grassroots development, budget allocations, local government area sovereignty)
 
   CRITICAL VERIFICATION RULES:
-  - Do NOT invent or hallucinate any YouTube video titles, video IDs, or links. Only report what is found and verified on Clearpath Media TV.
+  - Do NOT invent or hallucinate any YouTube video titles, video IDs, or links. Only report what is found and verified on ClearPath Media TV.
   - Set confidence Level to HIGH if you found direct confirmation of the video ID on YouTube metadata, MEDIUM if suggested by search text, or LOW if speculative. Remove any speculative/LOW confidence matches entirely from the final list.
   - Do NOT map a video to are standard programmes unless the video title, description, playlist context, or speakers clearly support that mapping.
   - Do NOT repeat the same YouTube video ID across multiple items unless the same video truly is published in both series (which is rare). Make sure video IDs are distinct.

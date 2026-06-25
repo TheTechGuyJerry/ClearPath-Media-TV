@@ -16,7 +16,7 @@ import SEO from '../components/SEO';
 const fallbackProgrammes: Programme[] = [
   {
     id: 'osita-insights',
-    title: 'Osita Insights',
+    title: 'OsitaInsight',
     slug: 'osita-insights',
     tagline: 'Reflective national choices and leadership pathways.',
     shortDescription: 'A structured conversation on executive judgment, responsibility, and choices.',
@@ -32,7 +32,7 @@ const fallbackProgrammes: Programme[] = [
     status: 'active',
     isFeatured: true,
     sortOrder: 1,
-    seoTitle: 'Osita Insights',
+    seoTitle: 'OsitaInsight',
     seoDescription: 'Discussing civil leadership.',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -119,6 +119,10 @@ export default function Programmes() {
         let latestVideo: any = null;
         if (filteredVideos.length > 0) {
           const getDateVal = (item: any, key: string) => {
+            if (key === 'sortDate' && item.displayDate) {
+              const parsed = Date.parse(item.displayDate);
+              if (!isNaN(parsed)) return parsed;
+            }
             const val = item[key];
             if (!val) return 0;
             if (val.seconds) return val.seconds * 1000;
@@ -236,13 +240,13 @@ export default function Programmes() {
   return (
     <div className="w-full">
       <SEO 
-        title="Programmes — Clearpath Media TV" 
-        description="Explore Clearpath Media's series of structured programs on African policy, power, governance, and democratic accountability." 
+        title="Programmes — ClearPath Media TV" 
+        description="Explore ClearPath Media's series of structured programs on African policy, power, governance, and democratic accountability." 
       />
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-unit-xl">
         <section className="mb-unit-xl max-w-3xl">
           <h1 className="font-display-lg text-display-lg text-primary mb-unit-sm font-semibold">Programmes</h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">Clearpath publishes a deliberately limited or structured selection of programmes. Each has a clear focus, schedule, and targeted professional coverage.</p>
+          <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">ClearPath publishes a deliberately limited or structured selection of programmes. Each has a clear focus, schedule, and targeted professional coverage.</p>
         </section>
       </div>
       

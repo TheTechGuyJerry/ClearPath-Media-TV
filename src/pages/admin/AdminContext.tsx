@@ -30,7 +30,7 @@ import {
   PartnerRequest, 
   NewsletterSubscriber 
 } from '../../types';
-import { seedProductionDatabase, repairClearPathProgrammesAndVideoLinks } from '../../lib/seeder';
+import { seedProductionDatabase, repairClearPathProgrammesAndVideoLinks, seedCompleteVideosCatalog } from '../../lib/seeder';
 
 const provider = new GoogleAuthProvider();
 
@@ -127,6 +127,7 @@ export interface AdminContextType {
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   runSeeder: () => Promise<void>;
+  runVideosSeeder: () => Promise<void>;
   handleSaveItem: (type: string, data: any) => Promise<void>;
   handleDeleteItem: (collectionName: string, docId: string) => Promise<void>;
   handleUpdateStatus: (collectionName: string, id: string, newStatus: string) => Promise<void>;
@@ -477,9 +478,9 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       } else {
         const initialSettings: SiteSettings = {
           id: 'primary',
-          siteName: 'Clearpath Media',
+          siteName: 'ClearPath Media',
           siteTagline: 'Systems, Not Headlines',
-          heroTitle: 'Clearpath Media',
+          heroTitle: 'ClearPath Media',
           heroSubtitle: 'Public intelligence to interpret West African governance and policies without the noise.',
           heroVideoUrl: 'https://www.youtube.com/watch?v=3H95x0BV9nA',
           heroVideoId: '3H95x0BV9nA',
@@ -495,7 +496,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           partnershipEmail: 'partnerships@clearpath.media',
           newsletterTitle: 'Subscribe to the Daily Brief',
           newsletterDescription: 'A weekday morning briefing to understand deep system design inside civil policies.',
-          footerText: '© 2026 Clearpath Media. All rights reserved.',
+          footerText: '© 2026 ClearPath Media. All rights reserved.',
           updatedAt: new Date().toISOString()
         };
         await setDoc(doc(db, 'siteSettings', 'primary'), initialSettings);
@@ -628,10 +629,25 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         auth.currentUser?.email || 'jerryagbedun@gmail.com',
         auth.currentUser?.displayName || 'Administrator'
       );
+      await seedCompleteVideosCatalog();
       await repairClearPathProgrammesAndVideoLinks();
       setRefreshTrigger(prev => prev + 1);
     } catch (err: any) {
       console.error('Seeder failed: ', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const runVideosSeeder = async () => {
+    setLoading(true);
+    try {
+      await seedCompleteVideosCatalog();
+      await repairClearPathProgrammesAndVideoLinks();
+      setRefreshTrigger(prev => prev + 1);
+    } catch (err: any) {
+      console.error('Videos Seeder failed: ', err);
       throw err;
     } finally {
       setLoading(false);
@@ -1074,6 +1090,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       loginWithEmail,
       logout,
       runSeeder,
+      runVideosSeeder,
       handleSaveItem,
       handleDeleteItem,
       handleUpdateStatus,

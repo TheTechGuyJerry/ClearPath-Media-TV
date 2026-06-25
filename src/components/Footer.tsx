@@ -6,16 +6,16 @@ export default function Footer() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto gap-gutter">
         <div className="flex flex-col gap-unit-sm">
           <Link to="/" className="inline-block">
-            <img src="/logo.png" alt="Clearpath Media" className="h-20 md:h-28 w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left hover:opacity-80 transition-opacity -ml-3" />
+            <img src="/logo.png" alt="ClearPath Media" className="h-20 md:h-28 w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left hover:opacity-80 transition-opacity -ml-3" />
           </Link>
           <p className="font-body-md text-body-md text-on-surface-variant max-w-sm">
-            © 2024 Clearpath Media. Explaining power, policy, and society.
+            © 2024 ClearPath Media. Explaining power, policy, and society.
           </p>
         </div>
         <nav className="flex flex-wrap gap-unit-md md:gap-unit-lg py-unit-sm opacity-80 hover:opacity-100 transition-opacity">
           <Link to="/" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Newsletter</Link>
-          <a href="https://www.youtube.com/@ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">YouTube</a>
-          <a href="https://www.youtube.com/@ClearpathMediaTV" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Podcasts</a>
+          <a href="https://www.youtube.com/@ClearPathMediaTV" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">YouTube</a>
+          <a href="https://www.youtube.com/@ClearPathMediaTV" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Podcasts</a>
           <Link to="/partner" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Contact</Link>
           <Link to="/about" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Editorial Policy</Link>
         </nav>

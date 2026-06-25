@@ -135,7 +135,7 @@ export default function AdminSiteSettings() {
               <option value="">-- No Override (Show Newest Video) --</option>
               {programmeVideos.map(v => {
                 const prog = programmes.find(p => p.id === v.programmeId || p.slug === v.programmeId);
-                const progTitle = prog ? prog.title : (v.programmeTitle || 'Clearpath Media');
+                const progTitle = prog ? prog.title : (v.programmeTitle || 'ClearPath Media');
                 return (
                   <option key={v.id} value={v.id}>
                     [{progTitle}] {v.title}

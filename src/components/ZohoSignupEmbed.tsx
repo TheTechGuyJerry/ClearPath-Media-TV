@@ -125,7 +125,7 @@ export default function ZohoSignupEmbed() {
       >
         <div className="relative z-10 max-w-2xl mx-auto flex flex-col gap-4">
           <h3 className="text-xl md:text-2xl font-bold font-display text-white tracking-tight leading-snug">
-            Get Clearpath election intelligence in your inbox.
+            Get ClearPath election intelligence in your inbox.
           </h3>
           <p className="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
             Data-driven political risk, democratic analysis, and public governance insights sent straight to your email.

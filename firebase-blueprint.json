@@ -15,7 +15,7 @@
     },
     "programme": {
       "title": "Programme",
-      "description": "A structured media category published by Clearpath.",
+      "description": "A structured media category published by ClearPath.",
       "type": "object",
       "properties": {
         "title": { "type": "string" },
@@ -261,7 +261,7 @@
   },
   "firestore": {
     "users": { "schema": "user", "description": "Admin accounts." },
-    "programmes": { "schema": "programme", "description": "The collection of Clearpath dynamic public programmes." },
+    "programmes": { "schema": "programme", "description": "The collection of ClearPath dynamic public programmes." },
     "programmeVideos": { "schema": "programmeVideo", "description": "The collection of videos under dynamic programmes." },
     "explainers": { "schema": "explainer", "description": "Dynamic explainers categories." },
     "explainerItems": { "schema": "explainerItem", "description": "Explainer articles and videos details." },
