@@ -23,13 +23,24 @@ import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
 
 function getProgrammeImageUrl(p: Programme): string {
+  const pid = (p.id || p.slug || p.title || '').toLowerCase().trim();
+  if (pid.includes('osita') || pid === 'ositainsight') {
+    return '/images/ositainsight.jpg';
+  }
+  if (pid.includes('annabel') || pid.includes('daily-brief') || pid.includes('daily_brief')) {
+    return '/images/daily_brief_annabel.jpg';
+  }
+  if (pid.includes('election') || pid === 'election-matters') {
+    return '/images/election_matters.jpg';
+  }
+
+  if (p.coverImage) return p.coverImage;
+  if (p.thumbnailImage) return p.thumbnailImage;
   if (p.cardImageUrl) return p.cardImageUrl;
   if (p.coverImageUrl) return p.coverImageUrl;
   if (p.thumbnailUrl) return p.thumbnailUrl;
   if (p.imageUrl) return p.imageUrl;
   if (p.latestVideoThumbnail) return p.latestVideoThumbnail;
-  if (p.coverImage) return p.coverImage;
-  if (p.thumbnailImage) return p.thumbnailImage;
   return 'https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM'; // Branded fallback
 }
 

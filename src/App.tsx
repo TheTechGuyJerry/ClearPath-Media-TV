@@ -16,6 +16,7 @@ import Explainers from './pages/Explainers';
 import About from './pages/About';
 import Partner from './pages/Partner';
 import ThreeThings from './pages/ThreeThings';
+import Subscribe from './pages/Subscribe';
 
 // Isolated authenticated admin imports
 import { AdminProvider } from './pages/admin/AdminContext';
@@ -92,6 +93,7 @@ function AppRoutes() {
 
             <Route path="/about" element={<About />} />
             <Route path="/partner" element={<Partner />} />
+            <Route path="/subscribe" element={<Subscribe />} />
 
             {/* Admin Authenticated Routes Group */}
             <Route path="/admin/*" element={

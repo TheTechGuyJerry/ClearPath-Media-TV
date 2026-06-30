@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { doc, setDoc, collection, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { Programme, Explainer, SiteSettings } from '../types';
 import { COMPLETE_CATALOG_VIDEOS } from '../data/complete_catalog_data';
 
@@ -19,8 +19,8 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
       topicFocus: ['governance', 'leadership', 'choices', 'policies'],
       scheduleText: 'Twice Monthly',
       youtubePlaylistUrl: 'https://www.youtube.com/playlist?list=PL3H95x0BV9nA',
-      coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0',
-      thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0',
+      coverImage: '/images/ositainsight.jpg',
+      thumbnailImage: '/images/ositainsight.jpg',
       status: 'active',
       isFeatured: true,
       sortOrder: 1,
@@ -42,8 +42,8 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
       topicFocus: ['policy', 'economy', 'macro-finance', 'trade'],
       scheduleText: 'Weekdays at 7:00 AM WAT',
       youtubePlaylistUrl: 'https://www.youtube.com/playlist?list=PL3H95x0BV9nA',
-      coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM',
-      thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM',
+      coverImage: '/images/daily_brief_annabel.jpg',
+      thumbnailImage: '/images/daily_brief_annabel.jpg',
       status: 'active',
       isFeatured: true,
       sortOrder: 2,
@@ -92,7 +92,7 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
       thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBNKSTe017KwF4P5tDrfPbgUDFKdtbE0uX2CL4fe-GGzUZFgW2Kj7l_yhAFWN9KtcdYZeCtL6IrwUf7qgeJvB3WDo96DaS6teP4-dYR7PZERUdB5BQsSmE0XE2fbZt96Tb8aNpGN_kLOU8V1bBtB620uHO0cDp9aysehKGWjUZ26n52xtGLOmkKGUm-1oq1ySJxEAGbfi1G4wiP-jBPTemlTbpgo0FiF6qxlhAZ7m7MTqPJNhf8LEM48dn_AbHBKVU59GTG3BzWpzU',
       status: 'active',
       isFeatured: false,
-      sortOrder: 4,
+      sortOrder: 5,
       seoTitle: 'Nigeria & Neighbours - Regional Analysis',
       seoDescription: 'Understanding security networks and continental alignments.',
       createdAt: new Date().toISOString(),
@@ -111,11 +111,11 @@ export async function seedProductionDatabase(currentUserUid: string, currentUser
       topicFocus: ['elections', 'reform', 'voting-systems', 'civic-trust'],
       scheduleText: 'During political windows',
       youtubePlaylistUrl: '',
-      coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBJEJ-XzUJpmNkQrXIdZDvgA6hIAbYMuln8MyC3A8rRzfBCqk0ALvJR0hPpKRONljw0wdiTqJGdMMleOtmuJtRwcUFXj_0a_4k-2aHV17tL8ZdfD6FyPbkhDKlYoL8HoUAi17IWXylWrc72xYSBQTQh_rC6JAB2yzHwPG6n1yMXv6Y1EjLYUM5V2qdDo-4Ucx5Z3R4rZcf5uJy5EeImosm1KqwSLtqmncPTfCrHqVlrKUfbiEY2IMtSiVq8vCqdwGK9mZht_XIs4lg',
-      thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBJEJ-XzUJpmNkQrXIdZDvgA6hIAbYMuln8MyC3A8rRzfBCqk0ALvJR0hPpKRONljw0wdiTqJGdMMleOtmuJtRwcUFXj_0a_4k-2aHV17tL8ZdfD6FyPbkhDKlYoL8HoUAi17IWXylWrc72xYSBQTQh_rC6JAB2yzHwPG6n1yMXv6Y1EjLYUM5V2qdDo-4Ucx5Z3R4rZcf5uJy5EeImosm1KqwSLtqmncPTfCrHqVlrKUfbiEY2IMtSiVq8vCqdwGK9mZht_XIs4lg',
+      coverImage: '/images/election_matters.jpg',
+      thumbnailImage: '/images/election_matters.jpg',
       status: 'active',
       isFeatured: false,
-      sortOrder: 5,
+      sortOrder: 4,
       seoTitle: 'Election Matters - ClearPath Media',
       seoDescription: 'Objective tracking of institutional ballots policies.',
       createdAt: new Date().toISOString(),
@@ -257,8 +257,8 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       topicFocus: ['governance', 'leadership', 'choices', 'policies'],
       scheduleText: 'Twice Monthly',
       youtubePlaylistUrl: 'https://www.youtube.com/playlist?list=PL3H95x0BV9nA',
-      coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0',
-      thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0',
+      coverImage: '/images/ositainsight.jpg',
+      thumbnailImage: '/images/ositainsight.jpg',
       status: 'active',
       isFeatured: true,
       sortOrder: 1,
@@ -280,8 +280,8 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       topicFocus: ['policy', 'economy', 'macro-finance', 'trade'],
       scheduleText: 'Weekdays at 9:00 AM WAT',
       youtubePlaylistUrl: 'https://www.youtube.com/playlist?list=PL3H95x0BV9nA',
-      coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM',
-      thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDj0sf1F6xFR6H3tbPIJPO_NYWyereW6LdnHUYz-S62krq0N-lI0KFfNNEMWcmcPVYBMQ487oKIJ5WTyDkMtu7VqlInld9PY0p_iGDAFpskRkHcarnEo0f98r8_Mp0IVtxc3Sk1YXbzQNmL1QtaWUWx7RCFWxaD1WLHSLnj7_XHTizqY8ztbb1R1WI8OXY9Hwdx0hkMrV9rLcSuXHEGAJcFN9xeAxubX7a-nYVdTEhDp99MUvwUxMnjs6BEXprW0Zoo980CBD029NM',
+      coverImage: '/images/daily_brief_annabel.jpg',
+      thumbnailImage: '/images/daily_brief_annabel.jpg',
       status: 'active',
       isFeatured: true,
       sortOrder: 2,
@@ -330,7 +330,7 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBNKSTe017KwF4P5tDrfPbgUDFKdtbE0uX2CL4fe-GGzUZFgW2Kj7l_yhAFWN9KtcdYZeCtL6IrwUf7qgeJvB3WDo96DaS6teP4-dYR7PZERUdB5BQsSmE0XE2fbZt96Tb8aNpGN_kLOU8V1bBtB620uHO0cDp9aysehKGWjUZ26n52xtGLOmkKGUm-1oq1ySJxEAGbfi1G4wiP-jBPTemlTbpgo0FiF6qxlhAZ7m7MTqPJNhf8LEM48dn_AbHBKVU59GTG3BzWpzU',
       status: 'active',
       isFeatured: false,
-      sortOrder: 4,
+      sortOrder: 5,
       seoTitle: 'Nigeria & Neighbours - Regional Analysis',
       seoDescription: 'Understanding security networks and continental alignments.',
       createdAt: new Date().toISOString(),
@@ -349,11 +349,11 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
       topicFocus: ['elections', 'reform', 'voting-systems', 'civic-trust'],
       scheduleText: 'During political windows',
       youtubePlaylistUrl: '',
-      coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBJEJ-XzUJpmNkQrXIdZDvgA6hIAbYMuln8MyC3A8rRzfBCqk0ALvJR0hPpKRONljw0wdiTqJGdMMleOtmuJtRwcUFXj_0a_4k-2aHV17tL8ZdfD6FyPbkhDKlYoL8HoUAi17IWXylWrc72xYSBQTQh_rC6JAB2yzHwPG6n1yMXv6Y1EjLYUM5V2qdDo-4Ucx5Z3R4rZcf5uJy5EeImosm1KqwSLtqmncPTfCrHqVlrKUfbiEY2IMtSiVq8vCqdwGK9mZht_XIs4lg',
-      thumbnailImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBJEJ-XzUJpmNkQrXIdZDvgA6hIAbYMuln8MyC3A8rRzfBCqk0ALvJR0hPpKRONljw0wdiTqJGdMMleOtmuJtRwcUFXj_0a_4k-2aHV17tL8ZdfD6FyPbkhDKlYoL8HoUAi17IWXylWrc72xYSBQTQh_rC6JAB2yzHwPG6n1yMXv6Y1EjLYUM5V2qdDo-4Ucx5Z3R4rZcf5uJy5EeImosm1KqwSLtqmncPTfCrHqVlrKUfbiEY2IMtSiVq8vCqdwGK9mZht_XIs4lg',
+      coverImage: '/images/election_matters.jpg',
+      thumbnailImage: '/images/election_matters.jpg',
       status: 'active',
       isFeatured: false,
-      sortOrder: 5,
+      sortOrder: 4,
       seoTitle: 'Election Matters - ClearPath Media',
       seoDescription: 'Objective tracking of institutional ballots policies.',
       createdAt: new Date().toISOString(),
@@ -398,23 +398,45 @@ export async function repairClearPathProgrammesAndVideoLinks(): Promise<{ repair
   // Process the programmes
   for (const canonical of canonicalProgs) {
     const normalizedCanonicalTitle = canonical.title.trim().toLowerCase();
+    const cleanCanonicalSlug = canonical.slug.trim().toLowerCase();
     
-    // Find matching programme case-insensitively and space-trimmed
-    const match = existingProgs.find(p => {
+    // Find all matching existing programmes by title, slug, or ID
+    const matches = existingProgs.filter(p => {
       const titleMatch = (p.title || '').trim().toLowerCase() === normalizedCanonicalTitle;
-      const slugMatch = (p.slug || '').trim().toLowerCase() === canonical.slug || (p.id || '').trim().toLowerCase() === canonical.slug;
-      return titleMatch || slugMatch;
+      const slugMatch = (p.slug || '').trim().toLowerCase() === cleanCanonicalSlug || (p.id || '').trim().toLowerCase() === cleanCanonicalSlug;
+      const idMatch = (p.id || '').trim().toLowerCase() === cleanCanonicalSlug;
+      return titleMatch || slugMatch || idMatch;
     });
 
-    const targetId = match ? match.id : canonical.id;
-    // Map the canonical slug to the actual document ID
+    const targetId = canonical.id;
+    let originalCreatedAt = canonical.createdAt;
+
+    // Record mappings and delete non-canonical duplicates
+    for (const match of matches) {
+      if (match.createdAt && originalCreatedAt === canonical.createdAt) {
+        originalCreatedAt = match.createdAt;
+      }
+      
+      if (match.id !== targetId) {
+        idMap[match.id] = targetId;
+        idMap[match.slug || ''] = targetId;
+        try {
+          await deleteDoc(doc(db, 'programmes', match.id));
+          console.log(`Deleted duplicate programme doc from Firestore: ${match.id}`);
+        } catch (err) {
+          console.error(`Failed to delete duplicate programme doc ${match.id}:`, err);
+        }
+      }
+    }
+
+    // Explicitly add mapping for the target ID and canonical slug
     idMap[canonical.slug] = targetId;
+    idMap[targetId] = targetId;
 
     const mergedData = {
       ...canonical,
-      // If we found a match, we keep its createdAt but update the fields
       id: targetId,
-      createdAt: match?.createdAt || canonical.createdAt,
+      createdAt: originalCreatedAt,
       updatedAt: new Date().toISOString(),
       status: 'active' as const
     };

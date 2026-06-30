@@ -91,13 +91,13 @@ export default function Navbar() {
               Partner with us
             </Link>
 
-            <button 
-              onClick={() => setIsModalOpen(true)}
+            <Link 
+              to="/subscribe"
               className="hidden lg:inline-flex bg-primary text-white font-label-sm px-5 py-2.5 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-all text-xs font-bold items-center justify-center h-10 shadow-sm"
               id="desktop-subscribe-button"
             >
               Subscribe
-            </button>
+            </Link>
 
             <button 
               className="lg:hidden p-2 text-on-surface-variant hover:text-primary"
@@ -119,16 +119,14 @@ export default function Navbar() {
             </div>
             
             <div className="px-4 pt-4 border-t border-outline-variant space-y-2.5">
-              <button 
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  setIsModalOpen(true);
-                }}
+              <Link 
+                to="/subscribe"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className="w-full bg-primary text-white font-label-sm px-4 py-3 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-colors block text-center font-bold text-xs font-label-sm shadow-sm"
                 id="mobile-subscribe-button"
               >
                 Subscribe
-              </button>
+              </Link>
               
               <Link 
                 to="/partner"

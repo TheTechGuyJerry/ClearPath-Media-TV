@@ -40,6 +40,17 @@ const fallbackProgrammes: Programme[] = [
 ];
 
 function getProgrammeImageUrl(p: Programme): string {
+  const pid = (p.id || p.slug || '').toLowerCase().trim();
+  if (pid === 'osita-insights' || pid === 'ositainsight') {
+    return '/images/ositainsight.jpg';
+  }
+  if (pid === 'daily-brief-with-annabel' || pid === 'daily-brief') {
+    return '/images/daily_brief_annabel.jpg';
+  }
+  if (pid === 'election-matters') {
+    return '/images/election_matters.jpg';
+  }
+
   if (p.cardImageUrl) return p.cardImageUrl;
   if (p.coverImageUrl) return p.coverImageUrl;
   if (p.thumbnailUrl) return p.thumbnailUrl;
@@ -221,6 +232,20 @@ export default function Programmes() {
     // 1. Active programmes first, inactive programmes after active
     if (aActive && !bActive) return -1;
     if (!aActive && bActive) return 1;
+
+    // 2. Identify if programs have episodes/videos
+    const aHasEpisodes = (videoCounts[a.id] || 0) > 0;
+    const bHasEpisodes = (videoCounts[b.id] || 0) > 0;
+
+    // If one has episodes and the other doesn't, put the one with episodes first
+    if (aHasEpisodes && !bHasEpisodes) return -1;
+    if (!aHasEpisodes && bHasEpisodes) return 1;
+
+    // 3. Among the ones that don't have episodes (Coming Soon / inactive), place election-matters at the top
+    const aIsElectionMatters = a.id === 'election-matters' || a.slug === 'election-matters';
+    const bIsElectionMatters = b.id === 'election-matters' || b.slug === 'election-matters';
+    if (aIsElectionMatters && !bIsElectionMatters) return -1;
+    if (!aIsElectionMatters && bIsElectionMatters) return 1;
 
     // Within each group, sort by:
     // 1. sortOrder ascending

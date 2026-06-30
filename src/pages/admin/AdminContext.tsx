@@ -452,6 +452,29 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         setProgrammeVideos(epList);
       }
 
+      // De-duplicate programmes by title case-insensitively, prioritizing canonical IDs
+      const seenTitles = new Set<string>();
+      const deDupedProgs: Programme[] = [];
+      const canonicalIds = ['osita-insights', 'daily-brief-with-annabel', 'clearpath-insights', 'nigeria-neighbours', 'election-matters', 'mekaria-series'];
+      
+      // Temporary sort to prioritize canonical IDs during de-duplication
+      const tempSortedList = [...progList].sort((a, b) => {
+        const aIsCanonical = canonicalIds.includes(a.id);
+        const bIsCanonical = canonicalIds.includes(b.id);
+        if (aIsCanonical && !bIsCanonical) return -1;
+        if (!aIsCanonical && bIsCanonical) return 1;
+        return (a.sortOrder || 0) - (b.sortOrder || 0);
+      });
+
+      for (const p of tempSortedList) {
+        const titleKey = (p.title || '').trim().toLowerCase();
+        if (!seenTitles.has(titleKey)) {
+          seenTitles.add(titleKey);
+          deDupedProgs.push(p);
+        }
+      }
+      progList = deDupedProgs;
+
       progList.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
       setProgrammes(progList);
 
