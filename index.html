@@ -8,20 +8,31 @@
     <!-- Primary Metadata -->
     <title>ClearPath Media TV — Africa Explained</title>
     <meta name="description" content="ClearPath Media TV is a public-intellectual media platform focused on Nigeria and West Africa. We explain elections, governance, and political risk through evidence-based analysis for serious audiences. Africa Explained." />
-    <link rel="canonical" href="https://www.clearpathmediatv.com/" />
+    <link rel="canonical" href="https://www.clearpathmedia.ng/" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:title" content="ClearPath Media TV — Africa Explained" />
     <meta property="og:description" content="ClearPath Media TV is a public-intellectual media platform focused on Nigeria and West Africa. We explain elections, governance, and political risk through evidence-based analysis for serious audiences. Africa Explained." />
-    <meta property="og:image" content="https://www.clearpathmediatv.com/og-clearpath.png" />
+    <meta property="og:image" content="/og-clearpath.png" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.clearpathmediatv.com/" />
+    <meta property="og:url" content="https://www.clearpathmedia.ng/" />
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ClearPath Media TV — Africa Explained" />
     <meta name="twitter:description" content="ClearPath Media TV is a public-intellectual media platform focused on Nigeria and West Africa. We explain elections, governance, and political risk through evidence-based analysis for serious audiences. Africa Explained." />
-    <meta name="twitter:image" content="https://www.clearpathmediatv.com/og-clearpath.png" />
+    <meta name="twitter:image" content="/og-clearpath.png" />
+
+    <script>
+      // Dynamically set canonical and OG URL to match the current domain being visited
+      try {
+        var currentOrigin = window.location.origin;
+        var canonical = document.querySelector('link[rel="canonical"]');
+        if (canonical) canonical.setAttribute('href', currentOrigin + '/');
+        var ogUrl = document.querySelector('meta[property="og:url"]');
+        if (ogUrl) ogUrl.setAttribute('content', currentOrigin + '/');
+      } catch(e) {}
+    </script>
 
     <!-- Site Favicon & Device Icons -->
     <link rel="icon" type="image/png" href="/favicon.png" />

@@ -43,7 +43,7 @@ export default function Navbar() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-unit-md mt-1 flex-shrink-0 z-10">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 relative">
               {isSearchOpen && (
                 <form 
                   onSubmit={(e) => {
@@ -54,7 +54,7 @@ export default function Navbar() {
                       setSearchQuery('');
                     }
                   }}
-                  className="animate-fade-in"
+                  className="absolute right-0 top-full mt-2 bg-surface-bright border border-outline-variant p-2 shadow-lg rounded-sm z-50 w-48 md:w-64 animate-fade-in"
                 >
                   <input 
                     type="text" 
@@ -62,7 +62,7 @@ export default function Navbar() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
-                    className="border border-outline-variant rounded-sm px-3 py-1 text-xs bg-surface-container-low focus:outline-none focus:border-primary w-32 md:w-48 transition-all"
+                    className="w-full border border-outline-variant rounded-sm px-3 py-1.5 text-xs bg-surface-container-low focus:outline-none focus:border-primary text-on-surface transition-all"
                   />
                 </form>
               )}
