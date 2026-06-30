@@ -40,23 +40,23 @@ const fallbackProgrammes: Programme[] = [
 ];
 
 function getProgrammeImageUrl(p: Programme): string {
-  const pid = (p.id || p.slug || '').toLowerCase().trim();
-  if (pid === 'osita-insights' || pid === 'ositainsight') {
+  const pid = (p.id || p.slug || p.title || '').toLowerCase().trim();
+  if (pid.includes('osita') || pid === 'ositainsight') {
     return '/images/ositainsight.jpg';
   }
-  if (pid === 'daily-brief-with-annabel' || pid === 'daily-brief') {
+  if (pid.includes('annabel') || pid.includes('daily-brief') || pid.includes('daily_brief')) {
     return '/images/daily_brief_annabel.jpg';
   }
-  if (pid === 'election-matters') {
+  if (pid.includes('election') || pid === 'election-matters') {
     return '/images/election_matters.jpg';
   }
 
+  if (p.coverImage) return p.coverImage;
+  if (p.thumbnailImage) return p.thumbnailImage;
   if (p.cardImageUrl) return p.cardImageUrl;
   if (p.coverImageUrl) return p.coverImageUrl;
   if (p.thumbnailUrl) return p.thumbnailUrl;
   if (p.imageUrl) return p.imageUrl;
-  if (p.coverImage) return p.coverImage;
-  if (p.thumbnailImage) return p.thumbnailImage;
   if (p.latestVideoThumbnail) return p.latestVideoThumbnail;
   return 'https://lh3.googleusercontent.com/aida-public/AB6AXuDG9UKkTBTJxrs0d89Z9THsm9d7HdnWdijMGia0urYSILrGjnBFjfSilnyT4Oc5m4QoBIqJ-EVppuRvCaBzLme6DsHM8LwXw89mms40fOwZVkQJkMaYck9XOxAh9mbR5JuoL65y2oCdx5x3haP0uBev3jW-HdVPXV-jiOcBbVV9VBBFhpQhHiMJiIgeuLSsYwYbzU_bFANePmutyYqlK7oMnynm60WgyG6pfsybx4z7bN3RcIoa4Smu-Vm9XntZA1ADTWNU94lfti0'; // Fallback branded image
 }
