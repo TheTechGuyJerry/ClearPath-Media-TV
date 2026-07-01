@@ -54,7 +54,7 @@ const STANDARD_PROGRAMMES: Record<string, Omit<Programme, 'createdAt' | 'updated
     formatType: 'interview',
     coverageArea: 'Nigeria',
     topicFocus: ['governance', 'leadership', 'choices', 'policies'],
-    scheduleText: 'Twice Monthly',
+    scheduleText: 'Twice Weekly',
     youtubePlaylistUrl: 'https://www.youtube.com/playlist?list=PL3H95x0BV9nA',
     coverImage: '/images/ositainsight.jpg',
     thumbnailImage: '/images/ositainsight.jpg',

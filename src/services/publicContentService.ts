@@ -109,6 +109,7 @@ export const DEFAULT_AUTHOR_CARDS: Record<string, Partial<Programme>> = {
 export function enrichProgramme(p: Programme): Programme {
   const slugKey = p.slug || slugify(p.title) || p.id || '';
   const cleanSlugKey = slugKey.toLowerCase().trim();
+  const isOsita = cleanSlugKey.includes('osita') || cleanSlugKey === 'ositainsight';
   
   // Try exact key or key with/without hyphens or prefix
   const matchKey = Object.keys(DEFAULT_AUTHOR_CARDS).find(k => 
@@ -122,6 +123,8 @@ export function enrichProgramme(p: Programme): Programme {
   
   return {
     ...p,
+    // Change the cadence of ositainsight to twice weekly
+    scheduleText: isOsita ? 'Twice Weekly' : (p.scheduleText || 'Weekly'),
     // Author/Presenter fields with robust defaults
     authorName: p.authorName || defaults.authorName || 'ClearPath Editorial Team',
     authorTitle: p.authorTitle || defaults.authorTitle || 'ClearPath Media',
