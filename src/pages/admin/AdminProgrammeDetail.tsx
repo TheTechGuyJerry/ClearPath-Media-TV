@@ -5,6 +5,7 @@ import CMSForm from '../../components/admin/CMSForm';
 import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { doc, updateDoc, setDoc } from 'firebase/firestore';
+import { Programme } from '../../types';
 
 export default function AdminProgrammeDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -23,6 +24,15 @@ export default function AdminProgrammeDetail() {
   const [progSubTab, setProgSubTab] = useState<'profile' | 'videos'>('profile');
 
   const currentProg = programmes.find(p => p.id === slug);
+
+  // Local state for interactive editing of the programme profile
+  const [editedProg, setEditedProg] = useState<Programme | null>(null);
+
+  useEffect(() => {
+    if (currentProg) {
+      setEditedProg({ ...currentProg });
+    }
+  }, [currentProg]);
 
   if (loading && !currentProg) {
     return (
@@ -55,8 +65,10 @@ export default function AdminProgrammeDetail() {
       return;
     }
     try {
-      await handleSaveItem('programmes', currentProg);
+      const dataToSave = editedProg || currentProg;
+      await handleSaveItem('programmes', dataToSave);
       alert('Programme Profile updated successfully!');
+      await refreshCollections();
     } catch (err: any) {
       alert('Save failed: ' + err.message);
     }
@@ -133,15 +145,11 @@ export default function AdminProgrammeDetail() {
         <div className="bg-white p-6 rounded-lg border border-outline-variant">
           <CMSForm 
             type="programmes"
-            data={currentProg}
+            data={editedProg || currentProg}
             programmes={programmes}
             explainers={explainers}
-            onChange={async (updated) => {
-              // Direct state write to allow dynamic form values inputs before saving
-              const idx = programmes.findIndex(p => p.id === currentProg.id);
-              if (idx > -1) {
-                programmes[idx] = updated;
-              }
+            onChange={(updated) => {
+              setEditedProg(updated as Programme);
             }}
             onSave={handleProfileSave}
             onCancel={() => navigate('/admin/programmes')}

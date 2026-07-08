@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdmin } from './AdminContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import CMSForm from '../../components/admin/CMSForm';
 import { Plus, Trash2, ArrowLeft, Edit } from 'lucide-react';
-import { ExplainerItem } from '../../types';
+import { ExplainerItem, Explainer } from '../../types';
 
 export default function AdminExplainerDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -24,6 +24,15 @@ export default function AdminExplainerDetail() {
   const [editingItem, setEditingItem] = useState<ExplainerItem | null>(null);
 
   const currentExpl = explainers.find(ex => ex.id === slug);
+
+  // Local state for interactive editing of the explainer profile
+  const [editedExpl, setEditedExpl] = useState<Explainer | null>(null);
+
+  useEffect(() => {
+    if (currentExpl) {
+      setEditedExpl({ ...currentExpl });
+    }
+  }, [currentExpl]);
 
   if (loading && !currentExpl) {
     return (
@@ -56,8 +65,10 @@ export default function AdminExplainerDetail() {
       return;
     }
     try {
-      await handleSaveItem('explainers', currentExpl);
+      const dataToSave = editedExpl || currentExpl;
+      await handleSaveItem('explainers', dataToSave);
       alert('Explainer Category Profile updated successfully!');
+      await refreshCollections();
     } catch (err: any) {
       alert('Save failed: ' + err.message);
     }
@@ -231,14 +242,11 @@ export default function AdminExplainerDetail() {
             <div className="bg-white p-6 border rounded-lg overflow-hidden">
               <CMSForm 
                 type="explainers"
-                data={currentExpl}
+                data={editedExpl || currentExpl}
                 programmes={[]}
                 explainers={explainers}
-                onChange={async (updated) => {
-                  const idx = explainers.findIndex(ex => ex.id === currentExpl.id);
-                  if (idx > -1) {
-                    explainers[idx] = updated;
-                  }
+                onChange={(updated) => {
+                  setEditedExpl(updated as Explainer);
                 }}
                 onSave={handleProfileSave}
                 onCancel={() => navigate('/admin/explainers')}
