@@ -8,7 +8,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import SubscribeHover from './components/SubscribeHover';
 import Home from './pages/Home';
 import Programmes from './pages/Programmes';
 import Briefing from './pages/Briefing';
@@ -131,7 +130,6 @@ function AppRoutes() {
         </ErrorBoundary>
       </main>
       {!isAdminPath && <Footer />}
-      {!isAdminPath && <SubscribeHover />}
     </div>
   );
 }

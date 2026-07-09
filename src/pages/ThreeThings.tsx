@@ -1,4 +1,4 @@
-import { Play, ArrowRight, Filter, Search, Clock, Users } from 'lucide-react';
+import { Play, ArrowRight, Filter, Search, Clock, Users, Share2, Check } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -49,7 +49,7 @@ interface ThreeThingsProps {
 
 export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
   const { slug, id } = useParams<{ slug?: string; id?: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [videos, setVideos] = useState<ProgrammeVideo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -67,6 +67,21 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
   const [activeTitle, setActiveTitle] = useState<string>('The Future of Central Banking');
   const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('search') || '');
   const playerSectionRef = useRef<HTMLDivElement>(null);
+
+  // Clipboard copy state
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyLink = (youtubeVideoId: string) => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?v=${youtubeVideoId}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopiedId(youtubeVideoId);
+      setTimeout(() => {
+        setCopiedId(null);
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy link: ', err);
+    });
+  };
 
   useEffect(() => {
     const qUrl = searchParams.get('search');
@@ -114,7 +129,21 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
           setVideos(formattedVideos);
           setDiagVideosMatched(formattedVideos.length);
 
-          if (formattedVideos.length > 0 && formattedVideos[0]?.youtubeVideoId) {
+          const urlVideoId = searchParams.get('v');
+          const targetVideo = urlVideoId 
+            ? formattedVideos.find((v: any) => v.youtubeVideoId === urlVideoId || v.id === urlVideoId)
+            : null;
+
+          if (targetVideo) {
+            setActiveVideoId(targetVideo.youtubeVideoId);
+            setActiveTitle(targetVideo.title);
+            // Scroll to player after a brief delay so the component has rendered
+            setTimeout(() => {
+              if (playerSectionRef.current) {
+                playerSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 300);
+          } else if (formattedVideos.length > 0 && formattedVideos[0]?.youtubeVideoId) {
             setActiveVideoId(formattedVideos[0].youtubeVideoId);
             setActiveTitle(formattedVideos[0].title);
           } else {
@@ -142,9 +171,27 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
     loadDynamicProgrammeData();
   }, [slug, id]);
 
+  // Synchronize playing video when search param 'v' changes (e.g. from a shared URL or navigation)
+  useEffect(() => {
+    const urlVideoId = searchParams.get('v');
+    if (urlVideoId && videos.length > 0) {
+      const match = videos.find(v => v.youtubeVideoId === urlVideoId || v.id === urlVideoId);
+      if (match && match.youtubeVideoId !== activeVideoId) {
+        setActiveVideoId(match.youtubeVideoId);
+        setActiveTitle(match.title);
+      }
+    }
+  }, [searchParams, videos]);
+
   const selectEpisodeForPlayback = (vidId: string, titleName: string) => {
     setActiveVideoId(vidId);
     setActiveTitle(titleName);
+    
+    // Update the URL query parameters dynamically
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('v', vidId);
+    setSearchParams(newParams, { replace: true });
+
     if (playerSectionRef.current) {
       playerSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -228,7 +275,28 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
                 </div>
               )}
               <div className="mt-4 bg-white p-4 border rounded-lg shadow-xs font-sans">
-                <h2 className="font-semibold text-lg text-primary">{activeTitle || 'No Video Available'}</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+                  <h2 className="font-semibold text-lg text-primary leading-tight">{activeTitle || 'No Video Available'}</h2>
+                  {activeVideoId && (
+                    <button
+                      onClick={() => handleCopyLink(activeVideoId)}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 border border-outline hover:border-primary text-primary hover:bg-surface-container-low transition-all text-xs font-bold rounded self-start sm:self-center uppercase tracking-wider cursor-pointer min-w-[130px]"
+                      title="Copy link to this specific video on the website"
+                    >
+                      {copiedId === activeVideoId ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-green-600" />
+                          <span className="text-green-600">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="w-3.5 h-3.5" />
+                          <span>Copy Web Link</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
                 {activeVideoId && videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription && (
                   <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">{videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription}</p>
                 )}
@@ -334,10 +402,26 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
               {filteredEpisodes.map((item, idx) => (
                 <article key={idx} className={`group bg-white border p-unit-lg flex flex-col hover:border-primary transition-colors duration-300 rounded ${activeVideoId === item.youtubeVideoId ? 'border-primary ring-1 ring-primary' : 'border-outline-variant'}`}>
-                  <div className="flex justify-between items-start mb-unit-sm">
+                  <div className="flex justify-between items-center mb-unit-sm">
                     <span className="font-label-sm text-label-sm text-outline font-mono text-xs">
                       {item.publishedAtLabel || formatFirestoreDate(item.publishedAt || item.createdAt, 'Recent')}
                     </span>
+                    {item.youtubeVideoId && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopyLink(item.youtubeVideoId);
+                        }}
+                        className="p-1.5 rounded-full text-outline hover:text-primary hover:bg-surface-container-low transition-all cursor-pointer flex items-center justify-center"
+                        title="Copy shareable web link for this video"
+                      >
+                        {copiedId === item.youtubeVideoId ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Share2 className="w-4 h-4" />
+                        )}
+                      </button>
+                    )}
                   </div>
                   <h4 className="font-headline-md text-xl font-semibold text-primary mb-2 group-hover:text-primary-container transition-colors leading-snug">{item.title}</h4>
                   <p className="font-label-md text-label-md text-secondary mb-unit-md flex items-center gap-1.5 text-xs font-semibold"><Users className="w-3.5 h-3.5" /> {item.presenters || 'OsitaInsight'}</p>
