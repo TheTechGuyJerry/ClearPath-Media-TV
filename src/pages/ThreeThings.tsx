@@ -49,6 +49,7 @@ interface ThreeThingsProps {
 
 export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
   const { slug, id } = useParams<{ slug?: string; id?: string }>();
+  const currentSlug = forcedSlug || slug || id || '';
   const [searchParams, setSearchParams] = useSearchParams();
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [videos, setVideos] = useState<ProgrammeVideo[]>([]);
@@ -440,7 +441,7 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
       )}
 
       {/* Zoho campaigns newsletter embed */}
-      <ZohoSignupEmbed />
+      {currentSlug === 'election-matters' && <ZohoSignupEmbed />}
 
       {/* Preview diagnostics block */}
       {(process.env.NODE_ENV !== 'production' || window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost')) && (

@@ -9,7 +9,7 @@ export default function Footer() {
             <img src="/logo.png" alt="ClearPath Media" className="h-20 md:h-28 w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left hover:opacity-80 transition-opacity -ml-3" />
           </Link>
           <p className="font-body-md text-body-md text-on-surface-variant max-w-sm">
-            © 2024 ClearPath Media. Explaining power, policy, and society.
+            © 2026 ClearPath Media. Explaining power, policy, and society.
           </p>
         </div>
         <nav className="flex flex-wrap gap-unit-md md:gap-unit-lg py-unit-sm opacity-80 hover:opacity-100 transition-opacity">
@@ -18,6 +18,8 @@ export default function Footer() {
           <a href="https://www.youtube.com/@ClearPathMediaTV" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Podcasts</a>
           <Link to="/partner" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Contact</Link>
           <Link to="/about" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Editorial Policy</Link>
+          <Link to="/privacy-policy" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Privacy Policy</Link>
+          <Link to="/terms-of-use" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Terms of Use</Link>
         </nav>
       </div>
     </footer>

@@ -116,9 +116,37 @@ export default function DetailModal({ type, data, onClose, onStatusUpdate }: Det
 
           {type === 'subscribers' && (
             <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">First Name</h4>
+                  <p className="font-semibold text-primary">{data.firstName || 'Not provided'}</p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Last Name</h4>
+                  <p className="font-semibold text-primary">{data.lastName || 'Not provided'}</p>
+                </div>
+              </div>
               <div>
                 <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Subscriber Email</h4>
                 <a href={`mailto:${data.email}`} className="font-mono font-semibold text-primary hover:underline">{data.email}</a>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Events Alerts Opt-In</h4>
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                    data.eventsOptIn ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {data.eventsOptIn ? 'YES (Opted In)' : 'NO'}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Privacy Consent</h4>
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                    data.privacyConsent ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {data.privacyConsent ? 'CONSENTED' : 'NO CONSENT'}
+                  </span>
+                </div>
               </div>
               <div>
                 <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Preferences Categories</h4>

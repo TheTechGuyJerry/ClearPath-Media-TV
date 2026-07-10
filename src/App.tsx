@@ -16,6 +16,8 @@ import About from './pages/About';
 import Partner from './pages/Partner';
 import ThreeThings from './pages/ThreeThings';
 import Subscribe from './pages/Subscribe';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfUse from './pages/TermsOfUse';
 
 // Isolated authenticated admin imports
 import { AdminProvider } from './pages/admin/AdminContext';
@@ -93,6 +95,9 @@ function AppRoutes() {
             <Route path="/about" element={<About />} />
             <Route path="/partner" element={<Partner />} />
             <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-use" element={<TermsOfUse />} />
+            <Route path="/legal-notices" element={<Navigate to="/privacy-policy" replace />} />
 
             {/* Admin Authenticated Routes Group */}
             <Route path="/admin/*" element={
