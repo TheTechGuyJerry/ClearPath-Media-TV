@@ -37,7 +37,7 @@ export default function TermsOfUse() {
               1. General Agreement
             </h2>
             <p className="text-on-surface-variant text-sm leading-relaxed">
-              ClearPath Media ("ClearPath," "we," "us," or "our") operates the website located at <span className="font-mono text-primary font-medium">clearpathmedia.tv</span> and related subdomains, platforms, mobile layouts, and email newsletter distribution lists.
+              ClearPath Media ("ClearPath," "we," "us," or "our") operates the website located at <span className="font-mono text-primary font-medium">clearpathmedia.ng</span> and related subdomains, platforms, mobile layouts, and email newsletter distribution lists.
             </p>
             <p className="text-on-surface-variant text-sm leading-relaxed">
               By accessing our platform, receiving our automated Daily Briefings, subscribing to our lists, or interacting with our analysts, you agree to be bound by these Terms of Use and our associated Privacy Policy.
@@ -86,11 +86,11 @@ export default function TermsOfUse() {
               For any licensing queries, republishing permissions, or terms clarification, please contact our compliance desk directly.
             </p>
             <a 
-              href="mailto:compliance@clearpathmedia.tv" 
+              href="mailto:compliance@clearpathmedia.ng" 
               className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
             >
               <Mail className="w-4 h-4" />
-              compliance@clearpathmedia.tv
+              compliance@clearpathmedia.ng
             </a>
           </div>
 

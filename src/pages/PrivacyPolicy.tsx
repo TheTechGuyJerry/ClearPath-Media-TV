@@ -37,7 +37,7 @@ export default function PrivacyPolicy() {
               1. General Information
             </h2>
             <p className="text-on-surface-variant text-sm leading-relaxed">
-              ClearPath Media ("ClearPath," "we," "us," or "our") operates the website located at <span className="font-mono text-primary font-medium">clearpathmedia.tv</span> and related subdomains, platforms, mobile layouts, and email newsletter distribution lists.
+              ClearPath Media ("ClearPath," "we," "us," or "our") operates the website located at <span className="font-mono text-primary font-medium">clearpathmedia.ng</span> and related subdomains, platforms, mobile layouts, and email newsletter distribution lists.
             </p>
             <p className="text-on-surface-variant text-sm leading-relaxed">
               Our services are intended for research, public affairs briefing, policy analysis, and informational media purposes. This Privacy Policy describes how we collect, use, store, transfer, and protect your information when you subscribe to our newsletters, submit inquiry forms, or browse our website.
@@ -135,11 +135,11 @@ export default function PrivacyPolicy() {
               For any privacy inquiries, data access requests, or compliance concerns, please reach out directly to our dedicated team.
             </p>
             <a 
-              href="mailto:compliance@clearpathmedia.tv" 
+              href="mailto:compliance@clearpathmedia.ng" 
               className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
             >
               <Mail className="w-4 h-4" />
-              compliance@clearpathmedia.tv
+              compliance@clearpathmedia.ng
             </a>
           </div>
 
