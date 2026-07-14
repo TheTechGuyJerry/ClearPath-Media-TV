@@ -26,14 +26,14 @@ export default function Navbar() {
         <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop mx-auto h-20 md:h-24 relative">
           
           {/* Left: Logo container to prevent touching/overlapping */}
-          <div className="flex-shrink-0 w-44 md:w-56 h-full flex items-center z-10">
+          <div className="flex-shrink-0 w-52 sm:w-64 md:w-[280px] h-full flex items-center z-10">
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center h-full py-2">
               <img src="/logo.png" alt="ClearPath Media" className="h-[80px] md:h-[110px] w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left" />
             </Link>
           </div>
 
           {/* Center: Centralized menu links - detached from logo */}
-          <div className="hidden lg:flex items-center justify-center gap-unit-md h-full pt-1 absolute left-1/2 -translate-x-1/2">
+          <div className="hidden xl:flex items-center justify-center gap-4 h-full pt-1 flex-1 mx-4">
             <Link to="/" className={getLinkClass('/')}>Home</Link>
             <Link to="/programmes" className={getLinkClass('/programmes')}>Programmes</Link>
             <Link to="/programmes/election-matters" className={getLinkClass('/programmes/election-matters')}>Election Matters</Link>
@@ -42,7 +42,7 @@ export default function Navbar() {
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-unit-md mt-1 flex-shrink-0 z-10">
+          <div className="flex items-center gap-unit-md mt-1 flex-shrink-0 z-20">
             <div className="flex items-center gap-1 relative">
               {isSearchOpen && (
                 <form 
@@ -85,7 +85,7 @@ export default function Navbar() {
             
             <Link 
               to="/partner"
-              className="hidden lg:inline-flex border border-primary text-primary hover:bg-primary/5 font-label-sm px-4 py-2 rounded-sm uppercase tracking-wider transition-all text-xs font-bold items-center justify-center h-10"
+              className="hidden xl:inline-flex border border-primary text-primary hover:bg-primary/5 font-label-sm px-4 py-2 rounded-sm uppercase tracking-wider transition-all text-xs font-bold items-center justify-center h-10"
               id="desktop-partner-button"
             >
               Partner with us
@@ -93,14 +93,14 @@ export default function Navbar() {
 
             <Link 
               to="/subscribe"
-              className="hidden lg:inline-flex bg-primary text-white font-label-sm px-5 py-2.5 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-all text-xs font-bold items-center justify-center h-10 shadow-sm"
+              className="hidden xl:inline-flex bg-primary text-white font-label-sm px-5 py-2.5 rounded-sm uppercase tracking-wider hover:bg-primary-container transition-all text-xs font-bold items-center justify-center h-10 shadow-sm"
               id="desktop-subscribe-button"
             >
               Subscribe
             </Link>
 
             <button 
-              className="lg:hidden p-2 text-on-surface-variant hover:text-primary"
+              className="xl:hidden p-2 text-on-surface-variant hover:text-primary"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -109,7 +109,7 @@ export default function Navbar() {
         </nav>
 
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-outline-variant absolute top-full left-0 w-full bg-background shadow-lg pb-6">
+          <div className="xl:hidden border-t border-outline-variant absolute top-full left-0 w-full bg-background shadow-lg pb-6 animate-fade-in">
             <div className="flex flex-col py-2">
               <Link to="/" className={getLinkClass('/', true)} onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
               <Link to="/programmes" className={getLinkClass('/programmes', true)} onClick={() => setIsMobileMenuOpen(false)}>Programmes</Link>

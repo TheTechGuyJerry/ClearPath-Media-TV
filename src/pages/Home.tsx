@@ -31,7 +31,7 @@ function getProgrammeImageUrl(p: Programme): string {
     return '/images/daily_brief_annabel.jpg';
   }
   if (pid.includes('election') || pid === 'election-matters') {
-    return '/images/election_matters.jpg';
+    return '/images/election-matters.jpg';
   }
 
   if (p.coverImage) return p.coverImage;
