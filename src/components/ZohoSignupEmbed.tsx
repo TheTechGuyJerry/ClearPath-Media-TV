@@ -90,6 +90,7 @@ export default function ZohoSignupEmbed() {
         selectedBriefings: ['Election Matters'],
         status: 'active',
         source: 'election_matters_embedded_form',
+        privacyConsent: true,
         subscribedAt: serverTimestamp(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()

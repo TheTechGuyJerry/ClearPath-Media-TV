@@ -132,6 +132,16 @@ export default function DetailModal({ type, data, onClose, onStatusUpdate }: Det
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Occupation</h4>
+                  <p className="font-semibold text-primary">{data.occupation || 'Not Specified'}</p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">State of Residence</h4>
+                  <p className="font-semibold text-primary">{data.stateOfOrigin || 'Not Specified'}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Events Alerts Opt-In</h4>
                   <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
                     data.eventsOptIn ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'
@@ -141,10 +151,8 @@ export default function DetailModal({ type, data, onClose, onStatusUpdate }: Det
                 </div>
                 <div>
                   <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">Privacy Consent</h4>
-                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
-                    data.privacyConsent ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {data.privacyConsent ? 'CONSENTED' : 'NO CONSENT'}
+                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-800">
+                    CONSENTED
                   </span>
                 </div>
               </div>

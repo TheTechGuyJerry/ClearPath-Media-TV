@@ -129,15 +129,17 @@ export default function AdminVideos() {
   };
 
   const handleDeleteVideo = async (video: any) => {
-    if (effectiveRole === 'viewer') {
+    if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
       alert('Access Denied: Viewers cannot make modifications.');
       return;
     }
     if (confirm(`Are you sure you want to delete video record: "${video.title}" permanently?`)) {
       try {
-        await handleDeleteItem('programmeVideos', video.id);
-        alert('Deleted video successfully.');
-        await refreshCollections();
+        const deleted = await handleDeleteItem('programmeVideos', video.id, true);
+        if (deleted) {
+          alert('Deleted video successfully.');
+          await refreshCollections();
+        }
       } catch (err: any) {
         alert('Deletion failed: ' + err.message);
       }

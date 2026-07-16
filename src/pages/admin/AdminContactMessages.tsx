@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAdmin } from './AdminContext';
 import { useSearchParams } from 'react-router-dom';
 import DetailModal from '../../components/admin/DetailModal';
@@ -49,20 +49,22 @@ export default function AdminContactMessages() {
   const selectedId = searchParams.get('id');
 
   const selectedMessage = contactMessages.find(m => m.id === selectedId);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string, name: string) => {
-    if (effectiveRole === 'viewer') {
+  const handleDelete = async (id: string) => {
+    if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
       alert('Access Denied: Viewers cannot make deletions.');
       return;
     }
-    if (confirm(`Are you sure you want to permanently delete contact message from "${name}"?`)) {
-      try {
-        await handleDeleteItem('contactMessages', id);
+    try {
+      const deleted = await handleDeleteItem('contactMessages', id, true);
+      if (deleted) {
         alert('Deleted successfully.');
+        setConfirmDeleteId(null);
         await refreshCollections();
-      } catch (err: any) {
-        alert('Deletion failed: ' + err.message);
       }
+    } catch (err: any) {
+      alert('Deletion failed: ' + err.message);
     }
   };
 
@@ -119,15 +121,38 @@ export default function AdminContactMessages() {
                     </span>
                   </td>
                   <td className="p-4 text-right">
-                    <button 
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        handleDelete(m.id, name); 
-                      }} 
-                      className="text-gray-400 hover:text-error p-1 cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {confirmDeleteId === m.id ? (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(m.id);
+                          }}
+                          className="bg-error hover:bg-error/90 text-white px-2.5 py-1 rounded text-[10px] font-bold transition-all cursor-pointer uppercase tracking-wider"
+                        >
+                          Delete
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDeleteId(null);
+                          }}
+                          className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer uppercase tracking-wider"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setConfirmDeleteId(m.id); 
+                        }} 
+                        className="text-gray-400 hover:text-error p-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

@@ -129,7 +129,7 @@ export interface AdminContextType {
   runSeeder: () => Promise<void>;
   runVideosSeeder: () => Promise<void>;
   handleSaveItem: (type: string, data: any) => Promise<void>;
-  handleDeleteItem: (collectionName: string, docId: string) => Promise<void>;
+  handleDeleteItem: (collectionName: string, docId: string, skipConfirm?: boolean) => Promise<boolean>;
   handleUpdateStatus: (collectionName: string, id: string, newStatus: string) => Promise<void>;
   handleUpdateSiteSettings: (settings: SiteSettings) => Promise<void>;
   refreshCollections: () => Promise<void>;
@@ -918,16 +918,16 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const handleDeleteItem = async (collectionName: string, docId: string) => {
+  const handleDeleteItem = async (collectionName: string, docId: string, skipConfirm = false): Promise<boolean> => {
     if (isReadOnly()) {
       alert('Access Denied: Read-only viewers are not allowed to delete resources.');
-      return;
+      return false;
     }
     
     if (collectionName === 'users') {
       if (!canManageUsers()) {
         alert('Access denied: Only Super Administrators can remove administrators.');
-        return;
+        return false;
       }
       
       const userRef = doc(db, 'users', docId);
@@ -938,15 +938,15 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         
         if (isProtectedOwner(targetUserObj)) {
           alert('Safety Lockout: The founder account cannot be deleted under any circumstances.');
-          return;
+          return false;
         }
         
         if (targetData.uid === user?.uid || targetData.email?.toLowerCase() === user?.email?.toLowerCase()) {
           alert('Safety Lockout: You cannot delete your own active operator account.');
-          return;
+          return false;
         }
         
-        if (!confirm('Are you sure you want to delete this administrator account permanently?')) return;
+        if (!skipConfirm && !confirm('Are you sure you want to delete this administrator account permanently?')) return false;
         setLoading(true);
         try {
           await deleteDoc(userRef);
@@ -968,19 +968,22 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
             { name: targetData.name }
           );
           setRefreshTrigger(prev => prev + 1);
+          return true;
         } catch (err: any) {
           handleFirestoreError(err, OperationType.DELETE, `${collectionName}/${docId}`);
+          return false;
         } finally {
           setLoading(false);
         }
       }
+      return false;
     } else {
       if (!canDeleteContent()) {
         alert('Access Denied: Your administrator role prefix does not permit content deletion.');
-        return;
+        return false;
       }
       
-      if (!confirm('Are you sure you want to delete this content item permanently?')) return;
+      if (!skipConfirm && !confirm('Are you sure you want to delete this content item permanently?')) return false;
       setLoading(true);
       try {
         await deleteDoc(doc(db, collectionName, docId));
@@ -992,8 +995,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           { id: docId }
         );
         setRefreshTrigger(prev => prev + 1);
+        return true;
       } catch (err: any) {
         handleFirestoreError(err, OperationType.DELETE, `${collectionName}/${docId}`);
+        return false;
       } finally {
         setLoading(false);
       }

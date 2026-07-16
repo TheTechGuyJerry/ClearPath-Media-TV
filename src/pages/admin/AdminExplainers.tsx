@@ -62,14 +62,16 @@ export default function AdminExplainers() {
   };
 
   const handleDelete = async (ex: Explainer) => {
-    if (effectiveRole === 'viewer') {
+    if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
       alert('Access Denied: Viewers cannot make modifications.');
       return;
     }
     if (confirm(`Are you sure you want to permanently delete Explainer classification: "${ex.title}"?`)) {
       try {
-        await handleDeleteItem('explainers', ex.id);
-        alert('Deleted successfully.');
+        const deleted = await handleDeleteItem('explainers', ex.id, true);
+        if (deleted) {
+          alert('Deleted successfully.');
+        }
       } catch (err: any) {
         alert('Deletion failed: ' + err.message);
       }

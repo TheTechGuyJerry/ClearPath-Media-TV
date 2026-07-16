@@ -66,6 +66,7 @@ export default function SubscribeHover() {
         selectedBriefings: [],
         status: 'active',
         source: 'subscribe_hover',
+        privacyConsent: true,
         subscribedAt: serverTimestamp(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()

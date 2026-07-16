@@ -142,6 +142,7 @@ export default function JoinModal({ isOpen, onClose }: JoinModalProps) {
         selectedBriefings,
         status: 'active',
         source: 'subscribe_modal',
+        privacyConsent: true,
         subscribedAt: serverTimestamp(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()

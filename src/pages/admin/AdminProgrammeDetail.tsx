@@ -75,15 +75,17 @@ export default function AdminProgrammeDetail() {
   };
 
   const handleDeleteProg = async () => {
-    if (effectiveRole === 'viewer') {
+    if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
       alert('Access Denied: Viewers cannot make modifications.');
       return;
     }
     if (confirm(`Are you sure you want to permanently delete program: "${currentProg.title}" and its configurations?`)) {
       try {
-        await handleDeleteItem('programmes', currentProg.id);
-        alert('Deleted successfully.');
-        navigate('/admin/programmes');
+        const deleted = await handleDeleteItem('programmes', currentProg.id, true);
+        if (deleted) {
+          alert('Deleted successfully.');
+          navigate('/admin/programmes');
+        }
       } catch (err: any) {
         alert('Deletion failed: ' + err.message);
       }
@@ -217,15 +219,17 @@ export default function AdminProgrammeDetail() {
                   };
 
                   const handleDeleteVideo = async () => {
-                    if (effectiveRole === 'viewer') {
+                    if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
                       alert('Access Denied: Viewers cannot delete records.');
                       return;
                     }
                     if (confirm(`Are you sure you want to permanently delete video record: "${v.title}"?`)) {
                       try {
-                        await handleDeleteItem('programmeVideos', v.id);
-                        alert('Deleted video successfully.');
-                        await refreshCollections();
+                        const deleted = await handleDeleteItem('programmeVideos', v.id, true);
+                        if (deleted) {
+                          alert('Deleted video successfully.');
+                          await refreshCollections();
+                        }
                       } catch (err: any) {
                         alert('Deletion failed: ' + err.message);
                       }
