@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, ChevronDown, Mail, Check } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Mail, Check, Play } from 'lucide-react';
 import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import SEO from '../components/SEO';
+import LiteYouTube from '../components/LiteYouTube';
+import { getPublishedProgrammeVideos } from '../services/publicContentService';
+import { ProgrammeVideo } from '../types';
 
 const OCCUPATIONS = [
   'Business Executive',
@@ -26,6 +29,84 @@ const STATES = [
 ];
 
 export default function Subscribe() {
+  // YouTube videos state & fetch logic
+  const [latestVideos, setLatestVideos] = useState<ProgrammeVideo[]>([]);
+  const [videosLoading, setVideosLoading] = useState(true);
+
+  const fallbackVideos: ProgrammeVideo[] = [
+    {
+      id: "security-breakthrough-or-political-weapon-daily-brief-with-annabel",
+      programmeId: "daily-brief-with-annabel",
+      programmeTitle: "Daily Brief with Annabel",
+      title: "Security Breakthrough Or Political Weapon",
+      slug: "security-breakthrough-or-political-weapon-daily-brief-with-annabel",
+      shortSummary: "Nigeria may be on the verge of one of its biggest security reforms yet. With growing calls for state policing, supporters say it will bring security closer to the people. Is state police the answer to Nigeria's security challenges, or does it create new ones?",
+      fullDescription: "Nigeria may be on the verge of one of its biggest security reforms yet. With growing calls for state policing, supporters say it will bring security closer to the people. Is state police the answer to Nigeria's security challenges, or does it create new ones?",
+      youtubeUrl: "https://www.youtube.com/watch?v=IpF2T1-okyA",
+      youtubeVideoId: "IpF2T1-okyA",
+      thumbnailUrl: "https://img.youtube.com/vi/IpF2T1-okyA/maxresdefault.jpg",
+      duration: "00:00",
+      presenters: "Annabel Orji",
+      guests: "",
+      status: "published",
+      coverageArea: "Nigeria",
+      displayDate: "June 18, 2026",
+      publishedAt: "2026-06-18",
+      createdAt: "2026-06-20T11:23:32.388Z",
+      updatedAt: "2026-06-20T11:23:32.388Z",
+      isFeatured: false,
+      topicTags: [],
+      transcript: "",
+      keyPoints: "",
+      sourceLinks: ""
+    },
+    {
+      id: "daily-brief-with-annabel_11TKee2fPvk",
+      programmeId: "daily-brief-with-annabel",
+      programmeTitle: "Daily Brief with Annabel",
+      title: "Nigeria’s Obsession With Virality Is Becoming Dangerous | Daily Brief With Annabel",
+      slug: "nigerias-obsession-with-virality-is-becoming-dangerous-daily-brief-with-annabel",
+      shortSummary: "Exploring the implications of the dangerous trend of virality obsession in Nigeria's digital public discourse.",
+      fullDescription: "Exploring the implications of the dangerous trend of virality obsession in Nigeria's digital public discourse.",
+      youtubeUrl: "https://www.youtube.com/watch?v=11TKee2fPvk",
+      youtubeVideoId: "11TKee2fPvk",
+      thumbnailUrl: "https://img.youtube.com/vi/11TKee2fPvk/hqdefault.jpg",
+      duration: "00:00",
+      presenters: "Annabel Orji",
+      guests: "",
+      status: "published",
+      coverageArea: "Nigeria",
+      displayDate: "May 20, 2026",
+      publishedAt: "2026-06-15",
+      createdAt: "2026-06-15T14:28:25.000Z",
+      updatedAt: "2026-06-15T14:28:25.000Z",
+      isFeatured: false,
+      topicTags: [],
+      transcript: "",
+      keyPoints: "",
+      sourceLinks: ""
+    }
+  ];
+
+  useEffect(() => {
+    async function fetchVideos() {
+      try {
+        const videos = await getPublishedProgrammeVideos();
+        // Get the latest 2 videos
+        setLatestVideos(videos.slice(0, 2));
+      } catch (err) {
+        console.error('Error fetching videos in Subscribe page:', err);
+      } finally {
+        setVideosLoading(false);
+      }
+    }
+    fetchVideos();
+  }, []);
+
+  const renderedVideos = latestVideos.length >= 2 
+    ? latestVideos 
+    : (latestVideos.length > 0 ? [...latestVideos, fallbackVideos[1]] : fallbackVideos);
+
   // Hero Form States
   const [emailA, setEmailA] = useState('');
   const [firstNameA, setFirstNameA] = useState('');
@@ -205,10 +286,10 @@ export default function Subscribe() {
                 <p className="max-w-[580px] mt-6 text-[#666b73] text-base sm:text-lg leading-relaxed">
                   Stay ahead with <strong className="text-[#17181a] font-semibold">ClearPath Daily</strong> — a concise weekday briefing on Nigeria's politics, economy, governance and public policy, delivered before the noise begins.
                 </p>
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 mt-8 text-blue-600 font-semibold text-xs sm:text-sm tracking-wide">
-                  <span className="flex items-center gap-1.5 text-blue-600"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> One email</span>
-                  <span className="flex items-center gap-1.5 text-blue-600"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Five minutes</span>
-                  <span className="flex items-center gap-1.5 text-blue-600"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Every weekday</span>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 mt-8 text-[#001e40] font-semibold text-xs sm:text-sm tracking-wide">
+                  <span className="flex items-center gap-1.5 text-[#001e40]"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> One email</span>
+                  <span className="flex items-center gap-1.5 text-[#001e40]"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Five minutes</span>
+                  <span className="flex items-center gap-1.5 text-[#001e40]"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Every weekday</span>
                 </div>
               </div>
 
@@ -229,7 +310,7 @@ export default function Subscribe() {
                       {stepA === 1 && (
                         <div className="animate-fade-in text-left">
                           <div className="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
-                            <h2 className="text-blue-600 text-xl sm:text-2xl font-bold font-sans">Subscribe free</h2>
+                            <h2 className="text-[#001e40] text-xl sm:text-2xl font-bold font-sans">Subscribe free</h2>
                             <span className="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap">Step 1 of 2</span>
                           </div>
                           <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
@@ -237,14 +318,14 @@ export default function Subscribe() {
                           </p>
 
                           <div className="mb-6">
-                            <label htmlFor="hero-email" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">Email address</label>
+                            <label htmlFor="hero-email" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Email address</label>
                             <input
                               id="hero-email"
                               type="email"
                               placeholder="you@example.com"
                               value={emailA}
                               onChange={(e) => setEmailA(e.target.value)}
-                              className="w-full px-4 py-3 sm:py-3.5 border border-slate-300 rounded-xl text-slate-800 text-sm sm:text-base placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all bg-white font-sans"
+                              className="w-full px-4 py-3 sm:py-3.5 border border-slate-300 rounded-xl text-slate-800 text-sm sm:text-base placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
                               required
                             />
                             {errorA && <p className="text-xs text-red-600 font-semibold mt-2">{errorA}</p>}
@@ -253,7 +334,7 @@ export default function Subscribe() {
                           <button
                             type="button"
                             onClick={handleHeroContinue}
-                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 shadow-md shadow-blue-600/5 hover:shadow-lg hover:shadow-blue-600/10"
+                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 shadow-md shadow-[#001e40]/5 hover:shadow-lg hover:shadow-[#001e40]/10"
                           >
                             Continue
                           </button>
@@ -267,7 +348,7 @@ export default function Subscribe() {
                       {stepA === 2 && (
                         <div className="animate-fade-in text-left">
                           <div className="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
-                            <h2 className="text-blue-600 text-xl sm:text-2xl font-bold font-sans">Almost there</h2>
+                            <h2 className="text-[#001e40] text-xl sm:text-2xl font-bold font-sans">Almost there</h2>
                             <span className="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap">Step 2 of 2</span>
                           </div>
                           <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
@@ -276,37 +357,37 @@ export default function Subscribe() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
-                              <label htmlFor="hero-first-name" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">First name</label>
+                              <label htmlFor="hero-first-name" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">First name</label>
                               <input
                                 id="hero-first-name"
                                 type="text"
                                 placeholder="First name"
                                 value={firstNameA}
                                 onChange={(e) => setFirstNameA(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all bg-white font-sans"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
                               />
                             </div>
                             <div>
-                              <label htmlFor="hero-surname" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">Surname</label>
+                              <label htmlFor="hero-surname" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Surname</label>
                               <input
                                 id="hero-surname"
                                 type="text"
                                 placeholder="Surname"
                                 value={surnameA}
                                 onChange={(e) => setSurnameA(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all bg-white font-sans"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
                               />
                             </div>
                           </div>
 
                           <div className="mb-4">
-                            <label htmlFor="hero-occupation" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">Occupation</label>
+                            <label htmlFor="hero-occupation" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Occupation</label>
                             <div className="relative">
                               <select
                                 id="hero-occupation"
                                 value={occupationA}
                                 onChange={(e) => setOccupationA(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
                               >
                                 <option value="" disabled>Select occupation</option>
                                 {OCCUPATIONS.map((occ) => (
@@ -318,7 +399,7 @@ export default function Subscribe() {
                           </div>
 
                           <div className="mb-6">
-                            <label htmlFor="hero-state" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">State of residence</label>
+                            <label htmlFor="hero-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">State of residence</label>
                             <div className="relative mb-3">
                               <select
                                 id="hero-state"
@@ -329,7 +410,7 @@ export default function Subscribe() {
                                     setCustomStateA('');
                                   }
                                 }}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
                               >
                                 <option value="" disabled>Select state</option>
                                 {STATES.map((st) => (
@@ -341,14 +422,14 @@ export default function Subscribe() {
 
                             {stateA === 'Others' && (
                               <div className="animate-fade-in">
-                                <label htmlFor="hero-custom-state" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">Specify state of residence/country</label>
+                                <label htmlFor="hero-custom-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Specify state of residence/country</label>
                                 <input
                                   id="hero-custom-state"
                                   type="text"
                                   placeholder="Enter your residence or country"
                                   value={customStateA}
                                   onChange={(e) => setCustomStateA(e.target.value)}
-                                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all bg-white font-sans"
+                                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
                                   required
                                 />
                               </div>
@@ -360,14 +441,14 @@ export default function Subscribe() {
                               type="checkbox"
                               checked={consentA}
                               onChange={(e) => setConsentA(e.target.checked)}
-                              className="w-4 h-4 mt-0.5 rounded border-slate-300 accent-blue-600 cursor-pointer"
+                              className="w-4 h-4 mt-0.5 rounded border-slate-300 accent-[#001e40] cursor-pointer"
                               required
                             />
                             <span className="font-medium text-slate-600">
                               I agree to receive ClearPath Daily and accept the{' '}
-                              <Link to="/privacy-policy" className="text-blue-600 font-bold underline">Privacy Policy</Link>
+                              <Link to="/privacy-policy" className="text-[#001e40] font-bold underline">Privacy Policy</Link>
                               {' '}and{' '}
-                              <Link to="/terms-of-use" className="text-blue-600 font-bold underline">Terms of Use</Link>.
+                              <Link to="/terms-of-use" className="text-[#001e40] font-bold underline">Terms of Use</Link>.
                             </span>
                           </label>
 
@@ -376,7 +457,7 @@ export default function Subscribe() {
                           <button
                             type="submit"
                             disabled={submittingA}
-                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 disabled:opacity-50 shadow-md shadow-blue-600/5 hover:shadow-lg"
+                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 disabled:opacity-50 shadow-md shadow-[#001e40]/5 hover:shadow-lg"
                           >
                             {submittingA ? 'Submitting...' : 'Subscribe Free'}
                           </button>
@@ -384,7 +465,7 @@ export default function Subscribe() {
                           <button
                             type="button"
                             onClick={() => setStepA(1)}
-                            className="inline-block mt-4 text-slate-400 text-xs hover:text-blue-600 bg-none border-none p-0 cursor-pointer transition-colors font-bold font-sans"
+                            className="inline-block mt-4 text-slate-400 text-xs hover:text-[#001e40] bg-none border-none p-0 cursor-pointer transition-colors font-bold font-sans"
                           >
                             &larr; Back
                           </button>
@@ -506,30 +587,43 @@ export default function Subscribe() {
 
             {/* Segment: In Focus */}
             <h3 className="mt-12 mb-5 pt-5 border-t border-[#e3e3e3] text-[#17181a] text-[0.76rem] font-bold tracking-[0.1em] uppercase">
-              In Focus — two stories, every day
+              In Focus — Latest YouTube Videos
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-5">
-              <article className="flex flex-col text-left">
-                <h4 className="text-[#17181a] font-serif font-normal text-lg sm:text-[1.18rem] leading-[1.32] mb-2.5">Fuel subsidy reform: what changed and what didn't</h4>
-                <p className="text-[#666b73] text-sm leading-relaxed mb-3">A plain explainer of the latest policy adjustment and its immediate effect on pump prices and logistics costs.</p>
-                <p className="text-[#666b73] text-sm leading-relaxed mb-4">
-                  <strong className="text-[#17181a] font-semibold">Why it matters:</strong> Signals where subsidy savings are being redirected, and what to watch before the next review.
-                </p>
-                <button onClick={scrollToTopForm} className="self-start text-[#17181a] font-bold text-xs sm:text-[0.88rem] border-b border-[#17181a] pb-0.5 hover:opacity-75 transition-opacity cursor-pointer bg-transparent border-none p-0">
-                  Read more &rarr;
-                </button>
-              </article>
-
-              <article className="flex flex-col text-left">
-                <h4 className="text-[#17181a] font-serif font-normal text-lg sm:text-[1.18rem] leading-[1.32] mb-2.5">State governors and the 2027 succession math</h4>
-                <p className="text-[#666b73] text-sm leading-relaxed mb-3">An early look at the alliances forming ahead of the next election cycle.</p>
-                <p className="text-[#666b73] text-sm leading-relaxed mb-4">
-                  <strong className="text-[#17181a] font-semibold">Why it matters:</strong> These alignments explain policy choices already being made today.
-                </p>
-                <button onClick={scrollToTopForm} className="self-start text-[#17181a] font-bold text-xs sm:text-[0.88rem] border-b border-[#17181a] pb-0.5 hover:opacity-75 transition-opacity cursor-pointer bg-transparent border-none p-0">
-                  Read more &rarr;
-                </button>
-              </article>
+              {videosLoading ? (
+                // Elegant skeleton loading state
+                <>
+                  <div className="flex flex-col gap-4 animate-pulse text-left">
+                    <div className="h-6 w-3/4 bg-slate-200 rounded"></div>
+                    <div className="h-4 w-5/6 bg-slate-200 rounded"></div>
+                    <div className="h-4 w-2/3 bg-slate-200 rounded"></div>
+                  </div>
+                  <div className="flex flex-col gap-4 animate-pulse text-left">
+                    <div className="h-6 w-3/4 bg-slate-200 rounded"></div>
+                    <div className="h-4 w-5/6 bg-slate-200 rounded"></div>
+                    <div className="h-4 w-2/3 bg-slate-200 rounded"></div>
+                  </div>
+                </>
+              ) : (
+                renderedVideos.map((video) => (
+                  <article key={video.id} className="flex flex-col text-left group">
+                    <h4 className="text-[#17181a] font-serif font-semibold text-lg sm:text-[1.18rem] leading-[1.32] mb-2 group-hover:text-[#001e40] transition-colors">
+                      {video.title}
+                    </h4>
+                    <p className="text-[#666b73] text-sm leading-relaxed mb-4 flex-grow line-clamp-3">
+                      {video.shortSummary || video.fullDescription || "Watch the latest update from ClearPath."}
+                    </p>
+                    <a 
+                      href="https://www.youtube.com/@ClearPathMediaTV" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center gap-1.5 text-[#001e40] font-bold text-xs sm:text-[0.88rem] hover:underline cursor-pointer group-hover:translate-x-0.5 transition-transform"
+                    >
+                      Watch Now <Play className="w-3 h-3 fill-current" />
+                    </a>
+                  </article>
+                ))
+              )}
             </div>
 
             {/* Segment: Daily Feature */}
@@ -650,10 +744,10 @@ export default function Subscribe() {
                 <h2 className="text-[#17181a] font-serif text-3xl sm:text-4xl font-normal leading-[1.15]">
                   Understand Nigeria before the day begins.
                 </h2>
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 mt-6 text-blue-600 font-semibold text-xs sm:text-sm tracking-wide">
-                  <span className="flex items-center gap-1.5 text-blue-600"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> One email</span>
-                  <span className="flex items-center gap-1.5 text-blue-600"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Five minutes</span>
-                  <span className="flex items-center gap-1.5 text-blue-600"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Every weekday</span>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 mt-6 text-[#001e40] font-semibold text-xs sm:text-sm tracking-wide">
+                  <span className="flex items-center gap-1.5 text-[#001e40]"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> One email</span>
+                  <span className="flex items-center gap-1.5 text-[#001e40]"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Five minutes</span>
+                  <span className="flex items-center gap-1.5 text-[#001e40]"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Every weekday</span>
                 </div>
               </div>
 
@@ -674,7 +768,7 @@ export default function Subscribe() {
                       {stepB === 1 && (
                         <div className="animate-fade-in text-left">
                           <div className="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
-                            <h2 className="text-blue-600 text-xl sm:text-2xl font-bold font-sans">Subscribe free</h2>
+                            <h2 className="text-[#001e40] text-xl sm:text-2xl font-bold font-sans">Subscribe free</h2>
                             <span className="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap">Step 1 of 2</span>
                           </div>
                           <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
@@ -682,14 +776,14 @@ export default function Subscribe() {
                           </p>
 
                           <div className="mb-6">
-                            <label htmlFor="footer-email" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">Email address</label>
+                            <label htmlFor="footer-email" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Email address</label>
                             <input
                               id="footer-email"
                               type="email"
                               placeholder="you@example.com"
                               value={emailB}
                               onChange={(e) => setEmailB(e.target.value)}
-                              className="w-full px-4 py-3 sm:py-3.5 border border-slate-300 rounded-xl text-slate-800 text-sm sm:text-base placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all bg-white font-sans"
+                              className="w-full px-4 py-3 sm:py-3.5 border border-slate-300 rounded-xl text-slate-800 text-sm sm:text-base placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
                               required
                             />
                             {errorB && <p className="text-xs text-red-600 font-semibold mt-2">{errorB}</p>}
@@ -698,7 +792,7 @@ export default function Subscribe() {
                           <button
                             type="button"
                             onClick={handleFooterContinue}
-                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 shadow-md shadow-blue-600/5 hover:shadow-lg hover:shadow-blue-600/10"
+                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 shadow-md shadow-[#001e40]/5 hover:shadow-lg hover:shadow-[#001e40]/10"
                           >
                             Continue
                           </button>
@@ -712,7 +806,7 @@ export default function Subscribe() {
                       {stepB === 2 && (
                         <div className="animate-fade-in text-left">
                           <div className="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
-                            <h2 className="text-blue-600 text-xl sm:text-2xl font-bold font-sans">Almost there</h2>
+                            <h2 className="text-[#001e40] text-xl sm:text-2xl font-bold font-sans">Almost there</h2>
                             <span className="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap">Step 2 of 2</span>
                           </div>
                           <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
@@ -721,37 +815,37 @@ export default function Subscribe() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
-                              <label htmlFor="footer-first-name" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">First name</label>
+                              <label htmlFor="footer-first-name" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">First name</label>
                               <input
                                 id="footer-first-name"
                                 type="text"
                                 placeholder="First name"
                                 value={firstNameB}
                                 onChange={(e) => setFirstNameB(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all bg-white font-sans"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
                               />
                             </div>
                             <div>
-                              <label htmlFor="footer-surname" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">Surname</label>
+                              <label htmlFor="footer-surname" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Surname</label>
                               <input
                                 id="footer-surname"
                                 type="text"
                                 placeholder="Surname"
                                 value={surnameB}
                                 onChange={(e) => setSurnameB(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all bg-white font-sans"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
                               />
                             </div>
                           </div>
 
                           <div className="mb-4">
-                            <label htmlFor="footer-occupation" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">Occupation</label>
+                            <label htmlFor="footer-occupation" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Occupation</label>
                             <div className="relative">
                               <select
                                 id="footer-occupation"
                                 value={occupationB}
                                 onChange={(e) => setOccupationB(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
                               >
                                 <option value="" disabled>Select occupation</option>
                                 {OCCUPATIONS.map((occ) => (
@@ -763,7 +857,7 @@ export default function Subscribe() {
                           </div>
 
                           <div className="mb-6">
-                            <label htmlFor="footer-state" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">State of residence</label>
+                            <label htmlFor="footer-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">State of residence</label>
                             <div className="relative mb-3">
                               <select
                                 id="footer-state"
@@ -774,7 +868,7 @@ export default function Subscribe() {
                                     setCustomStateB('');
                                   }
                                 }}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
                               >
                                 <option value="" disabled>Select state</option>
                                 {STATES.map((st) => (
@@ -786,14 +880,14 @@ export default function Subscribe() {
 
                             {stateB === 'Others' && (
                               <div className="animate-fade-in">
-                                <label htmlFor="footer-custom-state" className="block mb-2 text-blue-600 text-xs sm:text-sm font-bold tracking-wide">Specify state of residence/country</label>
+                                <label htmlFor="footer-custom-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Specify state of residence/country</label>
                                 <input
                                   id="footer-custom-state"
                                   type="text"
                                   placeholder="Enter your residence or country"
                                   value={customStateB}
                                   onChange={(e) => setCustomStateB(e.target.value)}
-                                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all bg-white font-sans"
+                                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
                                   required
                                 />
                               </div>
@@ -805,14 +899,14 @@ export default function Subscribe() {
                               type="checkbox"
                               checked={consentB}
                               onChange={(e) => setConsentB(e.target.checked)}
-                              className="w-4 h-4 mt-0.5 rounded border-slate-300 accent-blue-600 cursor-pointer"
+                              className="w-4 h-4 mt-0.5 rounded border-slate-300 accent-[#001e40] cursor-pointer"
                               required
                             />
                             <span className="font-medium text-slate-600">
                               I agree to receive ClearPath Daily and accept the{' '}
-                              <Link to="/privacy-policy" className="text-blue-600 font-bold underline">Privacy Policy</Link>
+                              <Link to="/privacy-policy" className="text-[#001e40] font-bold underline">Privacy Policy</Link>
                               {' '}and{' '}
-                              <Link to="/terms-of-use" className="text-blue-600 font-bold underline">Terms of Use</Link>.
+                              <Link to="/terms-of-use" className="text-[#001e40] font-bold underline">Terms of Use</Link>.
                             </span>
                           </label>
 
@@ -821,7 +915,7 @@ export default function Subscribe() {
                           <button
                             type="submit"
                             disabled={submittingB}
-                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 disabled:opacity-50 shadow-md shadow-blue-600/5 hover:shadow-lg"
+                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 disabled:opacity-50 shadow-md shadow-[#001e40]/5 hover:shadow-lg"
                           >
                             {submittingB ? 'Submitting...' : 'Subscribe Free'}
                           </button>
@@ -829,7 +923,7 @@ export default function Subscribe() {
                           <button
                             type="button"
                             onClick={() => setStepB(1)}
-                            className="inline-block mt-4 text-slate-400 text-xs hover:text-blue-600 bg-none border-none p-0 cursor-pointer transition-colors font-bold font-sans"
+                            className="inline-block mt-4 text-slate-400 text-xs hover:text-[#001e40] bg-none border-none p-0 cursor-pointer transition-colors font-bold font-sans"
                           >
                             &larr; Back
                           </button>
