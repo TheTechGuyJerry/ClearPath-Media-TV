@@ -18,6 +18,7 @@ import ThreeThings from './pages/ThreeThings';
 import Subscribe from './pages/Subscribe';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
+import NewsPage from './pages/NewsPage';
 
 // Isolated authenticated admin imports
 import { AdminProvider } from './pages/admin/AdminContext';
@@ -50,6 +51,7 @@ function AppRoutes() {
       const scriptId = 'google-analytics-gtag';
       let script = document.getElementById(scriptId) as HTMLScriptElement;
       if (!script) {
+        console.log(`[GA4] Initializing Google Analytics with ID: ${gaId}`);
         script = document.createElement('script');
         script.id = scriptId;
         script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
@@ -64,10 +66,13 @@ function AppRoutes() {
       }
       
       // Send page view event
+      console.log(`[GA4] Tracking pageview: ${location.pathname}${location.search}`);
       (window as any).gtag('config', gaId, {
         page_path: location.pathname + location.search,
         page_title: document.title
       });
+    } else {
+      console.warn('[GA4] Measurement ID is missing or invalid. Set VITE_GA4_MEASUREMENT_ID in environment variables.');
     }
   }, [location.pathname, location.search]);
 
@@ -86,6 +91,8 @@ function AppRoutes() {
             <Route path="/election-matters" element={<ThreeThings forcedSlug="election-matters" />} />
             
             <Route path="/briefing" element={<Briefing />} />
+            <Route path="/briefing/:slug" element={<Briefing />} />
+            <Route path="/news/:slug" element={<NewsPage />} />
             <Route path="/explainers" element={<Explainers />} />
             <Route path="/explainers/insights" element={<Explainers />} />
             

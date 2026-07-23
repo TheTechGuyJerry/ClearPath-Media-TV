@@ -635,9 +635,9 @@ export default function Subscribe() {
                 <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Mon</small>
                 <div>
                   <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <button onClick={scrollToTopForm} className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] bg-transparent border-none p-0 font-bold cursor-pointer">
+                    <Link to="/news/west-african-monitor" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
                       West Africa Monitor
-                    </button>
+                    </Link>
                   </h3>
                   <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">A teaser from our regional desk, tracking shifts across West Africa.</p>
                 </div>
@@ -647,9 +647,9 @@ export default function Subscribe() {
                 <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Tue</small>
                 <div>
                   <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <button onClick={scrollToTopForm} className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] bg-transparent border-none p-0 font-bold cursor-pointer">
+                    <Link to="/news/state-in-focus" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
                       State in Focus
-                    </button>
+                    </Link>
                   </h3>
                   <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">A rotating spotlight on one Nigerian state's governance and development story.</p>
                 </div>
@@ -659,9 +659,9 @@ export default function Subscribe() {
                 <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Wed</small>
                 <div>
                   <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <button onClick={scrollToTopForm} className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] bg-transparent border-none p-0 font-bold cursor-pointer">
+                    <Link to="/news/lga-brief" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
                       LGA Brief
-                    </button>
+                    </Link>
                   </h3>
                   <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">Grassroots reporting from Nigeria's local government areas.</p>
                 </div>
@@ -671,9 +671,9 @@ export default function Subscribe() {
                 <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Thu</small>
                 <div>
                   <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <button onClick={scrollToTopForm} className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] bg-transparent border-none p-0 font-bold cursor-pointer">
+                    <Link to="/news/governance-brief" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
                       Governance Brief
-                    </button>
+                    </Link>
                   </h3>
                   <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">Policy execution and public-sector accountability, tracked closely.</p>
                 </div>
@@ -683,9 +683,9 @@ export default function Subscribe() {
                 <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Fri</small>
                 <div>
                   <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <button onClick={scrollToTopForm} className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] bg-transparent border-none p-0 font-bold cursor-pointer">
+                    <Link to="/news/bccn-news" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
                       BCCN News
-                    </button>
+                    </Link>
                   </h3>
                   <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">Athena Perspectives on Benin, Chad, Cameroon and Niger.</p>
                 </div>

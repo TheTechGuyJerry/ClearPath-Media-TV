@@ -180,6 +180,9 @@ export interface Briefing {
   publishedAtLabel?: string;
   createdAtLabel?: string;
   updatedAtLabel?: string;
+  whatHappened?: string;
+  whyItMatters?: string;
+  whatToWatchNext?: string;
 }
 
 export interface SiteSettings {
