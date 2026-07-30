@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { getDoc, doc, collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
+import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import CheckEmailModal from './CheckEmailModal';
 
 export default function ZohoSignupEmbed() {
   const [embedCode, setEmbedCode] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [email, setEmail] = useState<string>('');
-  const [submitted, setSubmitted] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [checkEmailModalOpen, setCheckEmailModalOpen] = useState<boolean>(false);
+  const [continuationToken, setContinuationToken] = useState<string>('');
 
   useEffect(() => {
     // 1. Check environment variable first
@@ -69,36 +70,26 @@ export default function ZohoSignupEmbed() {
     setError('');
 
     try {
-      // Prevent duplicate active subscribers
-      try {
-        const duplicateQuery = query(
-          collection(db, 'newsletterSubscribers'),
-          where('email', '==', emailLower),
-          where('status', '==', 'active')
-        );
-        const dupSnap = await getDocs(duplicateQuery);
-        if (!dupSnap.empty) {
-          setSubmitted(true);
-          return;
-        }
-      } catch (checkErr) {
-        console.info('Pre-subscribe verification bypassed due to lack of public read credentials.');
-      }
-
-      await addDoc(collection(db, 'newsletterSubscribers'), {
-        email: emailLower,
-        selectedBriefings: ['Election Matters'],
-        status: 'active',
-        source: 'election_matters_embedded_form',
-        privacyConsent: true,
-        subscribedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailLower }),
       });
-      setSubmitted(true);
-    } catch (err) {
-      console.error('Error saving subscription:', err);
-      setError(err instanceof Error ? err.message : 'Subscription failed. Please try again.');
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.status === 'already_subscribed') {
+          setError(data.message || 'This email address is already subscribed.');
+        } else {
+          setContinuationToken(data.token || '');
+          setCheckEmailModalOpen(true);
+        }
+      } else {
+        setError(data.error || 'Failed to start subscription.');
+      }
+    } catch (err: any) {
+      console.error('Error in ZohoSignupEmbed submit:', err);
+      setError('Error processing subscription. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -106,6 +97,13 @@ export default function ZohoSignupEmbed() {
 
   return (
     <div className="w-full max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-unit-xl">
+      <CheckEmailModal
+        isOpen={checkEmailModalOpen}
+        onClose={() => setCheckEmailModalOpen(false)}
+        email={email}
+        continuationToken={continuationToken}
+      />
+
       <motion.div 
         className="bg-slate-900 border border-slate-800 text-white rounded-xl p-8 md:p-12 text-center max-w-4xl mx-auto font-sans shadow-lg relative overflow-hidden"
         initial={{ y: 150, scale: 0.85, opacity: 0 }}
@@ -142,14 +140,6 @@ export default function ZohoSignupEmbed() {
               className="mt-6 text-left"
               dangerouslySetInnerHTML={{ __html: embedCode }}
             />
-          ) : submitted ? (
-            <div className="mt-6 border border-emerald-800/50 bg-emerald-950/25 rounded-lg p-8 max-w-md mx-auto flex flex-col items-center gap-3 animate-fade-in">
-              <CheckCircle2 className="w-10 h-10 text-emerald-400 animate-bounce" />
-              <h4 className="text-md font-semibold text-white">Subscription Confirmed!</h4>
-              <p className="text-xs text-slate-400 leading-relaxed text-center">
-                You've successfully subscribed to the Election Matters newsletter briefing list.
-              </p>
-            </div>
           ) : (
             <div className="mt-6 w-full max-w-md mx-auto">
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">

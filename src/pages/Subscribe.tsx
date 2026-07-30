@@ -174,6 +174,22 @@ export default function Subscribe() {
       setErrorA('Please enter your First Name and Surname.');
       return;
     }
+    if (!occupationA) {
+      setErrorA('Please select your Occupation.');
+      return;
+    }
+    if (!stateA) {
+      setErrorA('Please select your State of residence.');
+      return;
+    }
+    if (stateA === 'Others' && !customStateA.trim()) {
+      setErrorA('Please specify your state of residence or country.');
+      return;
+    }
+    if (!consentA) {
+      setErrorA('You must accept the terms to complete subscription.');
+      return;
+    }
 
     setSubmittingA(true);
     setErrorA('');
@@ -186,8 +202,8 @@ export default function Subscribe() {
           token: continuationToken,
           firstName: firstNameA.trim(),
           surname: surnameA.trim(),
-          occupation: occupationA || 'Not Specified',
-          stateOfOrigin: stateA === 'Others' ? customStateA : stateA || 'Not Specified',
+          occupation: occupationA,
+          stateOfOrigin: stateA === 'Others' ? customStateA.trim() : stateA,
         }),
       });
       const data = await res.json();
@@ -254,6 +270,22 @@ export default function Subscribe() {
       setErrorB('Please enter your First Name and Surname.');
       return;
     }
+    if (!occupationB) {
+      setErrorB('Please select your Occupation.');
+      return;
+    }
+    if (!stateB) {
+      setErrorB('Please select your State of residence.');
+      return;
+    }
+    if (stateB === 'Others' && !customStateB.trim()) {
+      setErrorB('Please specify your state of residence or country.');
+      return;
+    }
+    if (!consentB) {
+      setErrorB('You must accept the terms to complete subscription.');
+      return;
+    }
 
     setSubmittingB(true);
     setErrorB('');
@@ -266,8 +298,8 @@ export default function Subscribe() {
           token: continuationToken,
           firstName: firstNameB.trim(),
           surname: surnameB.trim(),
-          occupation: occupationB || 'Not Specified',
-          stateOfOrigin: stateB === 'Others' ? customStateB : stateB || 'Not Specified',
+          occupation: occupationB,
+          stateOfOrigin: stateB === 'Others' ? customStateB.trim() : stateB,
         }),
       });
       const data = await res.json();
@@ -443,15 +475,16 @@ export default function Subscribe() {
                           </div>
 
                           <div className="mb-4">
-                            <label htmlFor="hero-occupation" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Occupation</label>
+                            <label htmlFor="hero-occupation" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Occupation *</label>
                             <div className="relative">
                               <select
                                 id="hero-occupation"
                                 value={occupationA}
                                 onChange={(e) => setOccupationA(e.target.value)}
                                 className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
+                                required
                               >
-                                <option value="" disabled>Select occupation</option>
+                                <option value="" disabled>Select occupation *</option>
                                 {OCCUPATIONS.map((occ) => (
                                   <option key={occ} value={occ}>{occ}</option>
                                 ))}
@@ -461,7 +494,7 @@ export default function Subscribe() {
                           </div>
 
                           <div className="mb-6">
-                            <label htmlFor="hero-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">State of residence</label>
+                            <label htmlFor="hero-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">State of residence *</label>
                             <div className="relative mb-3">
                               <select
                                 id="hero-state"
@@ -473,8 +506,9 @@ export default function Subscribe() {
                                   }
                                 }}
                                 className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
+                                required
                               >
-                                <option value="" disabled>Select state</option>
+                                <option value="" disabled>Select state *</option>
                                 {STATES.map((st) => (
                                   <option key={st} value={st}>{st}</option>
                                 ))}
@@ -484,7 +518,7 @@ export default function Subscribe() {
 
                             {stateA === 'Others' && (
                               <div className="animate-fade-in">
-                                <label htmlFor="hero-custom-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Specify state of residence/country</label>
+                                <label htmlFor="hero-custom-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Specify state of residence/country *</label>
                                 <input
                                   id="hero-custom-state"
                                   type="text"
@@ -669,13 +703,14 @@ export default function Subscribe() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-[#001e40] mb-1">Occupation</label>
+                          <label className="block text-xs font-bold text-[#001e40] mb-1">Occupation *</label>
                           <select
                             value={occupationB}
                             onChange={(e) => setOccupationB(e.target.value)}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                            required
                           >
-                            <option value="" disabled>Select occupation</option>
+                            <option value="" disabled>Select occupation *</option>
                             {OCCUPATIONS.map((occ) => (
                               <option key={occ} value={occ}>{occ}</option>
                             ))}
@@ -683,7 +718,7 @@ export default function Subscribe() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-[#001e40] mb-1">State of residence</label>
+                          <label className="block text-xs font-bold text-[#001e40] mb-1">State of residence *</label>
                           <select
                             value={stateB}
                             onChange={(e) => {
@@ -691,13 +726,44 @@ export default function Subscribe() {
                               if (e.target.value !== 'Others') setCustomStateB('');
                             }}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                            required
                           >
-                            <option value="" disabled>Select state</option>
+                            <option value="" disabled>Select state *</option>
                             {STATES.map((st) => (
                               <option key={st} value={st}>{st}</option>
                             ))}
                           </select>
                         </div>
+
+                        {stateB === 'Others' && (
+                          <div className="animate-fade-in">
+                            <label className="block text-xs font-bold text-[#001e40] mb-1">Specify state of residence/country *</label>
+                            <input
+                              type="text"
+                              placeholder="Enter your residence or country"
+                              value={customStateB}
+                              onChange={(e) => setCustomStateB(e.target.value)}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                              required
+                            />
+                          </div>
+                        )}
+
+                        <label className="grid grid-cols-[16px_1fr] gap-2.5 items-start my-3 text-slate-500 text-xs leading-normal select-none cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={consentB}
+                            onChange={(e) => setConsentB(e.target.checked)}
+                            className="w-4 h-4 mt-0.5 rounded border-slate-300 accent-[#001e40] cursor-pointer"
+                            required
+                          />
+                          <span className="font-medium text-slate-600">
+                            I agree to receive ClearPath Daily and accept the{' '}
+                            <Link to="/privacy-policy" className="text-[#001e40] font-bold underline">Privacy Policy</Link>
+                            {' '}and{' '}
+                            <Link to="/terms-of-use" className="text-[#001e40] font-bold underline">Terms of Use</Link>.
+                          </span>
+                        </label>
 
                         {errorB && <p className="text-xs text-red-600 font-semibold">{errorB}</p>}
 

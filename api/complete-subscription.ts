@@ -20,6 +20,18 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ success: false, error: 'Continuation token is required.' });
   }
 
+  if (!fName || !sName) {
+    return res.status(400).json({ success: false, error: 'First name and surname are required.' });
+  }
+
+  if (!occ || occ === 'Not Specified') {
+    return res.status(400).json({ success: false, error: 'Occupation is required.' });
+  }
+
+  if (!state || state === 'Not Specified') {
+    return res.status(400).json({ success: false, error: 'State of residence is required.' });
+  }
+
   try {
     const colRef = collection(db, 'newsletterSubscribers');
     const q = query(colRef, where('continuationToken', '==', cleanToken), limit(1));
