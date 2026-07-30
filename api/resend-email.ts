@@ -1,5 +1,5 @@
-import { db, collection, query, where, getDocs, updateDoc, doc, limit } from './_db';
-import { sendFirstSubscriptionEmail } from './_email';
+import { db, collection, query, where, getDocs, updateDoc, doc, limit } from './_db.js';
+import { sendFirstSubscriptionEmail } from './_email.js';
 
 export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {

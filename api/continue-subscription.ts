@@ -1,4 +1,4 @@
-import { db, collection, query, where, getDocs, limit } from './_db';
+import { db, collection, query, where, getDocs, limit } from './_db.js';
 
 export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
