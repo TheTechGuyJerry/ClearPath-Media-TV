@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Menu, X, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import JoinModal from './JoinModal';
-import clearPathLogo from '../assets/clearpath-logo.png';
 
 // Toggle to true when ready to reveal hidden menu items (ClearPath Daily, Analysis, Weekly Features)
 const SHOW_DRAFT_MENU_ITEMS = true;
@@ -47,7 +46,7 @@ export default function Navbar() {
               aria-label="Go to homepage"
             >
               <img 
-                src={clearPathLogo} 
+                src="/images/clearpath-logo.png" 
                 alt="ClearPath Media" 
                 className="header-logo-image block w-[150px] min-w-[150px] h-auto max-w-none max-h-none object-contain shrink-0" 
               />
