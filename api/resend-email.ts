@@ -1,5 +1,6 @@
 import { db, collection, query, where, getDocs, updateDoc, doc, limit } from './_db.js';
 import { sendFirstSubscriptionEmail } from './_email.js';
+import { resolveAppOrigin } from './_origin.js';
 
 export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
@@ -58,10 +59,13 @@ export default async function handler(req: any, res: any) {
     const currentToken = docData.continuationToken || cleanToken;
     const targetEmail = docData.email || emailLower;
 
-    const host = req.headers?.host || req.headers?.['x-forwarded-host'] || 'localhost:3000';
-    const protocol = req.headers?.['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
-    const appUrl = process.env.APP_URL ? process.env.APP_URL.replace(/\/$/, '') : `${protocol}://${host}`;
-    const continuationUrl = `${appUrl}/subscribe?token=${currentToken}`;
+    let targetOrigin = docData.sourceOrigin;
+    if (!targetOrigin) {
+      const originRes = resolveAppOrigin(req);
+      targetOrigin = originRes.origin || 'https://clearpathmedia.ng';
+    }
+
+    const continuationUrl = `${targetOrigin}/subscribe?token=${currentToken}`;
 
     const emailRes = await sendFirstSubscriptionEmail(targetEmail, continuationUrl);
     const resendId = emailRes.data?.id || null;

@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { db, collection, query, where, getDocs, addDoc, updateDoc, doc, limit } from './_db.js';
 import { sendFirstSubscriptionEmail } from './_email.js';
+import { resolveAppOrigin } from './_origin.js';
 
 export default async function handler(req: any, res: any) {
   // CORS & Header handling
@@ -19,6 +20,16 @@ export default async function handler(req: any, res: any) {
     if (!emailLower || !emailLower.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) {
       return res.status(400).json({ success: false, error: 'Please enter a valid email address.' });
     }
+
+    // Resolve validated origin
+    const originRes = resolveAppOrigin(req);
+    if (!originRes.origin) {
+      return res.status(500).json({
+        success: false,
+        error: originRes.error || 'Configuration error: APP_BASE_URL is missing in production environment.',
+      });
+    }
+    const validatedOrigin = originRes.origin;
 
     // Check if already actively subscribed
     const colRef = collection(db, 'newsletterSubscribers');
@@ -49,6 +60,7 @@ export default async function handler(req: any, res: any) {
         status: 'pending',
         continuationToken: token,
         continuationExpiresAt: expiresAt,
+        sourceOrigin: validatedOrigin,
         deliveryStatus: 'pending',
         updatedAt: nowIso,
       });
@@ -58,6 +70,7 @@ export default async function handler(req: any, res: any) {
         status: 'pending',
         continuationToken: token,
         continuationExpiresAt: expiresAt,
+        sourceOrigin: validatedOrigin,
         deliveryStatus: 'pending',
         source: 'clearpath_subscribe_flow',
         privacyConsent: true,
@@ -67,11 +80,8 @@ export default async function handler(req: any, res: any) {
       docId = newDoc.id;
     }
 
-    // Build base URL for continuation link
-    const host = req.headers?.host || req.headers?.['x-forwarded-host'] || 'localhost:3000';
-    const protocol = req.headers?.['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
-    const appUrl = process.env.APP_URL ? process.env.APP_URL.replace(/\/$/, '') : `${protocol}://${host}`;
-    const continuationUrl = `${appUrl}/subscribe?token=${token}`;
+    // Build continuation URL on validated origin
+    const continuationUrl = `${validatedOrigin}/subscribe?token=${token}`;
 
     // Send first email via Resend
     let resendId: string | null = null;
