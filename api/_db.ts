@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc, limit } from 'firebase/firestore';
-import config from '../firebase-applet-config.json';
+import config from '../firebase-applet-config.json' with { type: 'json' };
 
 // Initialize Firebase App for server environment
 const firebaseApp = getApps().length === 0 ? initializeApp({

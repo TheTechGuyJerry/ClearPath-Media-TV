@@ -19,7 +19,7 @@ import {
   onSnapshot 
 } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import firebaseConfig from '../../firebase-applet-config.json';
+import firebaseConfig from '../../firebase-applet-config.json' with { type: 'json' };
 
 // Support external environment variable overrides alongside the json config
 const API_KEY = import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey;
