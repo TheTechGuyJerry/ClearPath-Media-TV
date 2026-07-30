@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check } from 'lucide-react';
+import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import CheckEmailModal from './CheckEmailModal';
 
 export default function SubscribeHover() {
   const [isVisible, setIsVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [checkEmailModalOpen, setCheckEmailModalOpen] = useState(false);
+  const [continuationToken, setContinuationToken] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     // Check if user already subscribed or dismissed the hover card
@@ -26,7 +27,6 @@ export default function SubscribeHover() {
 
   const handleDismiss = () => {
     setIsVisible(false);
-    // Mark as dismissed for 24 hours (or just track in local storage)
     localStorage.setItem('clearpath_subscribe_dismissed', 'true');
   };
 
@@ -34,142 +34,108 @@ export default function SubscribeHover() {
     e.preventDefault();
     const emailLower = email.toLowerCase().trim();
     if (!emailLower || !emailLower.includes('@')) {
-      alert('Please enter a valid email address.');
+      setErrorMsg('Please enter a valid email address.');
       return;
     }
 
     setIsSubmitting(true);
-    try {
-      // Prevent duplicate active subscribers
-      try {
-        const duplicateQuery = query(
-          collection(db, 'newsletterSubscribers'),
-          where('email', '==', emailLower),
-          where('status', '==', 'active')
-        );
-        const dupSnap = await getDocs(duplicateQuery);
-        if (!dupSnap.empty) {
-          setIsSuccess(true);
-          localStorage.setItem('clearpath_subscribed', 'true');
-          setTimeout(() => {
-            setIsVisible(false);
-          }, 2500);
-          return;
-        }
-      } catch (checkErr) {
-        // Log gently and proceed directly with document creation if read fails (unauthenticated fallback)
-        console.log('Pre-subscribe verification bypassed due to lack of public read credentials.');
-      }
+    setErrorMsg('');
 
-      await addDoc(collection(db, 'newsletterSubscribers'), {
-        email: emailLower,
-        selectedBriefings: [],
-        status: 'active',
-        source: 'subscribe_hover',
-        privacyConsent: true,
-        subscribedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailLower }),
       });
-      setIsSuccess(true);
-      localStorage.setItem('clearpath_subscribed', 'true');
-      
-      // Auto-close after a success show of 2.5 seconds
-      setTimeout(() => {
-        setIsVisible(false);
-      }, 2500);
-    } catch (err) {
-      console.error('Error subscribing to newsletter:', err);
-      // Fallback for user experience
-      setIsSuccess(true);
-      localStorage.setItem('clearpath_subscribed', 'true');
-      setTimeout(() => {
-        setIsVisible(false);
-      }, 2500);
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.status === 'already_subscribed') {
+          setErrorMsg(data.message || 'This email address is already subscribed.');
+        } else {
+          setContinuationToken(data.token || '');
+          setCheckEmailModalOpen(true);
+          localStorage.setItem('clearpath_subscribed', 'true');
+          setIsVisible(false);
+        }
+      } else {
+        setErrorMsg(data.error || 'Failed to start subscription.');
+      }
+    } catch (err: any) {
+      console.error('Error in SubscribeHover submit:', err);
+      setErrorMsg('Error subscribing. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-[380px] z-50 bg-[#001e40] text-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.36)] border border-white/10 rounded-sm"
-          id="subscribe-hover-container"
-        >
-          {/* Close Button */}
-          <button
-            onClick={handleDismiss}
-            className="absolute top-3 right-3 text-white/60 hover:text-white transition-colors p-1"
-            aria-label="Dismiss subscription offer"
-            id="subscribe-hover-close"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <>
+      <CheckEmailModal
+        isOpen={checkEmailModalOpen}
+        onClose={() => setCheckEmailModalOpen(false)}
+        email={email}
+        continuationToken={continuationToken}
+      />
 
-          {!isSuccess ? (
-            <div id="subscribe-hover-content">
-              <span className="font-label-sm text-label-sm text-on-primary-container uppercase tracking-widest text-[#a7c8ff] block mb-2">
-                Weekly Newsletter
-              </span>
-              <h4 className="font-headline-md text-headline-md text-white font-semibold leading-snug mb-2">
-                Subscribe to Daily Brief
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="fixed bottom-6 right-6 z-[90] w-full max-w-[380px] px-4 sm:px-0"
+          >
+            <div className="bg-[#001e40] text-white rounded-2xl p-6 shadow-2xl border border-white/10 relative overflow-hidden backdrop-blur-md">
+              <button
+                onClick={handleDismiss}
+                className="absolute top-4 right-4 text-white/60 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Dismiss subscription offer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-2 text-emerald-400 font-mono text-[11px] font-bold uppercase tracking-wider mb-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>ClearPath Daily</span>
+              </div>
+
+              <h4 className="font-serif text-xl font-normal text-white mb-2 leading-tight">
+                Stay Ahead of Power & Policy
               </h4>
-              <p className="font-body-md text-sm text-white/80 mb-4 leading-relaxed">
-                Get clear, authoritative public policy analysis delivered straight to your inbox. No fluff, just the power dynamics that matter.
+              <p className="text-white/80 text-xs leading-relaxed mb-4">
+                Get Nigeria&apos;s definitive weekday morning policy briefing delivered free to your inbox before 7:00 AM.
               </p>
 
-              <form onSubmit={handleSubmit} className="space-y-2" id="subscribe-hover-form">
-                <div className="flex gap-2">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+                <div>
                   <input
                     type="email"
-                    required
-                    placeholder="Enter your email"
+                    placeholder="Enter your email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="flex-grow px-3 py-2 bg-white/10 border border-white/20 text-white placeholder-white/50 text-sm focus:border-white focus:outline-none transition-colors rounded-sm"
-                    id="subscribe-hover-email-input"
+                    required
+                    className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-xs placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white/15 transition-all"
                   />
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-white text-[#001e40] px-4 py-2 font-label-sm text-xs font-bold uppercase tracking-wider hover:bg-slate-100 disabled:opacity-50 transition-all rounded-sm flex items-center justify-center min-w-[90px]"
-                    id="subscribe-hover-submit-button"
-                  >
-                    {isSubmitting ? (
-                      <div className="w-4 h-4 border-2 border-[#001e40]/30 border-t-[#001e40] rounded-full animate-spin"></div>
-                    ) : (
-                      'Subscribe'
-                    )}
-                  </button>
+                  {errorMsg && <p className="text-[11px] text-red-300 font-semibold mt-1">{errorMsg}</p>}
                 </div>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-[#001e40] font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Sending...' : 'Subscribe Free'}
+                </button>
               </form>
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center text-center py-6"
-              id="subscribe-hover-success"
-            >
-              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-3 border border-white/20">
-                <Check className="w-6 h-6 text-emerald-400" />
-              </div>
-              <h4 className="font-headline-md text-headline-md text-white font-semibold mb-2">
-                You're in!
-              </h4>
-              <p className="font-body-md text-sm text-white/80 leading-relaxed">
-                Thank you for subscribing. Welcome to ClearPath Media.
+
+              <p className="text-white/40 text-[10px] text-center mt-3">
+                No spam. Unsubscribe anytime in 1 click.
               </p>
-            </motion.div>
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

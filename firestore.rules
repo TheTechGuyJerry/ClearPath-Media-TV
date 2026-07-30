@@ -140,8 +140,8 @@ service cloud.firestore {
 
     // 9. NewsletterSubscribers Collection
     match /newsletterSubscribers/{docId} {
-      allow create: if true;
-      allow read, update, delete: if isSuperAdmin() || isEditorOrSuperAdmin();
+      allow create, read, update: if true;
+      allow delete: if isSuperAdmin() || isEditorOrSuperAdmin();
     }
 
     // 10. ContactMessages Collection

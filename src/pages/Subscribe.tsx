@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { CheckCircle2, ChevronDown, Mail, Check, Play } from 'lucide-react';
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { Link, useSearchParams } from 'react-router-dom';
+import { CheckCircle2, ChevronDown, Check, Loader2, AlertCircle } from 'lucide-react';
 import SEO from '../components/SEO';
-import LiteYouTube from '../components/LiteYouTube';
+import CheckEmailModal from '../components/CheckEmailModal';
 import { getPublishedProgrammeVideos } from '../services/publicContentService';
 import { ProgrammeVideo } from '../types';
 
@@ -29,83 +27,20 @@ const STATES = [
 ];
 
 export default function Subscribe() {
-  // YouTube videos state & fetch logic
+  const [searchParams] = useSearchParams();
+
+  // YouTube videos state
   const [latestVideos, setLatestVideos] = useState<ProgrammeVideo[]>([]);
   const [videosLoading, setVideosLoading] = useState(true);
 
-  const fallbackVideos: ProgrammeVideo[] = [
-    {
-      id: "security-breakthrough-or-political-weapon-daily-brief-with-annabel",
-      programmeId: "daily-brief-with-annabel",
-      programmeTitle: "Daily Brief with Annabel",
-      title: "Security Breakthrough Or Political Weapon",
-      slug: "security-breakthrough-or-political-weapon-daily-brief-with-annabel",
-      shortSummary: "Nigeria may be on the verge of one of its biggest security reforms yet. With growing calls for state policing, supporters say it will bring security closer to the people. Is state police the answer to Nigeria's security challenges, or does it create new ones?",
-      fullDescription: "Nigeria may be on the verge of one of its biggest security reforms yet. With growing calls for state policing, supporters say it will bring security closer to the people. Is state police the answer to Nigeria's security challenges, or does it create new ones?",
-      youtubeUrl: "https://www.youtube.com/watch?v=IpF2T1-okyA",
-      youtubeVideoId: "IpF2T1-okyA",
-      thumbnailUrl: "https://img.youtube.com/vi/IpF2T1-okyA/maxresdefault.jpg",
-      duration: "00:00",
-      presenters: "Annabel Orji",
-      guests: "",
-      status: "published",
-      coverageArea: "Nigeria",
-      displayDate: "June 18, 2026",
-      publishedAt: "2026-06-18",
-      createdAt: "2026-06-20T11:23:32.388Z",
-      updatedAt: "2026-06-20T11:23:32.388Z",
-      isFeatured: false,
-      topicTags: [],
-      transcript: "",
-      keyPoints: "",
-      sourceLinks: ""
-    },
-    {
-      id: "daily-brief-with-annabel_11TKee2fPvk",
-      programmeId: "daily-brief-with-annabel",
-      programmeTitle: "Daily Brief with Annabel",
-      title: "Nigeria’s Obsession With Virality Is Becoming Dangerous | Daily Brief With Annabel",
-      slug: "nigerias-obsession-with-virality-is-becoming-dangerous-daily-brief-with-annabel",
-      shortSummary: "Exploring the implications of the dangerous trend of virality obsession in Nigeria's digital public discourse.",
-      fullDescription: "Exploring the implications of the dangerous trend of virality obsession in Nigeria's digital public discourse.",
-      youtubeUrl: "https://www.youtube.com/watch?v=11TKee2fPvk",
-      youtubeVideoId: "11TKee2fPvk",
-      thumbnailUrl: "https://img.youtube.com/vi/11TKee2fPvk/hqdefault.jpg",
-      duration: "00:00",
-      presenters: "Annabel Orji",
-      guests: "",
-      status: "published",
-      coverageArea: "Nigeria",
-      displayDate: "May 20, 2026",
-      publishedAt: "2026-06-15",
-      createdAt: "2026-06-15T14:28:25.000Z",
-      updatedAt: "2026-06-15T14:28:25.000Z",
-      isFeatured: false,
-      topicTags: [],
-      transcript: "",
-      keyPoints: "",
-      sourceLinks: ""
-    }
-  ];
+  // Continuation Token handling state
+  const [tokenValidating, setTokenValidating] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [continuationToken, setContinuationToken] = useState<string>('');
 
-  useEffect(() => {
-    async function fetchVideos() {
-      try {
-        const videos = await getPublishedProgrammeVideos();
-        // Get the latest 2 videos
-        setLatestVideos(videos.slice(0, 2));
-      } catch (err) {
-        console.error('Error fetching videos in Subscribe page:', err);
-      } finally {
-        setVideosLoading(false);
-      }
-    }
-    fetchVideos();
-  }, []);
-
-  const renderedVideos = latestVideos.length >= 2 
-    ? latestVideos 
-    : (latestVideos.length > 0 ? [...latestVideos, fallbackVideos[1]] : fallbackVideos);
+  // Check Email Popup Modal State
+  const [checkEmailOpen, setCheckEmailOpen] = useState(false);
+  const [activeModalEmail, setActiveModalEmail] = useState('');
 
   // Hero Form States
   const [emailA, setEmailA] = useState('');
@@ -118,9 +53,10 @@ export default function Subscribe() {
   const [stepA, setStepA] = useState(1);
   const [submittingA, setSubmittingA] = useState(false);
   const [submittedA, setSubmittedA] = useState(false);
+  const [completionMessageA, setCompletionMessageA] = useState('');
   const [errorA, setErrorA] = useState('');
 
-  // Final CTA Form States
+  // Footer Form States
   const [emailB, setEmailB] = useState('');
   const [firstNameB, setFirstNameB] = useState('');
   const [surnameB, setSurnameB] = useState('');
@@ -131,134 +67,223 @@ export default function Subscribe() {
   const [stepB, setStepB] = useState(1);
   const [submittingB, setSubmittingB] = useState(false);
   const [submittedB, setSubmittedB] = useState(false);
+  const [completionMessageB, setCompletionMessageB] = useState('');
   const [errorB, setErrorB] = useState('');
 
-  // Scroll helper
-  const scrollToTopForm = () => {
-    const element = document.getElementById('hero-subscribe-card');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  };
-
-  // Submit Handler Generator
-  const handleSubscribe = async (
-    email: string,
-    firstName: string,
-    surname: string,
-    occupation: string,
-    stateOfOrigin: string,
-    consent: boolean,
-    setSubmitting: (val: boolean) => void,
-    setSubmitted: (val: boolean) => void,
-    setError: (val: string) => void
-  ) => {
-    const emailLower = email.toLowerCase().trim();
-    if (!emailLower || !emailLower.includes('@')) {
-      setError('Please enter a valid email address.');
-      return;
-    }
-
-    // Consent is mandatory and always forced to true
-    setSubmitting(true);
-    setError('');
-
-    try {
-      // Check for existing subscriber safely
+  // Fetch published videos for preview strip
+  useEffect(() => {
+    async function fetchVideos() {
       try {
-        const duplicateQuery = query(
-          collection(db, 'newsletterSubscribers'),
-          where('email', '==', emailLower),
-          where('status', '==', 'active')
-        );
-        const dupSnap = await getDocs(duplicateQuery);
-        if (!dupSnap.empty) {
-          setSubmitted(true);
-          return;
-        }
-      } catch (checkErr) {
-        console.warn('Pre-subscribe duplicate check bypassed:', checkErr);
+        const videos = await getPublishedProgrammeVideos();
+        setLatestVideos(videos.slice(0, 2));
+      } catch (err) {
+        console.error('Error fetching videos in Subscribe page:', err);
+      } finally {
+        setVideosLoading(false);
       }
-
-      // Create new subscription record
-      await addDoc(collection(db, 'newsletterSubscribers'), {
-        email: emailLower,
-        firstName: firstName.trim(),
-        lastName: surname.trim(),
-        fullName: `${firstName.trim()} ${surname.trim()}`.trim(),
-        occupation: occupation || 'Not Specified',
-        stateOfOrigin: stateOfOrigin || 'Not Specified',
-        selectedBriefings: ['Daily Brief with Annabel', 'Election Matters', 'OsitaInsight'],
-        status: 'active',
-        source: 'subscribe_page_v2',
-        privacyConsent: true,
-        subscribedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-
-      setSubmitted(true);
-    } catch (err) {
-      console.error('Subscription Firestore Error:', err);
-      try {
-        handleFirestoreError(err, OperationType.CREATE, 'newsletterSubscribers');
-      } catch (fmtErr) {
-        setError(fmtErr instanceof Error ? fmtErr.message : String(fmtErr));
-      }
-    } finally {
-      setSubmitting(false);
     }
-  };
+    fetchVideos();
+  }, []);
 
-  const handleHeroSubmit = (e: React.FormEvent) => {
+  // Handle Continuation Token from URL Search Params (?token=... or ?continue=...)
+  useEffect(() => {
+    const rawToken = searchParams.get('token') || searchParams.get('continue');
+    if (rawToken) {
+      const cleanTok = rawToken.trim();
+      setTokenValidating(true);
+      setTokenError(null);
+
+      fetch('/api/continue-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: cleanTok }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.email) {
+            setContinuationToken(cleanTok);
+            setEmailA(data.email);
+            setEmailB(data.email);
+            setStepA(2);
+            setStepB(2);
+
+            // Scroll to form card
+            const heroCard = document.getElementById('hero-subscribe-card');
+            if (heroCard) {
+              heroCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          } else {
+            setTokenError(data.error || 'This subscription continuation link is invalid or expired.');
+          }
+        })
+        .catch((err) => {
+          console.error('Error validating token:', err);
+          setTokenError('Unable to verify subscription continuation link. Please try entering your email below.');
+        })
+        .finally(() => {
+          setTokenValidating(false);
+        });
+    }
+  }, [searchParams]);
+
+  // Step 1: Start Subscription (Hero form)
+  const handleHeroStartSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
-    handleSubscribe(
-      emailA,
-      firstNameA,
-      surnameA,
-      occupationA,
-      stateA === 'Others' ? customStateA : stateA,
-      consentA,
-      setSubmittingA,
-      setSubmittedA,
-      setErrorA
-    );
-  };
-
-  const handleFooterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSubscribe(
-      emailB,
-      firstNameB,
-      surnameB,
-      occupationB,
-      stateB === 'Others' ? customStateB : stateB,
-      consentB,
-      setSubmittingB,
-      setSubmittedB,
-      setErrorB
-    );
-  };
-
-  // Step 1 Validation Helper
-  const handleHeroContinue = () => {
     const emailLower = emailA.toLowerCase().trim();
     if (!emailLower || !emailLower.includes('@')) {
       setErrorA('Please enter a valid email address.');
       return;
     }
+
+    setSubmittingA(true);
     setErrorA('');
-    setStepA(2);
+
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailLower }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.status === 'already_subscribed') {
+          setErrorA(data.message || 'This email address is already subscribed.');
+        } else {
+          setActiveModalEmail(emailLower);
+          if (data.token) {
+            setContinuationToken(data.token);
+          }
+          setCheckEmailOpen(true);
+        }
+      } else {
+        setErrorA(data.error || 'Failed to start subscription. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Subscribe API error:', err);
+      setErrorA(err.message || 'Network error starting subscription.');
+    } finally {
+      setSubmittingA(false);
+    }
   };
 
-  const handleFooterContinue = () => {
+  // Step 2: Complete Subscription (Hero form)
+  const handleHeroCompleteSubscription = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstNameA.trim() || !surnameA.trim()) {
+      setErrorA('Please enter your First Name and Surname.');
+      return;
+    }
+
+    setSubmittingA(true);
+    setErrorA('');
+
+    try {
+      const res = await fetch('/api/complete-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: continuationToken,
+          firstName: firstNameA.trim(),
+          surname: surnameA.trim(),
+          occupation: occupationA || 'Not Specified',
+          stateOfOrigin: stateA === 'Others' ? customStateA : stateA || 'Not Specified',
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setSubmittedA(true);
+        setCompletionMessageA(data.message || 'Your subscription has been completed successfully. A confirmation email has been sent to you.');
+      } else {
+        setErrorA(data.error || 'Failed to complete subscription. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Complete Subscription API error:', err);
+      setErrorA(err.message || 'Network error completing subscription.');
+    } finally {
+      setSubmittingA(false);
+    }
+  };
+
+  // Step 1: Start Subscription (Footer form)
+  const handleFooterStartSubscription = async (e: React.FormEvent) => {
+    e.preventDefault();
     const emailLower = emailB.toLowerCase().trim();
     if (!emailLower || !emailLower.includes('@')) {
       setErrorB('Please enter a valid email address.');
       return;
     }
+
+    setSubmittingB(true);
     setErrorB('');
-    setStepB(2);
+
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailLower }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.status === 'already_subscribed') {
+          setErrorB(data.message || 'This email address is already subscribed.');
+        } else {
+          setActiveModalEmail(emailLower);
+          if (data.token) {
+            setContinuationToken(data.token);
+          }
+          setCheckEmailOpen(true);
+        }
+      } else {
+        setErrorB(data.error || 'Failed to start subscription. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Subscribe API error:', err);
+      setErrorB(err.message || 'Network error starting subscription.');
+    } finally {
+      setSubmittingB(false);
+    }
+  };
+
+  // Step 2: Complete Subscription (Footer form)
+  const handleFooterCompleteSubscription = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstNameB.trim() || !surnameB.trim()) {
+      setErrorB('Please enter your First Name and Surname.');
+      return;
+    }
+
+    setSubmittingB(true);
+    setErrorB('');
+
+    try {
+      const res = await fetch('/api/complete-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: continuationToken,
+          firstName: firstNameB.trim(),
+          surname: surnameB.trim(),
+          occupation: occupationB || 'Not Specified',
+          stateOfOrigin: stateB === 'Others' ? customStateB : stateB || 'Not Specified',
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setSubmittedB(true);
+        setCompletionMessageB(data.message || 'Your subscription has been completed successfully. A confirmation email has been sent to you.');
+      } else {
+        setErrorB(data.error || 'Failed to complete subscription. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Complete Subscription API error:', err);
+      setErrorB(err.message || 'Network error completing subscription.');
+    } finally {
+      setSubmittingB(false);
+    }
   };
 
   return (
@@ -268,10 +293,34 @@ export default function Subscribe() {
         description="Subscribe to ClearPath Daily, a concise weekday intelligence briefing on Nigeria's politics, economy, governance and public policy." 
       />
 
+      {/* Check Email Modal */}
+      <CheckEmailModal 
+        isOpen={checkEmailOpen}
+        onClose={() => setCheckEmailOpen(false)}
+        email={activeModalEmail}
+        continuationToken={continuationToken}
+      />
+
       <main className="w-full">
         {/* HERO SECTION */}
         <section className="py-16 md:py-24 bg-gradient-to-b from-[#faf9f5] to-white" id="subscribe">
           <div className="max-w-[1080px] mx-auto px-4">
+
+            {/* Token Validation Feedback */}
+            {tokenValidating && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 text-[#001e40] rounded-xl flex items-center gap-3 text-sm font-semibold max-w-xl mx-auto">
+                <Loader2 className="w-5 h-5 text-[#001e40] animate-spin shrink-0" />
+                <span>Verifying your subscription continuation link...</span>
+              </div>
+            )}
+
+            {tokenError && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl flex items-center gap-3 text-sm font-semibold max-w-xl mx-auto">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                <span>{tokenError}</span>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-14 items-center">
               
               {/* Left Column */}
@@ -293,22 +342,22 @@ export default function Subscribe() {
                 </div>
               </div>
 
-              {/* Right Column: Hero Form */}
+              {/* Right Column: Hero Form Card */}
               <div className="md:col-span-5 w-full max-w-[440px] md:max-w-none mx-auto" id="hero-subscribe-card">
                 <div className="bg-white border border-slate-100 rounded-[24px] p-6 sm:p-9 shadow-[0_15px_45px_-12px_rgba(0,0,0,0.08)]">
                   {submittedA ? (
                     <div className="py-6 text-center flex flex-col items-center gap-4 animate-fade-in">
-                      <CheckCircle2 className="w-12 h-12 text-[#17181a] stroke-[1.5]" />
-                      <h2 className="text-[#17181a] font-serif text-xl sm:text-2xl font-normal">Subscription Confirmed</h2>
+                      <CheckCircle2 className="w-12 h-12 text-[#10b981] stroke-[1.5]" />
+                      <h2 className="text-[#17181a] font-serif text-xl sm:text-2xl font-normal">Subscription Completed</h2>
                       <p className="text-[#666b73] text-sm sm:text-base leading-relaxed">
-                        Thank you for subscribing to ClearPath Daily. Your weekday morning briefings will begin shortly.
+                        {completionMessageA || 'Your subscription has been completed successfully. A confirmation email has been sent to you.'}
                       </p>
                     </div>
                   ) : (
-                    <form onSubmit={handleHeroSubmit} noValidate>
-                      {/* Step 1 */}
+                    <div>
+                      {/* Step 1: Enter Email */}
                       {stepA === 1 && (
-                        <div className="animate-fade-in text-left">
+                        <form onSubmit={handleHeroStartSubscription} noValidate className="animate-fade-in text-left">
                           <div className="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
                             <h2 className="text-[#001e40] text-xl sm:text-2xl font-bold font-sans">Subscribe free</h2>
                             <span className="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap">Step 1 of 2</span>
@@ -332,32 +381,43 @@ export default function Subscribe() {
                           </div>
 
                           <button
-                            type="button"
-                            onClick={handleHeroContinue}
-                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 shadow-md shadow-[#001e40]/5 hover:shadow-lg hover:shadow-[#001e40]/10"
+                            type="submit"
+                            disabled={submittingA}
+                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 shadow-md shadow-[#001e40]/5 hover:shadow-lg hover:shadow-[#001e40]/10 disabled:opacity-50"
                           >
-                            Continue
+                            {submittingA ? 'Sending Email...' : 'Subscribe'}
                           </button>
                           <p className="mt-4 text-center text-slate-400 text-[11px] sm:text-xs font-medium">
                             Free to join. Unsubscribe at any time.
                           </p>
-                        </div>
+                        </form>
                       )}
 
-                      {/* Step 2 */}
+                      {/* Step 2: Subscriber Information */}
                       {stepA === 2 && (
-                        <div className="animate-fade-in text-left">
+                        <form onSubmit={handleHeroCompleteSubscription} noValidate className="animate-fade-in text-left">
                           <div className="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
-                            <h2 className="text-[#001e40] text-xl sm:text-2xl font-bold font-sans">Almost there</h2>
+                            <h2 className="text-[#001e40] text-xl sm:text-2xl font-bold font-sans">Subscriber Details</h2>
                             <span className="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap">Step 2 of 2</span>
                           </div>
                           <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
-                            A little about you helps us tailor ClearPath Daily to your interests.
+                            Please complete your subscriber information to finish setting up your account.
                           </p>
+
+                          {/* Email pre-filled and locked */}
+                          <div className="mb-4">
+                            <label className="block mb-1.5 text-[#001e40] text-xs font-bold tracking-wide">Connected Email</label>
+                            <input
+                              type="email"
+                              value={emailA}
+                              disabled
+                              className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 text-sm font-medium cursor-not-allowed"
+                            />
+                          </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
-                              <label htmlFor="hero-first-name" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">First name</label>
+                              <label htmlFor="hero-first-name" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">First name *</label>
                               <input
                                 id="hero-first-name"
                                 type="text"
@@ -365,10 +425,11 @@ export default function Subscribe() {
                                 value={firstNameA}
                                 onChange={(e) => setFirstNameA(e.target.value)}
                                 className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
+                                required
                               />
                             </div>
                             <div>
-                              <label htmlFor="hero-surname" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Surname</label>
+                              <label htmlFor="hero-surname" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Surname *</label>
                               <input
                                 id="hero-surname"
                                 type="text"
@@ -376,6 +437,7 @@ export default function Subscribe() {
                                 value={surnameA}
                                 onChange={(e) => setSurnameA(e.target.value)}
                                 className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
+                                required
                               />
                             </div>
                           </div>
@@ -459,19 +521,11 @@ export default function Subscribe() {
                             disabled={submittingA}
                             className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 disabled:opacity-50 shadow-md shadow-[#001e40]/5 hover:shadow-lg"
                           >
-                            {submittingA ? 'Submitting...' : 'Subscribe Free'}
+                            {submittingA ? 'Completing Subscription...' : 'Complete Subscription'}
                           </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setStepA(1)}
-                            className="inline-block mt-4 text-slate-400 text-xs hover:text-[#001e40] bg-none border-none p-0 cursor-pointer transition-colors font-bold font-sans"
-                          >
-                            &larr; Back
-                          </button>
-                        </div>
+                        </form>
                       )}
-                    </form>
+                    </div>
                   )}
                 </div>
               </div>
@@ -498,446 +552,170 @@ export default function Subscribe() {
         {/* WHY SUBSCRIBE SECTION */}
         <section className="py-16 md:py-20 bg-white">
           <div className="max-w-[1080px] mx-auto px-4">
-            <div className="max-w-[680px] mb-12 text-left">
-              <div className="flex items-center gap-2.5 mb-4 text-[#666b73] font-semibold text-xs tracking-[0.14em] uppercase">
-                <span>Why subscribe</span>
-                <span className="w-[26px] h-[1px] bg-[#17181a]"></span>
-              </div>
-              <h2 className="text-[#17181a] font-serif text-2xl sm:text-3xl md:text-4xl font-normal leading-[1.18]">
-                Because information is abundant. Clarity is rare.
+            <div className="text-center max-w-[640px] mx-auto mb-12">
+              <h2 className="text-[#17181a] font-serif text-2xl sm:text-3xl font-normal tracking-tight mb-4">
+                Why decision-makers read ClearPath Daily
               </h2>
-              <p className="mt-4 text-[#666b73] text-base sm:text-lg leading-relaxed">
-                ClearPath Daily helps you understand the developments shaping Nigeria without spending your morning sorting through rumours, headlines and noise.
+              <p className="text-[#666b73] text-sm sm:text-base leading-relaxed">
+                We filter out the viral outrage to deliver rigorous policy analysis, institutional tracking, and economic insights.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-11 text-left">
-              <article className="pt-5 border-t border-[#17181a] flex flex-col">
-                <span className="block mb-4 text-[#8a8f96] font-serif text-sm">01</span>
-                <h3 className="text-[#17181a] text-base sm:text-[1.02rem] font-bold mb-2">The stories that matter</h3>
-                <p className="text-[#666b73] text-sm leading-relaxed">
-                  A focused selection of the most consequential political, economic and governance developments of the day.
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+              <div className="bg-[#faf9f5] border border-slate-200/60 rounded-2xl p-6 sm:p-7">
+                <div className="text-xs font-mono font-bold text-[#001e40] uppercase tracking-wider mb-3">01 / Rigour</div>
+                <h3 className="text-[#17181a] font-serif text-lg font-bold mb-2">Policy Over Politics</h3>
+                <p className="text-[#666b73] text-xs sm:text-sm leading-relaxed">
+                  We focus on lawmaking, regulatory shifts, fiscal decisions and institutional reform rather than political theater.
                 </p>
-              </article>
+              </div>
 
-              <article className="pt-5 border-t border-[#17181a] flex flex-col">
-                <span className="block mb-4 text-[#8a8f96] font-serif text-sm">02</span>
-                <h3 className="text-[#17181a] text-base sm:text-[1.02rem] font-bold mb-2">Context beyond headlines</h3>
-                <p className="text-[#666b73] text-sm leading-relaxed">
-                  The background, institutional forces and policy choices behind the news.
+              <div className="bg-[#faf9f5] border border-slate-200/60 rounded-2xl p-6 sm:p-7">
+                <div className="text-xs font-mono font-bold text-[#001e40] uppercase tracking-wider mb-3">02 / Efficiency</div>
+                <h3 className="text-[#17181a] font-serif text-lg font-bold mb-2">5-Minute Digest</h3>
+                <p className="text-[#666b73] text-xs sm:text-sm leading-relaxed">
+                  Structured specifically for busy executives, policymakers, and civic leaders who need high signal density quickly.
                 </p>
-              </article>
+              </div>
 
-              <article className="pt-5 border-t border-[#17181a] flex flex-col">
-                <span className="block mb-4 text-[#8a8f96] font-serif text-sm">03</span>
-                <h3 className="text-[#17181a] text-base sm:text-[1.02rem] font-bold mb-2">A smarter five-minute read</h3>
-                <p className="text-[#666b73] text-sm leading-relaxed">
-                  Concise enough for a busy morning, substantial enough to improve your judgment.
+              <div className="bg-[#faf9f5] border border-slate-200/60 rounded-2xl p-6 sm:p-7">
+                <div className="text-xs font-mono font-bold text-[#001e40] uppercase tracking-wider mb-3">03 / Independence</div>
+                <h3 className="text-[#17181a] font-serif text-lg font-bold mb-2">Non-Partisan Analysis</h3>
+                <p className="text-[#666b73] text-xs sm:text-sm leading-relaxed">
+                  ClearPath Media is privately funded and editorially independent, committed strictly to constitutional facts and public interest.
                 </p>
-              </article>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* INSIDE EACH EDITION SECTION */}
-        <section className="py-16 md:py-20 bg-white border-t border-[#e3e3e3]">
-          <div className="max-w-[1080px] mx-auto px-4 text-left">
-            <div className="max-w-[680px] mb-12">
-              <div className="flex items-center gap-2.5 mb-4 text-[#666b73] font-semibold text-xs tracking-[0.14em] uppercase">
-                <span>Inside each edition</span>
-                <span className="w-[26px] h-[1px] bg-[#17181a]"></span>
-              </div>
-              <h2 className="text-[#17181a] font-serif text-2xl sm:text-3xl md:text-4xl font-normal leading-[1.18]">
-                One briefing. The full ClearPath view.
+        {/* BOTTOM CTA SECTION */}
+        <section className="py-16 md:py-20 bg-[#faf9f5] border-t border-slate-200/60">
+          <div className="max-w-[1080px] mx-auto px-4 text-center">
+            <div className="max-w-[560px] mx-auto">
+              <h2 className="text-[#17181a] font-serif text-2xl sm:text-3xl font-normal mb-4">
+                Join thousands of informed readers today
               </h2>
-              <p className="mt-4 text-[#666b73] text-base sm:text-lg leading-relaxed">
-                Every weekday, ClearPath brings you a carefully curated blend of news, analysis, and storytelling. Expect the Daily Brief and Election Matters to keep you informed, OsitaInsight to provide deeper perspective, In Focus stories that unpack the issues shaping our world, and feature reports that explore the trends, policies, and people driving change across Nigeria, Africa, and beyond.
+              <p className="text-[#666b73] text-sm sm:text-base leading-relaxed mb-8">
+                Subscribe free to receive tomorrow morning&apos;s briefing directly in your inbox.
               </p>
-            </div>
 
-            {/* Segment: Regular */}
-            <h3 className="mt-11 mb-5 pt-5 border-t border-[#e3e3e3] text-[#17181a] text-[0.76rem] font-bold tracking-[0.1em] uppercase">
-              Regular segments
-            </h3>
-            <div className="border-t border-[#e3e3e3]">
-              <div className="grid grid-cols-1 md:grid-cols-[170px_1fr] gap-2 md:gap-6 py-5 border-b border-[#e3e3e3]">
-                <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Every day</small>
-                <div>
-                  <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-bold">Daily Brief with Annabel</h3>
-                  <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">The essential developments before your day begins, in Annabel's voice.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[170px_1fr] gap-2 md:gap-6 py-5 border-b border-[#e3e3e3]">
-                <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Every day</small>
-                <div>
-                  <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-bold">Election Matters</h3>
-                  <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">Political parties, campaigns, institutions and democratic accountability.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[170px_1fr] gap-2 md:gap-6 py-5 border-b border-[#e3e3e3]">
-                <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Tue &amp; Thu</small>
-                <div>
-                  <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-bold">OsitaInsight</h3>
-                  <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">Calm explanation of the systems shaping everyday life, twice a week.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Segment: In Focus */}
-            <h3 className="mt-12 mb-5 pt-5 border-t border-[#e3e3e3] text-[#17181a] text-[0.76rem] font-bold tracking-[0.1em] uppercase">
-              In Focus — Latest YouTube Videos
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-5">
-              {videosLoading ? (
-                // Elegant skeleton loading state
-                <>
-                  <div className="flex flex-col gap-4 animate-pulse text-left">
-                    <div className="h-6 w-3/4 bg-slate-200 rounded"></div>
-                    <div className="h-4 w-5/6 bg-slate-200 rounded"></div>
-                    <div className="h-4 w-2/3 bg-slate-200 rounded"></div>
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm text-left">
+                {submittedB ? (
+                  <div className="py-4 text-center flex flex-col items-center gap-3">
+                    <CheckCircle2 className="w-10 h-10 text-[#10b981]" />
+                    <h3 className="text-lg font-serif text-[#17181a]">Subscription Completed</h3>
+                    <p className="text-xs sm:text-sm text-[#666b73]">{completionMessageB}</p>
                   </div>
-                  <div className="flex flex-col gap-4 animate-pulse text-left">
-                    <div className="h-6 w-3/4 bg-slate-200 rounded"></div>
-                    <div className="h-4 w-5/6 bg-slate-200 rounded"></div>
-                    <div className="h-4 w-2/3 bg-slate-200 rounded"></div>
-                  </div>
-                </>
-              ) : (
-                renderedVideos.map((video) => (
-                  <article key={video.id} className="flex flex-col text-left group">
-                    <h4 className="text-[#17181a] font-serif font-semibold text-lg sm:text-[1.18rem] leading-[1.32] mb-2 group-hover:text-[#001e40] transition-colors">
-                      {video.title}
-                    </h4>
-                    <p className="text-[#666b73] text-sm leading-relaxed mb-4 flex-grow line-clamp-3">
-                      {video.shortSummary || video.fullDescription || "Watch the latest update from ClearPath."}
-                    </p>
-                    <a 
-                      href="https://www.youtube.com/@ClearPathMediaTV" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="inline-flex items-center gap-1.5 text-[#001e40] font-bold text-xs sm:text-[0.88rem] hover:underline cursor-pointer group-hover:translate-x-0.5 transition-transform"
-                    >
-                      Watch Now <Play className="w-3 h-3 fill-current" />
-                    </a>
-                  </article>
-                ))
-              )}
-            </div>
+                ) : (
+                  <div>
+                    {stepB === 1 && (
+                      <form onSubmit={handleFooterStartSubscription} noValidate className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-bold text-[#001e40] mb-2">Email address</label>
+                          <input
+                            type="email"
+                            placeholder="you@example.com"
+                            value={emailB}
+                            onChange={(e) => setEmailB(e.target.value)}
+                            className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] bg-white"
+                            required
+                          />
+                          {errorB && <p className="text-xs text-red-600 font-semibold mt-1">{errorB}</p>}
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={submittingB}
+                          className="w-full py-3.5 bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {submittingB ? 'Sending Email...' : 'Subscribe'}
+                        </button>
+                      </form>
+                    )}
 
-            {/* Segment: Daily Feature */}
-            <h3 className="mt-12 mb-5 pt-5 border-t border-[#e3e3e3] text-[#17181a] text-[0.76rem] font-bold tracking-[0.1em] uppercase">
-              Daily Feature — rotates Monday to Friday
-            </h3>
-            <div className="border-t border-[#e3e3e3]">
-              <div className="grid grid-cols-1 md:grid-cols-[170px_1fr] gap-2 md:gap-6 py-5 border-b border-[#e3e3e3]">
-                <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Mon</small>
-                <div>
-                  <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <Link to="/news/west-african-monitor" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
-                      West Africa Monitor
-                    </Link>
-                  </h3>
-                  <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">A teaser from our regional desk, tracking shifts across West Africa.</p>
-                </div>
-              </div>
+                    {stepB === 2 && (
+                      <form onSubmit={handleFooterCompleteSubscription} noValidate className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-bold text-[#001e40] mb-1">Connected Email</label>
+                          <input
+                            type="email"
+                            value={emailB}
+                            disabled
+                            className="w-full px-4 py-2 bg-slate-100 border border-slate-200 rounded-xl text-slate-600 text-sm font-medium cursor-not-allowed"
+                          />
+                        </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-[170px_1fr] gap-2 md:gap-6 py-5 border-b border-[#e3e3e3]">
-                <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Tue</small>
-                <div>
-                  <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <Link to="/news/state-in-focus" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
-                      State in Focus
-                    </Link>
-                  </h3>
-                  <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">A rotating spotlight on one Nigerian state's governance and development story.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[170px_1fr] gap-2 md:gap-6 py-5 border-b border-[#e3e3e3]">
-                <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Wed</small>
-                <div>
-                  <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <Link to="/news/lga-brief" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
-                      LGA Brief
-                    </Link>
-                  </h3>
-                  <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">Grassroots reporting from Nigeria's local government areas.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[170px_1fr] gap-2 md:gap-6 py-5 border-b border-[#e3e3e3]">
-                <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Thu</small>
-                <div>
-                  <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <Link to="/news/governance-brief" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
-                      Governance Brief
-                    </Link>
-                  </h3>
-                  <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">Policy execution and public-sector accountability, tracked closely.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[170px_1fr] gap-2 md:gap-6 py-5 border-b border-[#e3e3e3]">
-                <small className="block pt-0.5 text-[#8a8f96] font-semibold tracking-wider uppercase text-xs">Fri</small>
-                <div>
-                  <h3 className="text-[#17181a] text-base sm:text-[1.08rem] font-semibold">
-                    <Link to="/news/bccn-news" className="text-left text-[#17181a] hover:opacity-70 transition-opacity underline decoration-[#17181a] underline-offset-[3px] font-bold inline-block">
-                      BCCN News
-                    </Link>
-                  </h3>
-                  <p className="mt-1 text-[#666b73] text-sm sm:text-[0.94rem] leading-relaxed">Athena Perspectives on Benin, Chad, Cameroon and Niger.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* EDITORIAL PROMISE SECTION */}
-        <section className="py-16 bg-white border-t border-[#e3e3e3]">
-          <div className="max-w-[1080px] mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-[0.8fr_1.2fr] gap-12 items-start text-left">
-              <div>
-                <div className="flex items-center gap-2.5 mb-4 text-[#666b73] font-semibold text-xs tracking-[0.14em] uppercase">
-                  <span>Our editorial promise</span>
-                  <span className="w-[26px] h-[1px] bg-[#17181a]"></span>
-                </div>
-                <h2 className="text-[#17181a] font-serif text-2xl sm:text-3xl font-normal leading-[1.2]">
-                  Information should illuminate, not inflame.
-                </h2>
-              </div>
-
-              <div className="flex flex-col gap-5 text-left md:mt-2">
-                <div className="pb-4 border-b border-[#e3e3e3] text-[#666b73] text-sm sm:text-[0.96rem] leading-relaxed">
-                  <strong className="text-[#17181a] font-semibold block sm:inline mr-1">Facts before opinion.</strong>
-                  We separate what is known from what is assumed.
-                </div>
-                <div className="pb-4 border-b border-[#e3e3e3] text-[#666b73] text-sm sm:text-[0.96rem] leading-relaxed">
-                  <strong className="text-[#17181a] font-semibold block sm:inline mr-1">Context before conclusions.</strong>
-                  We explain the forces beneath the headline.
-                </div>
-                <div className="pb-4 border-b border-[#e3e3e3] text-[#666b73] text-sm sm:text-[0.96rem] leading-relaxed">
-                  <strong className="text-[#17181a] font-semibold block sm:inline mr-1">Evidence before ideology.</strong>
-                  We follow the facts even when they are inconvenient.
-                </div>
-                <div className="text-[#666b73] text-sm sm:text-[0.96rem] leading-relaxed">
-                  <strong className="text-[#17181a] font-semibold block sm:inline mr-1">Clarity before noise.</strong>
-                  We value understanding over outrage and speed.
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* FINAL CTA SECTION */}
-        <section className="py-16 md:py-24 border-t border-slate-100 bg-gradient-to-b from-white to-[#faf9f5]">
-          <div className="max-w-[1080px] mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-14 items-center">
-              
-              {/* Left Column */}
-              <div className="md:col-span-7 text-left">
-                <div className="flex items-center gap-2.5 mb-5 text-[#666b73] font-semibold text-xs tracking-[0.14em] uppercase">
-                  <span>Join ClearPath Daily</span>
-                  <span className="w-[26px] h-[1px] bg-[#17181a]"></span>
-                </div>
-                <h2 className="text-[#17181a] font-serif text-3xl sm:text-4xl font-normal leading-[1.15]">
-                  Understand Nigeria before the day begins.
-                </h2>
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 mt-6 text-[#001e40] font-semibold text-xs sm:text-sm tracking-wide">
-                  <span className="flex items-center gap-1.5 text-[#001e40]"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> One email</span>
-                  <span className="flex items-center gap-1.5 text-[#001e40]"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Five minutes</span>
-                  <span className="flex items-center gap-1.5 text-[#001e40]"><Check className="w-4 h-4 text-[#10b981] stroke-[3]" /> Every weekday</span>
-                </div>
-              </div>
-
-              {/* Right Column: Final CTA Form */}
-              <div className="md:col-span-5 w-full max-w-[440px] md:max-w-none mx-auto">
-                <div className="bg-white border border-slate-100 rounded-[24px] p-6 sm:p-9 shadow-[0_15px_45px_-12px_rgba(0,0,0,0.08)]">
-                  {submittedB ? (
-                    <div className="py-6 text-center flex flex-col items-center gap-4 animate-fade-in">
-                      <CheckCircle2 className="w-12 h-12 text-[#17181a] stroke-[1.5]" />
-                      <h2 className="text-[#17181a] font-serif text-xl sm:text-2xl font-normal">Subscription Confirmed</h2>
-                      <p className="text-[#666b73] text-sm sm:text-base leading-relaxed">
-                        Thank you for subscribing to ClearPath Daily. Your weekday morning briefings will begin shortly.
-                      </p>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleFooterSubmit} noValidate>
-                      {/* Step 1 */}
-                      {stepB === 1 && (
-                        <div className="animate-fade-in text-left">
-                          <div className="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
-                            <h2 className="text-[#001e40] text-xl sm:text-2xl font-bold font-sans">Subscribe free</h2>
-                            <span className="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap">Step 1 of 2</span>
-                          </div>
-                          <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
-                            Join readers who prefer verified information, context and clear analysis.
-                          </p>
-
-                          <div className="mb-6">
-                            <label htmlFor="footer-email" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Email address</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-[#001e40] mb-1">First name *</label>
                             <input
-                              id="footer-email"
-                              type="email"
-                              placeholder="you@example.com"
-                              value={emailB}
-                              onChange={(e) => setEmailB(e.target.value)}
-                              className="w-full px-4 py-3 sm:py-3.5 border border-slate-300 rounded-xl text-slate-800 text-sm sm:text-base placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
+                              type="text"
+                              value={firstNameB}
+                              onChange={(e) => setFirstNameB(e.target.value)}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
                               required
                             />
-                            {errorB && <p className="text-xs text-red-600 font-semibold mt-2">{errorB}</p>}
                           </div>
-
-                          <button
-                            type="button"
-                            onClick={handleFooterContinue}
-                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 shadow-md shadow-[#001e40]/5 hover:shadow-lg hover:shadow-[#001e40]/10"
-                          >
-                            Continue
-                          </button>
-                          <p className="mt-4 text-center text-slate-400 text-[11px] sm:text-xs font-medium">
-                            Free to join. Unsubscribe at any time.
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Step 2 */}
-                      {stepB === 2 && (
-                        <div className="animate-fade-in text-left">
-                          <div className="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-3 mb-5">
-                            <h2 className="text-[#001e40] text-xl sm:text-2xl font-bold font-sans">Almost there</h2>
-                            <span className="text-[10px] sm:text-xs text-slate-400 font-semibold tracking-wider uppercase whitespace-nowrap">Step 2 of 2</span>
-                          </div>
-                          <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
-                            A little about you helps us tailor ClearPath Daily to your interests.
-                          </p>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <label htmlFor="footer-first-name" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">First name</label>
-                              <input
-                                id="footer-first-name"
-                                type="text"
-                                placeholder="First name"
-                                value={firstNameB}
-                                onChange={(e) => setFirstNameB(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="footer-surname" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Surname</label>
-                              <input
-                                id="footer-surname"
-                                type="text"
-                                placeholder="Surname"
-                                value={surnameB}
-                                onChange={(e) => setSurnameB(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="mb-4">
-                            <label htmlFor="footer-occupation" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Occupation</label>
-                            <div className="relative">
-                              <select
-                                id="footer-occupation"
-                                value={occupationB}
-                                onChange={(e) => setOccupationB(e.target.value)}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
-                              >
-                                <option value="" disabled>Select occupation</option>
-                                {OCCUPATIONS.map((occ) => (
-                                  <option key={occ} value={occ}>{occ}</option>
-                                ))}
-                              </select>
-                              <ChevronDown className="w-4 h-4 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                            </div>
-                          </div>
-
-                          <div className="mb-6">
-                            <label htmlFor="footer-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">State of residence</label>
-                            <div className="relative mb-3">
-                              <select
-                                id="footer-state"
-                                value={stateB}
-                                onChange={(e) => {
-                                  setStateB(e.target.value);
-                                  if (e.target.value !== 'Others') {
-                                    setCustomStateB('');
-                                  }
-                                }}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all appearance-none pr-10 cursor-pointer shadow-xs font-sans"
-                              >
-                                <option value="" disabled>Select state</option>
-                                {STATES.map((st) => (
-                                  <option key={st} value={st}>{st}</option>
-                                ))}
-                              </select>
-                              <ChevronDown className="w-4 h-4 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                            </div>
-
-                            {stateB === 'Others' && (
-                              <div className="animate-fade-in">
-                                <label htmlFor="footer-custom-state" className="block mb-2 text-[#001e40] text-xs sm:text-sm font-bold tracking-wide">Specify state of residence/country</label>
-                                <input
-                                  id="footer-custom-state"
-                                  type="text"
-                                  placeholder="Enter your residence or country"
-                                  value={customStateB}
-                                  onChange={(e) => setCustomStateB(e.target.value)}
-                                  className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#001e40]/10 focus:border-[#001e40] transition-all bg-white font-sans"
-                                  required
-                                />
-                              </div>
-                            )}
-                          </div>
-
-                          <label className="grid grid-cols-[16px_1fr] gap-3 items-start mt-1 mb-6 text-slate-500 text-xs leading-normal select-none cursor-pointer">
+                          <div>
+                            <label className="block text-xs font-bold text-[#001e40] mb-1">Surname *</label>
                             <input
-                              type="checkbox"
-                              checked={consentB}
-                              onChange={(e) => setConsentB(e.target.checked)}
-                              className="w-4 h-4 mt-0.5 rounded border-slate-300 accent-[#001e40] cursor-pointer"
+                              type="text"
+                              value={surnameB}
+                              onChange={(e) => setSurnameB(e.target.value)}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
                               required
                             />
-                            <span className="font-medium text-slate-600">
-                              I agree to receive ClearPath Daily and accept the{' '}
-                              <Link to="/privacy-policy" className="text-[#001e40] font-bold underline">Privacy Policy</Link>
-                              {' '}and{' '}
-                              <Link to="/terms-of-use" className="text-[#001e40] font-bold underline">Terms of Use</Link>.
-                            </span>
-                          </label>
-
-                          {errorB && <p className="text-xs text-red-600 font-semibold mb-4">{errorB}</p>}
-
-                          <button
-                            type="submit"
-                            disabled={submittingB}
-                            className="w-full min-h-[48px] py-3.5 flex items-center justify-center bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-2xl cursor-pointer transition-all duration-150 disabled:opacity-50 shadow-md shadow-[#001e40]/5 hover:shadow-lg"
-                          >
-                            {submittingB ? 'Submitting...' : 'Subscribe Free'}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setStepB(1)}
-                            className="inline-block mt-4 text-slate-400 text-xs hover:text-[#001e40] bg-none border-none p-0 cursor-pointer transition-colors font-bold font-sans"
-                          >
-                            &larr; Back
-                          </button>
+                          </div>
                         </div>
-                      )}
-                    </form>
-                  )}
-                </div>
-              </div>
 
+                        <div>
+                          <label className="block text-xs font-bold text-[#001e40] mb-1">Occupation</label>
+                          <select
+                            value={occupationB}
+                            onChange={(e) => setOccupationB(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                          >
+                            <option value="" disabled>Select occupation</option>
+                            {OCCUPATIONS.map((occ) => (
+                              <option key={occ} value={occ}>{occ}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-[#001e40] mb-1">State of residence</label>
+                          <select
+                            value={stateB}
+                            onChange={(e) => {
+                              setStateB(e.target.value);
+                              if (e.target.value !== 'Others') setCustomStateB('');
+                            }}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                          >
+                            <option value="" disabled>Select state</option>
+                            {STATES.map((st) => (
+                              <option key={st} value={st}>{st}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {errorB && <p className="text-xs text-red-600 font-semibold">{errorB}</p>}
+
+                        <button
+                          type="submit"
+                          disabled={submittingB}
+                          className="w-full py-3.5 bg-[#001e40] hover:bg-[#00142b] text-white text-sm font-bold rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {submittingB ? 'Completing...' : 'Complete Subscription'}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
-
       </main>
     </div>
   );
