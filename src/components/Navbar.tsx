@@ -50,6 +50,16 @@ export default function Navbar() {
                 src={clearpathLogo} 
                 alt="ClearPath Media" 
                 className="header-logo-image block w-[175px] min-w-[175px] h-auto max-w-none max-h-none object-contain shrink-0" 
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.triedFallback) {
+                    target.dataset.triedFallback = 'true';
+                    target.src = '/logo.png';
+                  } else if (target.dataset.triedFallback === 'true') {
+                    target.dataset.triedFallback = 'secondary';
+                    target.src = '/images/clearpath-logo.png';
+                  }
+                }}
               />
             </Link>
           </div>
