@@ -49,7 +49,7 @@ export default function Navbar() {
               <img 
                 src={clearpathLogo} 
                 alt="ClearPath Media" 
-                className="header-logo-image block w-[150px] min-w-[150px] h-auto max-w-none max-h-none object-contain shrink-0" 
+                className="header-logo-image block w-[175px] min-w-[175px] h-auto max-w-none max-h-none object-contain shrink-0" 
               />
             </Link>
           </div>
