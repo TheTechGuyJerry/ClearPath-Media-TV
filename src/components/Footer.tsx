@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import clearpathLogo from '../assets/clearpath-logo.png';
 
 export default function Footer() {
   return (
@@ -6,7 +7,7 @@ export default function Footer() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto gap-gutter">
         <div className="flex flex-col gap-unit-sm">
           <Link to="/" className="inline-block">
-            <img src="/images/clearpath-logo.png" alt="ClearPath Media" className="h-20 md:h-28 w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left hover:opacity-80 transition-opacity -ml-3" />
+            <img src={clearpathLogo} alt="ClearPath Media" className="h-20 md:h-28 w-auto object-contain scale-[1.5] md:scale-[1.8] origin-left hover:opacity-80 transition-opacity -ml-3" />
           </Link>
           <p className="font-body-md text-body-md text-on-surface-variant max-w-sm">
             © 2026 ClearPath Media. Explaining power, policy, and society.
