@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto gap-gutter">
         <div className="flex flex-col gap-unit-sm">
           <Link to="/" className="inline-block">
-            <img src={clearpathLogo} alt="ClearPath Media" className="h-24 md:h-32 w-auto object-contain scale-[1.75] md:scale-[2.1] origin-left hover:opacity-80 transition-opacity -ml-3" />
+            <img src={clearpathLogo} alt="ClearPath Media" className="h-10 md:h-12 w-auto object-contain hover:opacity-80 transition-opacity" />
           </Link>
           <p className="font-body-md text-body-md text-on-surface-variant max-w-sm">
             © 2026 ClearPath Media. Explaining power, policy, and society.
