@@ -7,7 +7,7 @@ import { NewsletterSubscriber } from '../../types';
 
 export const ALL_NIGERIAN_STATES = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
-  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT - Abuja', 'Gombe',
+  'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Abuja (FCT)', 'Gombe',
   'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos',
   'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto',
   'Taraba', 'Yobe', 'Zamfara'
@@ -49,9 +49,15 @@ const formatFirebaseDate = (dateVal: any): string => {
 };
 
 const getSubscriberState = (s: NewsletterSubscriber | any): string => {
-  const st = s.stateOfOrigin || s.state || s.nigerianState || s.location || s.city;
+  const st = s?.stateOfOrigin || s?.state || s?.nigerianState || s?.location || s?.city;
   if (!st || !String(st).trim()) return 'Unspecified';
-  return String(st).trim();
+  const str = String(st).trim();
+  const lower = str.toLowerCase();
+  if (lower.includes('abuja') || lower.includes('fct') || lower.includes('federal capital')) {
+    return 'Abuja (FCT)';
+  }
+  const matched = ALL_NIGERIAN_STATES.find(name => name.toLowerCase() === lower);
+  return matched || str;
 };
 
 export default function AdminSubscribers() {

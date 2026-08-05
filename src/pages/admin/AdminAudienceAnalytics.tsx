@@ -48,6 +48,17 @@ const formatSeconds = (sec: number) => {
   return `${m}m ${s}s`;
 };
 
+const normalizeState = (rawState: string | undefined | null): string => {
+  if (!rawState || !rawState.trim()) return 'Unknown';
+  const str = rawState.trim();
+  const lower = str.toLowerCase();
+  if (lower.includes('abuja') || lower.includes('fct') || lower.includes('federal capital')) {
+    return 'Abuja (FCT)';
+  }
+  const matched = ALL_NIGERIAN_STATES.find(st => st.toLowerCase() === lower);
+  return matched || (ALL_NIGERIAN_STATES.includes(str) ? str : 'Unknown');
+};
+
 export default function AdminAudienceAnalytics() {
   const [events, setEvents] = useState<AudienceAnalyticsEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -150,7 +161,7 @@ export default function AdminAudienceAnalytics() {
     const matchesFilters = (ev: AudienceAnalyticsEvent) => {
       const evDate = new Date(ev.timestamp);
       if (evDate < currentStart || evDate > currentEnd) return false;
-      if (selectedStateFilter !== 'All' && ev.state !== selectedStateFilter) return false;
+      if (selectedStateFilter !== 'All' && normalizeState(ev.state) !== selectedStateFilter) return false;
       if (selectedProgrammeFilter !== 'All' && ev.programmeName !== selectedProgrammeFilter && ev.programmeId !== selectedProgrammeFilter) return false;
       if (selectedVideoFilter !== 'All' && ev.videoTitle !== selectedVideoFilter && ev.videoId !== selectedVideoFilter) return false;
       if (selectedContentTypeFilter !== 'All' && ev.contentType !== selectedContentTypeFilter) return false;
@@ -174,7 +185,7 @@ export default function AdminAudienceAnalytics() {
       previousEvents = events.filter((ev) => {
         const evDate = new Date(ev.timestamp);
         if (evDate < prevStart || evDate >= prevEnd) return false;
-        if (selectedStateFilter !== 'All' && ev.state !== selectedStateFilter) return false;
+        if (selectedStateFilter !== 'All' && normalizeState(ev.state) !== selectedStateFilter) return false;
         if (selectedProgrammeFilter !== 'All' && ev.programmeName !== selectedProgrammeFilter && ev.programmeId !== selectedProgrammeFilter) return false;
         if (selectedVideoFilter !== 'All' && ev.videoTitle !== selectedVideoFilter && ev.videoId !== selectedVideoFilter) return false;
         if (selectedContentTypeFilter !== 'All' && ev.contentType !== selectedContentTypeFilter) return false;
@@ -279,7 +290,7 @@ export default function AdminAudienceAnalytics() {
 
     // Also handle unexpected foreign or unmapped states
     currentEvents.forEach(ev => {
-      const stName = ALL_NIGERIAN_STATES.includes(ev.state) ? ev.state : 'Unknown';
+      const stName = normalizeState(ev.state);
       if (!map[stName]) {
         map[stName] = {
           state: stName,
@@ -300,7 +311,7 @@ export default function AdminAudienceAnalytics() {
     const totalViews = metrics.pageViews || currentEvents.length || 1;
 
     Object.values(map).forEach(item => {
-      const stateEvs = currentEvents.filter(e => (ALL_NIGERIAN_STATES.includes(e.state) ? e.state : 'Unknown') === item.state);
+      const stateEvs = currentEvents.filter(e => normalizeState(e.state) === item.state);
       item.uniqueVisitors = new Set(stateEvs.map(e => e.visitorId)).size;
       item.sessions = new Set(stateEvs.map(e => e.sessionId)).size;
       item.percentage = Number(((item.visitors / totalViews) * 100).toFixed(1));
