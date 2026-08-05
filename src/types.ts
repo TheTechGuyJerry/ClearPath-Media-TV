@@ -240,6 +240,12 @@ export interface NewsletterSubscriber {
   email: string;
   phone?: string;
   fullName?: string;
+  stateOfOrigin?: string;
+  state?: string;
+  nigerianState?: string;
+  location?: string;
+  city?: string;
+  occupation?: string;
   interestArea?: string;
   source?: string;
   status: 'active' | 'unsubscribed';
@@ -248,3 +254,28 @@ export interface NewsletterSubscriber {
   createdAt: any;
   updatedAt?: any;
 }
+
+export interface AudienceAnalyticsEvent {
+  id?: string;
+  visitorId: string;
+  sessionId: string;
+  path: string;
+  pageTitle: string;
+  eventType?: 'page_view' | 'watch_now_click' | 'copy_weblink_click' | 'copy_weblink_failure' | 'programme_page_click' | 'programme_page_load' | 'programme_page_failed';
+  programmeId?: string;
+  programmeName?: string;
+  videoId?: string;
+  videoTitle?: string;
+  buttonLocation?: string;
+  errorMessage?: string;
+  contentType: 'programme' | 'explainer' | 'briefing' | 'news' | 'home' | 'other';
+  trafficSource: 'direct' | 'google' | 'social' | 'referral' | 'other';
+  deviceType: 'desktop' | 'mobile' | 'tablet';
+  state: string;
+  timestamp: string;
+  dateWAT: string;
+  dayOfWeek: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+  hourWAT: number;
+  engagementSeconds: number;
+}
+

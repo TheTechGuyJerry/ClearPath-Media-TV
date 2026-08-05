@@ -19,6 +19,7 @@ import Subscribe from './pages/Subscribe';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 import NewsPage from './pages/NewsPage';
+import { audienceTracker } from './services/audienceTracker';
 
 // Isolated authenticated admin imports
 import { AdminProvider } from './pages/admin/AdminContext';
@@ -39,12 +40,18 @@ import AdminContactMessages from './pages/admin/AdminContactMessages';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminSiteSettings from './pages/admin/AdminSiteSettings';
 import AdminYoutubeResearch from './pages/admin/AdminYoutubeResearch';
+import AdminAudienceAnalytics from './pages/admin/AdminAudienceAnalytics';
 
 function AppRoutes() {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
 
   useEffect(() => {
+    if (!isAdminPath) {
+      audienceTracker.init();
+      audienceTracker.trackPageView(location.pathname, document.title);
+    }
+
     const gaId = import.meta.env.VITE_GA4_MEASUREMENT_ID;
     if (gaId && gaId.startsWith('G-')) {
       // Initialize if script not already present
@@ -128,6 +135,7 @@ function AppRoutes() {
                     <Route path="users" element={<AdminUsers />} />
                     <Route path="settings" element={<AdminSiteSettings />} />
                     <Route path="youtube-research" element={<AdminYoutubeResearch />} />
+                    <Route path="audience-analytics" element={<AdminAudienceAnalytics />} />
                   </Route>
 
                   {/* Fallback internal admin fallback redirect */}

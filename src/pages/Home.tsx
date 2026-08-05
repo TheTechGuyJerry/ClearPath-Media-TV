@@ -18,6 +18,7 @@ import {
   safeText,
   slugify
 } from '../services/publicContentService';
+import { audienceTracker } from '../services/audienceTracker';
 import { formatFirestoreDate, renderSafe } from '../utils/formatters';
 import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
@@ -572,7 +573,20 @@ export default function Home() {
                   )}
                   <div className="mt-auto flex items-center justify-between pt-3 border-t border-gray-100 text-xs">
                     <span className="font-label-sm text-on-text-container font-medium text-gray-500">{renderSafe(item.date)}</span>
-                    <Link to={item.link} className="text-primary font-bold hover:underline">Watch</Link>
+                    <Link 
+                      to={item.link} 
+                      onClick={() => {
+                        audienceTracker.trackWatchNowClick({
+                          programmeName: item.tag,
+                          videoTitle: item.title,
+                          path: item.link,
+                          buttonLocation: 'home_latest_releases'
+                        });
+                      }}
+                      className="text-primary font-bold hover:underline"
+                    >
+                      Watch
+                    </Link>
                   </div>
                 </div>
               </div>

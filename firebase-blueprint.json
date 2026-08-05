@@ -267,6 +267,27 @@
         "timestamp": { "type": "string" }
       },
       "required": ["adminEmail", "adminUid", "action", "timestamp"]
+    },
+    "audienceAnalyticsEvent": {
+      "title": "AudienceAnalyticsEvent",
+      "description": "Anonymized pageview and engagement activity logs for CMS Audience Analytics.",
+      "type": "object",
+      "properties": {
+        "visitorId": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "path": { "type": "string" },
+        "pageTitle": { "type": "string" },
+        "contentType": { "type": "string", "enum": ["programme", "explainer", "briefing", "news", "home", "other"] },
+        "trafficSource": { "type": "string", "enum": ["direct", "google", "social", "referral", "other"] },
+        "deviceType": { "type": "string", "enum": ["mobile", "tablet", "desktop"] },
+        "state": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "dateWAT": { "type": "string" },
+        "dayOfWeek": { "type": "string", "enum": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] },
+        "hourWAT": { "type": "integer" },
+        "engagementSeconds": { "type": "integer" }
+      },
+      "required": ["visitorId", "sessionId", "path", "state", "timestamp", "dateWAT", "dayOfWeek", "hourWAT"]
     }
   },
   "firestore": {
@@ -280,6 +301,7 @@
     "partnerRequests": { "schema": "partnerRequest", "description": "Cooperation leads." },
     "newsletterSubscribers": { "schema": "newsletterSubscriber", "description": "Mailing list subscribers." },
     "contactMessages": { "schema": "contactMessage", "description": "Reach-out contact messages." },
-    "adminAuditLogs": { "schema": "adminAuditLog", "description": "Administrator activity and security audit trail logs." }
+    "adminAuditLogs": { "schema": "adminAuditLog", "description": "Administrator activity and security audit trail logs." },
+    "audience_analytics_events": { "schema": "audienceAnalyticsEvent", "description": "Collection of anonymized audience activity records for CMS analytics." }
   }
 }

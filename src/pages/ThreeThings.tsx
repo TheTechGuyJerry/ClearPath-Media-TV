@@ -15,6 +15,7 @@ import { formatFirestoreDate, renderSafe } from '../utils/formatters';
 import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
 import LiteYouTube from '../components/LiteYouTube';
+import { audienceTracker } from '../services/audienceTracker';
 
 const fallbackProgramGrid: ProgrammeVideo[] = [
   {
@@ -76,11 +77,26 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
     const shareUrl = `${window.location.origin}${window.location.pathname}?v=${youtubeVideoId}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopiedId(youtubeVideoId);
+      audienceTracker.trackCopyWeblinkSuccess({
+        programmeId: programme?.id || '',
+        programmeName: programme?.title || '',
+        videoId: youtubeVideoId,
+        videoTitle: activeTitle,
+        path: window.location.pathname
+      });
       setTimeout(() => {
         setCopiedId(null);
       }, 2000);
     }).catch(err => {
       console.error('Failed to copy link: ', err);
+      audienceTracker.trackCopyWeblinkFailure({
+        programmeId: programme?.id || '',
+        programmeName: programme?.title || '',
+        videoId: youtubeVideoId,
+        videoTitle: activeTitle,
+        path: window.location.pathname,
+        errorMessage: String(err)
+      });
     });
   };
 
@@ -114,6 +130,12 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
           setProgramme(resolvedProg);
           setDiagResolved(true);
           setDiagProgrammeId(resolvedProg.id);
+
+          audienceTracker.trackProgrammePageLoad({
+            programmeId: resolvedProg.id,
+            programmeName: resolvedProg.title,
+            path: window.location.pathname
+          });
 
           const matchedVideos = await getVideosForProgramme(resolvedProg);
           
@@ -158,6 +180,12 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
           setActiveVideoId('');
           setActiveTitle('');
           console.warn(`[Diagnostics - Detail] Programme slug matching failed for param "${progParam}".`);
+          audienceTracker.trackProgrammePageFailed({
+            programmeId: '',
+            programmeName: progParam,
+            path: window.location.pathname,
+            errorMessage: `Programme not found for "${progParam}"`
+          });
         }
       } catch (generalErr: any) {
         console.error('[Diagnostics - Detail] Broad exception in loadDynamicProgrammeData:', generalErr);
@@ -165,6 +193,12 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
         setErrorStatus(errMsg);
         setDiagError(errMsg);
         setVideos([]);
+        audienceTracker.trackProgrammePageFailed({
+          programmeId: '',
+          programmeName: progParam,
+          path: window.location.pathname,
+          errorMessage: errMsg
+        });
       } finally {
         setLoading(false);
       }
@@ -187,6 +221,14 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
   const selectEpisodeForPlayback = (vidId: string, titleName: string) => {
     setActiveVideoId(vidId);
     setActiveTitle(titleName);
+
+    audienceTracker.trackWatchNowClick({
+      programmeId: programme?.id || '',
+      programmeName: programme?.title || '',
+      videoId: vidId,
+      videoTitle: titleName,
+      buttonLocation: 'episode_card'
+    });
     
     // Update the URL query parameters dynamically
     const newParams = new URLSearchParams(searchParams);

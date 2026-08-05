@@ -6,6 +6,7 @@ import subscribeHandler from './api/subscribe.js';
 import continueSubscriptionHandler from './api/continue-subscription.js';
 import completeSubscriptionHandler from './api/complete-subscription.js';
 import resendEmailHandler from './api/resend-email.js';
+import trackHandler from './api/track.js';
 
 async function startServer() {
   const app = express();
@@ -15,6 +16,7 @@ async function startServer() {
   app.use(express.urlencoded({ extended: true }));
 
   // API Routes
+  app.all('/api/track', (req, res) => trackHandler(req, res));
   app.all('/api/subscribe', (req, res) => subscribeHandler(req, res));
   app.all('/api/continue-subscription', (req, res) => continueSubscriptionHandler(req, res));
   app.all('/api/complete-subscription', (req, res) => completeSubscriptionHandler(req, res));

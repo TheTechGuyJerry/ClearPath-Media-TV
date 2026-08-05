@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAdmin } from './AdminContext';
 import { useNavigate } from 'react-router-dom';
-import { Search, Database, Plus } from 'lucide-react';
+import { Search, Database, Plus, BarChart3 } from 'lucide-react';
 
 export default function AdminConsoleHome() {
   const { 
@@ -48,6 +48,12 @@ export default function AdminConsoleHome() {
           <p className="text-sm text-on-surface-variant">Manage programs, newsletters, postings, and global layout timings.</p>
         </div>
         <div className="flex flex-wrap gap-2.5">
+          <button 
+            onClick={() => navigate('/admin/audience-analytics')}
+            className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs px-4 py-2 transition-all flex items-center gap-2 rounded cursor-pointer"
+          >
+            <BarChart3 className="w-4 h-4" /> Open Audience Analytics
+          </button>
           <button 
             onClick={() => navigate('/admin/youtube-research')}
             className="bg-primary hover:bg-primary-container text-white font-semibold text-xs px-4 py-2 transition-all flex items-center gap-2 rounded cursor-pointer"

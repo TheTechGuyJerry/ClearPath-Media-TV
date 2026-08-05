@@ -3,6 +3,7 @@ import { useAdmin } from '../../pages/admin/AdminContext';
 import { useLocation, useNavigate, Link, Outlet } from 'react-router-dom';
 import { 
   LayoutDashboard, 
+  BarChart3,
   Plus, 
   Tv, 
   BookOpen, 
@@ -22,7 +23,7 @@ function isRouteAllowed(role: string, pathname: string): boolean {
   if (role === 'super_admin') return true;
   
   const cleanPath = pathname.replace(/\/$/, '') || '/admin';
-  if (cleanPath === '/admin') return true;
+  if (cleanPath === '/admin' || cleanPath.startsWith('/admin/audience-analytics')) return true;
 
   if (role === 'admin') {
     // admin gets everything EXCEPT user management
@@ -30,13 +31,14 @@ function isRouteAllowed(role: string, pathname: string): boolean {
   }
 
   if (role === 'content_admin') {
-    // content_admin gets Programmes, Videos, Explainers, Daily Briefs, YouTube Research
+    // content_admin gets Programmes, Videos, Explainers, Daily Briefs, YouTube Research, Audience Analytics
     return (
       cleanPath.startsWith('/admin/programmes') ||
       cleanPath.startsWith('/admin/videos') ||
       cleanPath.startsWith('/admin/explainers') ||
       cleanPath.startsWith('/admin/briefing') ||
-      cleanPath.startsWith('/admin/youtube-research')
+      cleanPath.startsWith('/admin/youtube-research') ||
+      cleanPath.startsWith('/admin/audience-analytics')
     );
   }
 
@@ -162,6 +164,16 @@ export default function AdminLayout() {
               <div className="flex items-center gap-3">
                 <LayoutDashboard className="w-4 h-4" />
                 <span>Console Home</span>
+              </div>
+            </Link>
+
+            <Link 
+              to="/admin/audience-analytics" 
+              className={getLinkClass('/admin/audience-analytics')}
+            >
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-4 h-4 text-emerald-400" />
+                <span>Audience Analytics</span>
               </div>
             </Link>
           </div>

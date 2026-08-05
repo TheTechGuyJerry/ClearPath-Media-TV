@@ -136,8 +136,8 @@ export default function DetailModal({ type, data, onClose, onStatusUpdate }: Det
                   <p className="font-semibold text-primary">{data.occupation || 'Not Specified'}</p>
                 </div>
                 <div>
-                  <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">State of Residence</h4>
-                  <p className="font-semibold text-primary">{data.stateOfOrigin || 'Not Specified'}</p>
+                  <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1">State of Residence / State</h4>
+                  <p className="font-semibold text-primary">{data.stateOfOrigin || data.state || data.nigerianState || data.location || 'Not Specified'}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
