@@ -1,5 +1,16 @@
 {
   "entities": {
+    "clearpathDailyArticle": {
+      "title": "ClearPathDailyArticle",
+      "description": "Daily articles and CMS formats.",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string" },
+        "status": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" }
+      }
+    },
     "user": {
       "title": "User",
       "description": "An admin user who has access to the CMS dashboard.",
@@ -291,6 +302,7 @@
     }
   },
   "firestore": {
+    "clearpath_daily_articles": { "schema": "clearpathDailyArticle", "description": "Daily news posts." },
     "users": { "schema": "user", "description": "Admin accounts." },
     "programmes": { "schema": "programme", "description": "The collection of ClearPath dynamic public programmes." },
     "programmeVideos": { "schema": "programmeVideo", "description": "The collection of videos under dynamic programmes." },

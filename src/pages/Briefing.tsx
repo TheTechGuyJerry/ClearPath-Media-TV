@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Briefing as BriefingType } from '../types';
@@ -164,11 +164,23 @@ const getContextSignals = (slug: string): string[] => {
 export default function Briefing() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [briefings, setBriefings] = useState<BriefingType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [activeTab, setActiveTab] = useState<'feed' | 'brief'>('feed');
+
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    if (typeParam && ['daily', 'weekly', 'analysis', 'all'].includes(typeParam)) {
+      setSelectedType(typeParam);
+    }
+    const queryParam = searchParams.get('search');
+    if (queryParam) {
+      setSearchTerm(queryParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function fetchBriefings() {

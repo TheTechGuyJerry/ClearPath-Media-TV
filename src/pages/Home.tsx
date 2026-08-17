@@ -8,7 +8,8 @@ import {
   doc
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { SiteSettings, Briefing, Programme, ProgrammeVideo } from '../types';
+import { SiteSettings, Briefing, Programme, ProgrammeVideo, ClearPathDailyArticle } from '../types';
+import { query, where, limit, orderBy } from 'firebase/firestore';
 import {
   getActiveProgrammes,
   getActiveExplainers,
@@ -22,6 +23,8 @@ import { audienceTracker } from '../services/audienceTracker';
 import { formatFirestoreDate, renderSafe } from '../utils/formatters';
 import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
+import { CURRENT_DAILY_EDITION } from '../data/clearpath_daily_data';
+import { AnalysisAndFeaturesSection } from '../components/clearpath/AnalysisAndFeaturesSection';
 
 function getProgrammeImageUrl(p: Programme): string {
   const pid = (p.id || p.slug || p.title || '').toLowerCase().trim();
@@ -65,6 +68,7 @@ export default function Home() {
   const [activeProgrammes, setActiveProgrammes] = useState<Programme[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
+  const [cpArticles, setCpArticles] = useState<ClearPathDailyArticle[]>([]);
 
   // Diagnostics states
   const [diagProgrammes, setDiagProgrammes] = useState<number>(0);
@@ -100,7 +104,8 @@ export default function Home() {
         getActiveProgrammes(),
         getActiveExplainers(),
         getPublishedProgrammeVideos(),
-        getDocs(collection(db, 'briefings'))
+        getDocs(collection(db, 'briefings')),
+        getDocs(query(collection(db, 'clearpath_daily_articles'), where('status', '==', 'published'), limit(15)))
       ]);
 
       let siteSettingsConfig: any = null;
@@ -440,9 +445,9 @@ export default function Home() {
         </div>
 
         <div className="relative w-full px-margin-mobile md:px-margin-desktop py-unit-xl md:py-24 max-w-container-max mx-auto z-10">
-          <div className="max-w-3xl flex flex-col gap-unit-md">
-            <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-5xl md:font-display-lg md:text-display-lg text-white font-bold leading-tight font-display tracking-tight">
-              Clear context <br/>for public life.
+          <div className="max-w-4xl flex flex-col gap-unit-md">
+            <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-5xl md:font-display-lg md:text-display-lg text-white font-bold leading-tight font-display tracking-tight sm:whitespace-nowrap">
+              Clear context for public life.
             </h1>
             <p className="font-body-lg text-body-lg text-white/90 max-w-2xl mt-unit-sm leading-relaxed">
               ClearPath Media TV is a public-intellectual media platform focused on Nigeria and West Africa. We explain elections, governance, and political risk through evidence-based analysis for serious audiences. Intelligence, not advocacy.
@@ -451,7 +456,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto border-b border-outline-variant">
+      <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto">
         <div className="mb-unit-lg">
           <h2 className="font-headline-lg text-3xl font-bold text-primary mb-2">Today's Featured</h2>
         </div>
@@ -527,73 +532,17 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto border-b border-outline-variant">
-        <div className="mb-unit-lg flex flex-col md:flex-row md:items-end justify-between gap-unit-md">
-          <div>
-            <h2 className="font-headline-lg text-3xl font-bold text-primary mb-2">Latest releases</h2>
-            <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl leading-relaxed">
-              Our most recent publications and updates from around the continent.
-            </p>
-          </div>
-          <Link to="/programmes" className="font-label-md text-label-md text-primary hover:underline flex items-center gap-1 font-bold">
-            View all <ArrowRight className="w-4 h-4 text-primary" />
-          </Link>
-        </div>
-        {errorStatus && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded text-red-800 text-sm font-sans flex flex-col gap-1">
-            <span className="font-semibold">⚠️ Unable to load live programme content. (Active Offline Fallback Enabled)</span>
-            <span className="text-xs opacity-90">{errorStatus}</span>
-          </div>
-        )}
-        {renderedFeedList.length === 0 ? (
-          <div className="p-12 text-center text-on-surface-variant bg-surface-container-low rounded border border-outline-variant">
-            No videos published yet.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-unit-md">
-            {renderedFeedList.map((item, idx) => (
-              <div key={idx} className="bg-white border border-outline-variant rounded overflow-hidden flex flex-col hover:bg-surface-container-low transition-colors duration-300 group shadow-xs">
-                <div className="aspect-[16/9] bg-surface-container-high relative overflow-hidden">
-                  <img src={item.thumbnail || `https://img.youtube.com/vi/3H95x0BV9nA/hqdefault.jpg`} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 animate-fade-in" referrerPolicy="no-referrer" />
-                </div>
-                <div className="p-unit-md flex flex-col flex-grow">
-                  <span className="font-label-sm text-xs font-bold text-primary uppercase tracking-wider mb-unit-xs block">{item.tag}</span>
-                  <h3 className="font-body-lg text-base font-bold text-on-surface mb-unit-sm group-hover:text-primary transition-colors line-clamp-2 leading-snug">{item.title}</h3>
-                  <p className="font-body-md text-body-md text-on-surface-variant flex-grow line-clamp-3 mb-2 leading-relaxed text-sm">
-                    {item.desc}
-                  </p>
-                  {Array.isArray(item.topicTags) && item.topicTags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {item.topicTags.map((tag: string) => (
-                        <span key={tag} className="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider font-mono">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-auto flex items-center justify-between pt-3 border-t border-gray-100 text-xs">
-                    <span className="font-label-sm text-on-text-container font-medium text-gray-500">{renderSafe(item.date)}</span>
-                    <Link 
-                      to={item.link} 
-                      onClick={() => {
-                        audienceTracker.trackWatchNowClick({
-                          programmeName: item.tag,
-                          videoTitle: item.title,
-                          path: item.link,
-                          buttonLocation: 'home_latest_releases'
-                        });
-                      }}
-                      className="text-primary font-bold hover:underline"
-                    >
-                      Watch
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* ClearPath Daily Editorial Sub-Section */}
+      <div className="w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto space-y-8">
+        {/* Editorial 3-Column Section (Latest, Featured Analysis, Latest Releases) */}
+        <AnalysisAndFeaturesSection 
+          mainFeaturedAnalysis={cpArticles.find(a => a.categorySlug === 'todays-brief')}
+          inFocusStories={cpArticles.filter(a => a.categorySlug === 'in-focus').slice(0, 2)}
+          lensStory={cpArticles.find(a => a.categorySlug === 'clearpath-lens')}
+          latestStoriesList={cpArticles.slice(0, 5).map(a => ({ id: a.id, category: a.category, title: a.title, link: '/daily/' + a.categorySlug + '/' + a.slug, date: a.publishedAt }))}
+          videoFeed={renderedFeedList}
+        />
+      </div>
 
       <section className="w-full px-margin-mobile md:px-margin-desktop py-unit-xl max-w-container-max mx-auto border-b border-outline-variant bg-surface-container-low">
         <div className="mb-unit-lg">

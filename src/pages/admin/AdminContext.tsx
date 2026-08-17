@@ -1,3 +1,4 @@
+import { ClearPathDailyArticle } from '../../types';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db, OperationType, handleFirestoreError } from '../../lib/firebase';
 import { 
@@ -116,6 +117,7 @@ export interface AdminContextType {
   explainers: Explainer[];
   explainerItems: ExplainerItem[];
   briefings: Briefing[];
+  clearpathDailyArticles: ClearPathDailyArticle[];
   siteSettings: SiteSettings | null;
   partnerRequests: PartnerRequest[];
   subscribers: NewsletterSubscriber[];
@@ -174,6 +176,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [explainers, setExplainers] = useState<Explainer[]>([]);
   const [explainerItems, setExplainerItems] = useState<ExplainerItem[]>([]);
   const [briefings, setBriefings] = useState<Briefing[]>([]);
+  const [clearpathDailyArticles, setClearpathDailyArticles] = useState<ClearPathDailyArticle[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [partnerRequests, setPartnerRequests] = useState<PartnerRequest[]>([]);
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
@@ -493,6 +496,12 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       const bList = bSnap.docs.map(d => ({ id: d.id, ...d.data() } as Briefing));
       bList.sort((a,b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
       setBriefings(bList);
+
+      // ClearPath Daily Articles
+      const clearpathDailySnap = await getDocs(collection(db, 'clearpath_daily_articles'));
+      const clearpathDailyList = clearpathDailySnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setClearpathDailyArticles(clearpathDailyList as ClearPathDailyArticle[]);
+
 
       // Site Settings
       const settingsSnap = await getDocs(collection(db, 'siteSettings'));
@@ -1108,6 +1117,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       explainers,
       explainerItems,
       briefings,
+      clearpathDailyArticles,
       siteSettings,
       partnerRequests,
       subscribers,

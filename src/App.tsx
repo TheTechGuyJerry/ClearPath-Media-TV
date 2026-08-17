@@ -19,6 +19,21 @@ import Subscribe from './pages/Subscribe';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 import NewsPage from './pages/NewsPage';
+import DailyEditionPage from './pages/DailyEditionPage';
+import ArticlePage from './pages/ArticlePage';
+import ClearPathLensPage from './pages/ClearPathLensPage';
+import TodaysBriefPage from './pages/news/TodaysBriefPage';
+import InFocusPage from './pages/news/InFocusPage';
+import TheIndicatorPage from './pages/news/TheIndicatorPage';
+import ThePublicRecordPage from './pages/news/ThePublicRecordPage';
+import SignalsToWatchPage from './pages/news/SignalsToWatchPage';
+import WeeklyFeaturePage from './pages/WeeklyFeaturePage';
+import CategoryPage from './pages/CategoryPage';
+import TopicPage from './pages/TopicPage';
+import AthenaPage from './pages/AthenaPage';
+import SearchPage from './pages/SearchPage';
+import ArchivePage from './pages/ArchivePage';
+import NotFoundPage from './pages/NotFoundPage';
 import { audienceTracker } from './services/audienceTracker';
 
 // Isolated authenticated admin imports
@@ -27,6 +42,7 @@ import AdminLayout from './components/admin/AdminLayout';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminConsoleHome from './pages/admin/AdminConsoleHome';
 import AdminProgrammes from './pages/admin/AdminProgrammes';
+import AdminClearPathDaily from './pages/admin/AdminClearPathDaily';
 import AdminProgrammeDetail from './pages/admin/AdminProgrammeDetail';
 import AdminVideos from './pages/admin/AdminVideos';
 import AdminVideoNew from './pages/admin/AdminVideoNew';
@@ -45,6 +61,20 @@ import AdminAudienceAnalytics from './pages/admin/AdminAudienceAnalytics';
 function AppRoutes() {
   const location = useLocation();
   const isAdminPath = location.pathname.startsWith('/admin');
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+      }
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname, location.hash]);
 
   useEffect(() => {
     if (!isAdminPath) {
@@ -97,13 +127,43 @@ function AppRoutes() {
             <Route path="/programmes/:slug" element={<ThreeThings />} />
             <Route path="/election-matters" element={<ThreeThings forcedSlug="election-matters" />} />
             
+            {/* ClearPath Daily Publications Platform Routes */}
+            <Route path="/clearpath-daily" element={<Navigate to="/clearpath-daily/todays-brief" replace />} />
+            <Route path="/news/todays-brief" element={<Navigate to="/clearpath-daily/todays-brief" replace />} />
+            <Route path="/clearpath-daily/todays-brief" element={<TodaysBriefPage />} />
+            <Route path="/todays-brief" element={<Navigate to="/clearpath-daily/todays-brief" replace />} />
+            <Route path="/news/in-focus" element={<Navigate to="/clearpath-daily/in-focus" replace />} />
+            <Route path="/clearpath-daily/in-focus" element={<InFocusPage />} />
+            <Route path="/in-focus" element={<Navigate to="/clearpath-daily/in-focus" replace />} />
+            <Route path="/news/the-indicator" element={<Navigate to="/clearpath-daily/the-indicator" replace />} />
+            <Route path="/clearpath-daily/the-indicator" element={<TheIndicatorPage />} />
+            <Route path="/the-indicator" element={<Navigate to="/clearpath-daily/the-indicator" replace />} />
+            <Route path="/news/the-public-record" element={<Navigate to="/clearpath-daily/the-public-record" replace />} />
+            <Route path="/clearpath-daily/the-public-record" element={<ThePublicRecordPage />} />
+            <Route path="/the-public-record" element={<Navigate to="/clearpath-daily/the-public-record" replace />} />
+            <Route path="/news/signals-to-watch" element={<Navigate to="/clearpath-daily/signals-to-watch" replace />} />
+            <Route path="/clearpath-daily/signals-to-watch" element={<SignalsToWatchPage />} />
+            <Route path="/signals-to-watch" element={<Navigate to="/clearpath-daily/signals-to-watch" replace />} />
+            <Route path="/daily/:year/:month/:day" element={<DailyEditionPage />} />
+            <Route path="/daily/:year/:month/:day/:slug" element={<ArticlePage />} />
+            <Route path="/article/:slug" element={<ArticlePage />} />
+            <Route path="/clearpath-daily/:menuSlug/:slug" element={<ArticlePage />} />
+            <Route path="/clearpath-lens" element={<Navigate to="/clearpath-daily/clearpath-lens" replace />} />
+            <Route path="/clearpath-daily/clearpath-lens" element={<ClearPathLensPage />} />
+            <Route path="/news/clearpath-lens" element={<Navigate to="/clearpath-daily/clearpath-lens" replace />} />
+            <Route path="/weekly-feature/:slug" element={<WeeklyFeaturePage />} />
+            <Route path="/category/:slug" element={<CategoryPage />} />
+            <Route path="/topic/:slug" element={<TopicPage />} />
+            <Route path="/athena" element={<AthenaPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/archive" element={<ArchivePage />} />
+
+            {/* Preserved Legacy Briefing and News Routes */}
             <Route path="/briefing" element={<Briefing />} />
             <Route path="/briefing/:slug" element={<Briefing />} />
             <Route path="/news/:slug" element={<NewsPage />} />
             <Route path="/explainers" element={<Explainers />} />
             <Route path="/explainers/insights" element={<Explainers />} />
-            
-            {/* Fallbacks */}
             <Route path="/explainers/:id" element={<Explainers />} />
 
             <Route path="/about" element={<About />} />
@@ -122,6 +182,7 @@ function AppRoutes() {
                   <Route element={<AdminLayout />}>
                     <Route index element={<AdminConsoleHome />} />
                     <Route path="programmes" element={<AdminProgrammes />} />
+                    <Route path="clearpath-daily/:menuSlug" element={<AdminClearPathDaily />} />
                     <Route path="programmes/:slug" element={<AdminProgrammeDetail />} />
                     <Route path="videos" element={<AdminVideos />} />
                     <Route path="videos/new" element={<AdminVideoNew />} />
@@ -144,8 +205,8 @@ function AppRoutes() {
               </AdminProvider>
             } />
 
-            {/* Redirect any other legacy URL home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Catch-all route showing clean NotFoundPage */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </ErrorBoundary>
       </main>

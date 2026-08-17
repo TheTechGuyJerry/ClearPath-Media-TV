@@ -169,7 +169,7 @@ export default function AdminAudienceAnalytics() {
       if (selectedDeviceTypeFilter !== 'All' && ev.deviceType !== selectedDeviceTypeFilter) return false;
       if (selectedDayOfWeekFilter !== 'All' && ev.dayOfWeek !== selectedDayOfWeekFilter) return false;
       if (selectedHourFilter !== 'All' && ev.hourWAT !== Number(selectedHourFilter)) return false;
-      if (pageSearchFilter && !ev.path.toLowerCase().includes(pageSearchFilter.toLowerCase()) && !ev.pageTitle.toLowerCase().includes(pageSearchFilter.toLowerCase())) return false;
+      if (pageSearchFilter && !(ev.path || '').toLowerCase().includes(pageSearchFilter.toLowerCase()) && !(ev.pageTitle || '').toLowerCase().includes(pageSearchFilter.toLowerCase())) return false;
       return true;
     };
 
@@ -193,7 +193,7 @@ export default function AdminAudienceAnalytics() {
         if (selectedDeviceTypeFilter !== 'All' && ev.deviceType !== selectedDeviceTypeFilter) return false;
         if (selectedDayOfWeekFilter !== 'All' && ev.dayOfWeek !== selectedDayOfWeekFilter) return false;
         if (selectedHourFilter !== 'All' && ev.hourWAT !== Number(selectedHourFilter)) return false;
-        if (pageSearchFilter && !ev.path.toLowerCase().includes(pageSearchFilter.toLowerCase()) && !ev.pageTitle.toLowerCase().includes(pageSearchFilter.toLowerCase())) return false;
+        if (pageSearchFilter && !(ev.path || '').toLowerCase().includes(pageSearchFilter.toLowerCase()) && !(ev.pageTitle || '').toLowerCase().includes(pageSearchFilter.toLowerCase())) return false;
         return true;
       });
     }
@@ -236,7 +236,7 @@ export default function AdminAudienceAnalytics() {
     const watchNowClicks = currentEvents.filter(e => e.eventType === 'watch_now_click').length;
     const uniqueWatchNowVisitors = new Set(currentEvents.filter(e => e.eventType === 'watch_now_click').map(e => e.visitorId)).size;
     
-    const programmePageVisitors = new Set(currentEvents.filter(e => e.contentType === 'programme' || e.path.startsWith('/programmes')).map(e => e.visitorId)).size;
+    const programmePageVisitors = new Set(currentEvents.filter(e => e.contentType === 'programme' || (e.path || '').startsWith('/programmes')).map(e => e.visitorId)).size;
     const watchNowCTR = programmePageVisitors > 0 ? ((uniqueWatchNowVisitors / programmePageVisitors) * 100).toFixed(1) : '0.0';
 
     // Copy Weblink metrics
