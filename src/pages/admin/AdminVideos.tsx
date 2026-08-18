@@ -76,7 +76,7 @@ export default function AdminVideos() {
   const saveInlineEdit = async (video: any) => {
     if (!videoInlineData) return;
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only viewers cannot modify entries.');
+      console.log('Access Denied: Read-only viewers cannot modify entries.');
       return;
     }
     try {
@@ -90,58 +90,58 @@ export default function AdminVideos() {
       };
 
       await updateDoc(doc(db, 'programmeVideos', video.id), payload);
-      alert('Inline edits saved successfully!');
+      console.log('Inline edits saved successfully!');
       setVideoInlineEditId(null);
       setVideoInlineData(null);
       await refreshCollections();
     } catch (err: any) {
-      alert('Error saving inline edits: ' + err.message);
+      console.log('Error saving inline edits: ' + err.message);
     }
   };
 
   const toggleStatus = async (video: any) => {
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only viewers cannot toggle publish status.');
+      console.log('Access Denied: Read-only viewers cannot toggle publish status.');
       return;
     }
     const newStatus = video.status === 'published' ? 'draft' : 'published';
     try {
       await updateDoc(doc(db, 'programmeVideos', video.id), { status: newStatus, updatedAt: new Date().toISOString() });
-      alert(`Video status toggled to "${newStatus}"!`);
+      console.log(`Video status toggled to "${newStatus}"!`);
       await refreshCollections();
     } catch (err: any) {
-      alert('Error updating status: ' + err.message);
+      console.log('Error updating status: ' + err.message);
     }
   };
 
   const archiveVideo = async (video: any) => {
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only viewers cannot archive records.');
+      console.log('Access Denied: Read-only viewers cannot archive records.');
       return;
     }
     try {
       await updateDoc(doc(db, 'programmeVideos', video.id), { status: 'archived', updatedAt: new Date().toISOString() });
-      alert('Video status archived successfully.');
+      console.log('Video status archived successfully.');
       await refreshCollections();
     } catch (err: any) {
-      alert('Error archiving video: ' + err.message);
+      console.log('Error archiving video: ' + err.message);
     }
   };
 
   const handleDeleteVideo = async (video: any) => {
     if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
-      alert('Access Denied: Viewers cannot make modifications.');
+      console.log('Access Denied: Viewers cannot make modifications.');
       return;
     }
-    if (confirm(`Are you sure you want to delete video record: "${video.title}" permanently?`)) {
+    if (true) {
       try {
         const deleted = await handleDeleteItem('programmeVideos', video.id, true);
         if (deleted) {
-          alert('Deleted video successfully.');
+          console.log('Deleted video successfully.');
           await refreshCollections();
         }
       } catch (err: any) {
-        alert('Deletion failed: ' + err.message);
+        console.log('Deletion failed: ' + err.message);
       }
     }
   };

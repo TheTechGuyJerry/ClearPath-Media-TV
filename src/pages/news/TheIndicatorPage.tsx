@@ -5,7 +5,6 @@ import { BarChart3, TrendingUp, ExternalLink, ArrowRight, BookOpen, Database } f
 import SEO from '../../components/SEO';
 import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDailySidebar';
-import { ATHENA_PUBLICATIONS } from '../../data/clearpath_daily_data';
 import { SubscriptionSection } from '../../components/clearpath/SubscriptionSection';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 

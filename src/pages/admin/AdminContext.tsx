@@ -778,13 +778,13 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   const handleSaveItem = async (type: string, data: any) => {
     if (isReadOnly()) {
-      alert('Access Denied: Read-only viewers are not allowed to submit modifications.');
+      console.log('Access Denied: Read-only viewers are not allowed to submit modifications.');
       return;
     }
     
     if (type === 'users') {
       if (!canManageUsers()) {
-        alert('Access denied: Only Super Administrators can manage administrators.');
+        console.log('Access denied: Only Super Administrators can manage administrators.');
         return;
       }
       
@@ -795,7 +795,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       if (isProtectedOwner(targetUserObj)) {
         const isCurrentJerry = user?.email?.toLowerCase() === 'jerryagbedun@gmail.com';
         if (!isCurrentJerry) {
-          alert('Access Denied: Founder account brand is protected and cannot be edited by other administrators.');
+          console.log('Access Denied: Founder account brand is protected and cannot be edited by other administrators.');
           return;
         }
       }
@@ -812,25 +812,25 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       // Target checks on disabling/locking self
       if (data.email?.toLowerCase().trim() === user?.email?.toLowerCase()) {
         if (data.status === 'disabled' || data.disabled === true) {
-          alert('Safety lock: You cannot disable your own active administrator account.');
+          console.log('Safety lock: You cannot disable your own active administrator account.');
           return;
         }
         if (data.role !== 'super_admin') {
-          alert('Safety lock: You cannot demote yourself from Super Admin role.');
+          console.log('Safety lock: You cannot demote yourself from Super Admin role.');
           return;
         }
       }
     } else {
       // Content save checks
       if (!canManageContent()) {
-        alert('Access Denied: Your administrator role prefix does not permit content management.');
+        console.log('Access Denied: Your administrator role prefix does not permit content management.');
         return;
       }
       
       // Publish vs save draft checks
       const isPublishing = data.status === 'published' || data.status === 'active';
       if (isPublishing && !canPublishContent()) {
-        alert('Access Denied: You do not have permissions to publish content assets. Please save as a draft or inactive status.');
+        console.log('Access Denied: You do not have permissions to publish content assets. Please save as a draft or inactive status.');
         return;
       }
     }
@@ -841,7 +841,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
       if (type === 'users') {
         if (!data.email) {
-          alert('Email is required for creating an administrator.');
+          console.log('Email is required for creating an administrator.');
           setLoading(false);
           return;
         }
@@ -929,13 +929,13 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   const handleDeleteItem = async (collectionName: string, docId: string, skipConfirm = false): Promise<boolean> => {
     if (isReadOnly()) {
-      alert('Access Denied: Read-only viewers are not allowed to delete resources.');
+      console.log('Access Denied: Read-only viewers are not allowed to delete resources.');
       return false;
     }
     
     if (collectionName === 'users') {
       if (!canManageUsers()) {
-        alert('Access denied: Only Super Administrators can remove administrators.');
+        console.log('Access denied: Only Super Administrators can remove administrators.');
         return false;
       }
       
@@ -946,12 +946,12 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         const targetUserObj = { email: targetData.email, uid: targetData.uid };
         
         if (isProtectedOwner(targetUserObj)) {
-          alert('Safety Lockout: The founder account cannot be deleted under any circumstances.');
+          console.log('Safety Lockout: The founder account cannot be deleted under any circumstances.');
           return false;
         }
         
         if (targetData.uid === user?.uid || targetData.email?.toLowerCase() === user?.email?.toLowerCase()) {
-          alert('Safety Lockout: You cannot delete your own active operator account.');
+          console.log('Safety Lockout: You cannot delete your own active operator account.');
           return false;
         }
         
@@ -988,7 +988,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       return false;
     } else {
       if (!canDeleteContent()) {
-        alert('Access Denied: Your administrator role prefix does not permit content deletion.');
+        console.log('Access Denied: Your administrator role prefix does not permit content deletion.');
         return false;
       }
       
@@ -1016,18 +1016,18 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   const handleUpdateStatus = async (collectionName: string, id: string, newStatus: string) => {
     if (isReadOnly()) {
-      alert('Access Denied: Read-only viewers cannot toggle publish status.');
+      console.log('Access Denied: Read-only viewers cannot toggle publish status.');
       return;
     }
     
     // Content status changes vs Admin profile status changes
     if (collectionName === 'users') {
-      alert('Access Denied: Please use the admin user-management panel to edit status.');
+      console.log('Access Denied: Please use the admin user-management panel to edit status.');
       return;
     }
 
     if (newStatus === 'published' && !canPublishContent()) {
-      alert('Access Denied: You do not have permissions to publish content assets.');
+      console.log('Access Denied: You do not have permissions to publish content assets.');
       return;
     }
 
@@ -1054,13 +1054,13 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       console.error('Error updating status:', err);
-      alert('Failed to update status.');
+      console.log('Failed to update status.');
     }
   };
 
   const handleUpdateSiteSettings = async (settings: SiteSettings) => {
     if (!canManageSettings()) {
-      alert('Access Denied: Your administrator role prefix does not permit updating site settings.');
+      console.log('Access Denied: Your administrator role prefix does not permit updating site settings.');
       return;
     }
     setLoading(true);

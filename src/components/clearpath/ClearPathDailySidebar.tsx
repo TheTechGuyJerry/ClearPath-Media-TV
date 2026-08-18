@@ -5,6 +5,7 @@ import { Play, Calendar, ExternalLink, ArrowRight, BookOpen, Layers, BarChart3, 
 import { CURRENT_DAILY_EDITION, DailyEdition, DailyArticle } from '../../data/clearpath_daily_data';
 import { getPublishedProgrammeVideos } from '../../services/publicContentService';
 import { ProgrammeVideo } from '../../types';
+import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 
 export interface ClearPathDailySidebarProps {
   currentDate?: string;
@@ -21,7 +22,18 @@ export function ClearPathDailySidebar({
   articleTitleOrSubject,
   edition = CURRENT_DAILY_EDITION
 }: ClearPathDailySidebarProps) {
-  const publicationDate = currentDate || edition.formattedDate;
+
+  const { articles: allArticles } = useClearPathArticles();
+  
+  const todaysBrief = allArticles.find(a => a.categorySlug === 'todays-brief');
+  const mainInFocus = allArticles.find(a => a.categorySlug === 'in-focus');
+  const indicator = allArticles.find(a => a.categorySlug === 'the-indicator');
+  const publicRecord = allArticles.find(a => a.categorySlug === 'the-public-record');
+  const clearpathLens = allArticles.find(a => a.categorySlug === 'clearpath-lens');
+  const topSignal = allArticles.find(a => a.categorySlug === 'signals-to-watch');
+
+  const dynPublicationDate = currentDate || todaysBrief?.publishedAt || mainInFocus?.publishedAt || edition.formattedDate;
+
 
   // Dynamic Programme Video state
   const [video, setVideo] = useState<ProgrammeVideo | null>(null);
@@ -43,21 +55,34 @@ export function ClearPathDailySidebar({
             edition.todaysBrief?.title || ''
           ].join(' ').toLowerCase();
 
-          // Extract non-trivial words (length > 3)
-          const words = searchTerms.split(/\W+/).filter(w => w.length > 3);
+          // Stop words to exclude
+          const stopWords = ['this', 'that', 'with', 'from', 'what', 'when', 'where', 'will', 'would', 'could', 'should', 'have', 'been', 'their', 'there', 'your', 'which', 'about', 'some', 'these'];
 
-          // Find best matching video dynamically
-          const matched = publishedVideos.find(v => {
+          // Extract non-trivial words
+          const words = searchTerms.split(/\W+/).filter(w => w.length > 3 && !stopWords.includes(w));
+
+          // Score videos based on keyword matches
+          const scoredVideos = publishedVideos.map(v => {
             const vTitle = (v.title || '').toLowerCase();
             const vSummary = (v.shortSummary || v.fullDescription || '').toLowerCase();
             const vProg = (v.programmeTitle || v.programmeId || '').toLowerCase();
-            const tags = (v.topicTags || []).map(t => t.toLowerCase());
+            const tags = (v.topicTags || []).map(t => (t || '').toLowerCase());
             const keyPts = typeof v.keyPoints === 'string' ? v.keyPoints.toLowerCase() : '';
-
             const combined = `${vTitle} ${vSummary} ${vProg} ${tags.join(' ')} ${keyPts}`;
 
-            return words.some(word => combined.includes(word));
-          }) || publishedVideos[0];
+            let score = 0;
+            words.forEach(word => {
+              if (vTitle.includes(word)) score += 3; // Title matches weight higher
+              else if (combined.includes(word)) score += 1;
+            });
+            return { video: v, score };
+          });
+
+          // Sort by highest score
+          scoredVideos.sort((a, b) => b.score - a.score);
+
+          // Get the highest scoring video, or fallback to the latest video if no matches
+          const matched = (scoredVideos.length > 0 && scoredVideos[0].score > 0) ? scoredVideos[0].video : publishedVideos[0];
 
           setVideo(matched);
         }
@@ -78,11 +103,39 @@ export function ClearPathDailySidebar({
       <div className="bg-surface-bright border-2 border-primary/20 rounded-2xl p-5 md:p-6 shadow-sm">
         {/* Section List */}
         <div className="space-y-3.5">
+          
+          {/* 1. Today's Brief */}
+          {(() => {
+            const isCurrent = currentSectionSlug === 'todays-brief' || todaysBrief?.slug === currentArticleSlug;
+            if (!todaysBrief || isCurrent) return null;
+            return (
+              <div className="p-3 rounded-xl border bg-surface-container-low hover:bg-surface-container border-outline-variant/60 transition-all">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-[10px] font-mono font-bold text-primary uppercase tracking-wider flex items-center gap-1">
+                    <BookOpen className="w-3 h-3" />
+                    TODAY'S BRIEF
+                  </span>
+                </div>
+                <Link
+                  to={getArticleUrl(todaysBrief, 'todays-brief')}
+                  className="font-serif font-bold text-xs sm:text-sm text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
+                >
+                  {todaysBrief.title}
+                </Link>
+                <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
+                  <span>{dynPublicationDate}</span>
+                  <Link to="/daily/todays-brief" className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
+                    Read Brief <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* 2. In Focus */}
           {(() => {
-            const isCurrent = currentSectionSlug === 'in-focus' || edition.inFocus.some(f => f.article.slug === currentArticleSlug);
-            const mainInFocus = edition.inFocus[0]?.article;
-            if (!mainInFocus) return null;
+            const isCurrent = currentSectionSlug === 'in-focus' || mainInFocus?.slug === currentArticleSlug;
+            if (!mainInFocus || isCurrent) return null;
             return (
               <div className={`p-3 rounded-xl border transition-all ${isCurrent ? 'bg-primary/5 border-primary/40' : 'bg-surface-container-low hover:bg-surface-container border-outline-variant/60'}`}>
                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -103,7 +156,7 @@ export function ClearPathDailySidebar({
                   {mainInFocus.title}
                 </Link>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
-                  <span>{publicationDate}</span>
+                  <span>{dynPublicationDate}</span>
                   <Link to={`/clearpath-daily/in-focus`} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     Deep Analysis <ArrowRight className="w-3 h-3" />
                   </Link>
@@ -115,6 +168,7 @@ export function ClearPathDailySidebar({
           {/* 3. The Indicator */}
           {(() => {
             const isCurrent = currentSectionSlug === 'the-indicator';
+            if (!indicator || isCurrent) return null;
             return (
               <div className={`p-3 rounded-xl border transition-all ${isCurrent ? 'bg-primary/5 border-primary/40' : 'bg-surface-container-low hover:bg-surface-container border-outline-variant/60'}`}>
                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -133,14 +187,14 @@ export function ClearPathDailySidebar({
                   className="flex items-baseline gap-2 group"
                 >
                   <span className="text-base font-black font-mono text-primary group-hover:underline">
-                    {edition.indicator.number}
+                    {indicator?.indicatorNumber}
                   </span>
                   <span className="font-serif font-bold text-xs text-on-surface group-hover:text-primary transition-colors line-clamp-1">
-                    {edition.indicator.title}
+                    {indicator?.title}
                   </span>
                 </Link>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
-                  <span>{publicationDate}</span>
+                  <span>{dynPublicationDate}</span>
                   <Link to="/clearpath-daily/the-indicator" className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     View Data <ArrowRight className="w-3 h-3" />
                   </Link>
@@ -152,6 +206,7 @@ export function ClearPathDailySidebar({
           {/* 4. The Public Record */}
           {(() => {
             const isCurrent = currentSectionSlug === 'the-public-record';
+            if (!publicRecord || isCurrent) return null;
             return (
               <div className={`p-3 rounded-xl border transition-all ${isCurrent ? 'bg-primary/5 border-primary/40' : 'bg-surface-container-low hover:bg-surface-container border-outline-variant/60'}`}>
                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -169,10 +224,10 @@ export function ClearPathDailySidebar({
                   to="/clearpath-daily/the-public-record"
                   className="font-serif italic text-xs text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
                 >
-                  "{edition.publicRecord.quote}"
+                  "{publicRecord?.quote}"
                 </Link>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
-                  <span className="font-sans font-semibold text-on-surface">{edition.publicRecord.speakerName}</span>
+                  <span className="font-sans font-semibold text-on-surface">{publicRecord?.speakerName}</span>
                   <Link to="/clearpath-daily/the-public-record" className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     View Record <ArrowRight className="w-3 h-3" />
                   </Link>
@@ -183,7 +238,8 @@ export function ClearPathDailySidebar({
 
           {/* 5. The ClearPath Lens */}
           {(() => {
-            const isCurrent = currentSectionSlug === 'clearpath-lens' || currentArticleSlug === edition.clearpathLens.slug;
+            const isCurrent = currentSectionSlug === 'clearpath-lens' || currentArticleSlug === clearpathLens?.slug;
+            if (!clearpathLens || isCurrent) return null;
             return (
               <div className={`p-3 rounded-xl border transition-all ${isCurrent ? 'bg-primary/5 border-primary/40' : 'bg-surface-container-low hover:bg-surface-container border-outline-variant/60'}`}>
                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -198,14 +254,14 @@ export function ClearPathDailySidebar({
                   )}
                 </div>
                 <Link
-                  to={getArticleUrl(edition.clearpathLens, 'clearpath-lens')}
+                  to={getArticleUrl(clearpathLens as any, 'clearpath-lens')}
                   className="font-serif font-bold text-xs sm:text-sm text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
                 >
-                  {edition.clearpathLens.headline}
+                  {clearpathLens?.lensHeadline}
                 </Link>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
-                  <span>{publicationDate}</span>
-                  <Link to={getArticleUrl(edition.clearpathLens, 'clearpath-lens')} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
+                  <span>{dynPublicationDate}</span>
+                  <Link to={getArticleUrl(clearpathLens as any, 'clearpath-lens')} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     Read Lens <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -216,7 +272,7 @@ export function ClearPathDailySidebar({
           {/* 6. Signals to Watch */}
           {(() => {
             const isCurrent = currentSectionSlug === 'signals-to-watch';
-            const topSignal = edition.signalsToWatch[0];
+            if (!topSignal || isCurrent) return null;
             return (
               <div className={`p-3 rounded-xl border transition-all ${isCurrent ? 'bg-primary/5 border-primary/40' : 'bg-surface-container-low hover:bg-surface-container border-outline-variant/60'}`}>
                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -235,11 +291,11 @@ export function ClearPathDailySidebar({
                     to="/clearpath-daily/signals-to-watch"
                     className="font-serif font-bold text-xs text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
                   >
-                    {topSignal.event}
+                    {topSignal?.signalEvent}
                   </Link>
                 )}
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
-                  <span>{publicationDate}</span>
+                  <span>{dynPublicationDate}</span>
                   <Link to="/clearpath-daily/signals-to-watch" className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     View Signals <ArrowRight className="w-3 h-3" />
                   </Link>

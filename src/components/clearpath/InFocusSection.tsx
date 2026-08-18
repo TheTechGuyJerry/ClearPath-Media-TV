@@ -83,7 +83,7 @@ export const InFocusSection: React.FC<InFocusSectionProps> = ({ stories }) => {
               </div>
 
               {/* Footer CTA */}
-              <div className="px-6 pb-6 pt-0 mt-auto flex items-center justify-between border-t border-outline-variant/40 pt-4">
+              <div className="px-6 pb-6 mt-auto flex items-center justify-between">
                 <span className="text-xs font-medium text-on-surface-variant">
                   {article.publishedAt}
                 </span>

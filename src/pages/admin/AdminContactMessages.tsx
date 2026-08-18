@@ -53,31 +53,31 @@ export default function AdminContactMessages() {
 
   const handleDelete = async (id: string) => {
     if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
-      alert('Access Denied: Viewers cannot make deletions.');
+      console.log('Access Denied: Viewers cannot make deletions.');
       return;
     }
     try {
       const deleted = await handleDeleteItem('contactMessages', id, true);
       if (deleted) {
-        alert('Deleted successfully.');
+        console.log('Deleted successfully.');
         setConfirmDeleteId(null);
         await refreshCollections();
       }
     } catch (err: any) {
-      alert('Deletion failed: ' + err.message);
+      console.log('Deletion failed: ' + err.message);
     }
   };
 
   const handleUpdateStatusProxy = async (collectionName: string, id: string, newStatus: string) => {
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only accounts cannot modify statuses.');
+      console.log('Access Denied: Read-only accounts cannot modify statuses.');
       return;
     }
     try {
       await handleUpdateStatus(collectionName, id, newStatus);
       await refreshCollections();
     } catch (err: any) {
-      alert('Failed to update status: ' + err.message);
+      console.log('Failed to update status: ' + err.message);
     }
   };
 

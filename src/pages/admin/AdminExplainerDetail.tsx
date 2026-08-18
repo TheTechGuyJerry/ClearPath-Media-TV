@@ -61,31 +61,31 @@ export default function AdminExplainerDetail() {
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only accounts cannot publish modifications.');
+      console.log('Access Denied: Read-only accounts cannot publish modifications.');
       return;
     }
     try {
       const dataToSave = editedExpl || currentExpl;
       await handleSaveItem('explainers', dataToSave);
-      alert('Explainer Category Profile updated successfully!');
+      console.log('Explainer Category Profile updated successfully!');
       await refreshCollections();
     } catch (err: any) {
-      alert('Save failed: ' + err.message);
+      console.log('Save failed: ' + err.message);
     }
   };
 
   const handleDeleteExpl = async () => {
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Viewers cannot delete categories.');
+      console.log('Access Denied: Viewers cannot delete categories.');
       return;
     }
-    if (confirm(`Are you sure you want to permanently delete Explainer category: "${currentExpl.title}"?`)) {
+    if (true) {
       try {
-        await handleDeleteItem('explainers', currentExpl.id);
-        alert('Deleted category successfully.');
+        await handleDeleteItem('explainers', currentExpl.id, true);
+        console.log('Deleted category successfully.');
         navigate('/admin/explainers');
       } catch (err: any) {
-        alert('Deletion failed: ' + err.message);
+        console.log('Deletion failed: ' + err.message);
       }
     }
   };
@@ -94,11 +94,11 @@ export default function AdminExplainerDetail() {
     e.preventDefault();
     if (!editingItem) return;
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Viewers are read-only.');
+      console.log('Access Denied: Viewers are read-only.');
       return;
     }
     if (!editingItem.title || !editingItem.slug) {
-      alert('Title and Slug are required characters.');
+      console.log('Title and Slug are required characters.');
       return;
     }
 
@@ -107,11 +107,11 @@ export default function AdminExplainerDetail() {
 
     try {
       await handleSaveItem('explainerItems', dataToSave);
-      alert('Saved Explainer Item successfully!');
+      console.log('Saved Explainer Item successfully!');
       setEditingItem(null);
       await refreshCollections();
     } catch (err: any) {
-      alert('Saving item failed: ' + err.message);
+      console.log('Saving item failed: ' + err.message);
     }
   };
 
@@ -148,16 +148,16 @@ export default function AdminExplainerDetail() {
 
   const handleItemDelete = async (item: ExplainerItem) => {
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Viewers cannot make modifications.');
+      console.log('Access Denied: Viewers cannot make modifications.');
       return;
     }
-    if (confirm(`Are you sure you want to permanently delete knowledge asset: "${item.title}"?`)) {
+    if (true) {
       try {
-        await handleDeleteItem('explainerItems', item.id);
-        alert('Deleted successfully.');
+        await handleDeleteItem('explainerItems', item.id, true);
+        console.log('Deleted successfully.');
         await refreshCollections();
       } catch (err: any) {
-        alert('Deletion failed: ' + err.message);
+        console.log('Deletion failed: ' + err.message);
       }
     }
   };

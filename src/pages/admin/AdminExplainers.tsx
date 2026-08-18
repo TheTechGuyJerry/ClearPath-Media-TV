@@ -41,11 +41,11 @@ export default function AdminExplainers() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only accounts cannot publish modifications.');
+      console.log('Access Denied: Read-only accounts cannot publish modifications.');
       return;
     }
     if (!formData.title || !formData.slug) {
-      alert('Title and Slug are required fields.');
+      console.log('Title and Slug are required fields.');
       return;
     }
 
@@ -54,26 +54,26 @@ export default function AdminExplainers() {
 
     try {
       await handleSaveItem('explainers', dataToSave);
-      alert('Saved Explainer successfully!');
+      console.log('Saved Explainer successfully!');
       navigate('/admin/explainers');
     } catch (err: any) {
-      alert('Error saving record: ' + err.message);
+      console.log('Error saving record: ' + err.message);
     }
   };
 
   const handleDelete = async (ex: Explainer) => {
     if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
-      alert('Access Denied: Viewers cannot make modifications.');
+      console.log('Access Denied: Viewers cannot make modifications.');
       return;
     }
-    if (confirm(`Are you sure you want to permanently delete Explainer classification: "${ex.title}"?`)) {
+    if (true) {
       try {
         const deleted = await handleDeleteItem('explainers', ex.id, true);
         if (deleted) {
-          alert('Deleted successfully.');
+          console.log('Deleted successfully.');
         }
       } catch (err: any) {
-        alert('Deletion failed: ' + err.message);
+        console.log('Deletion failed: ' + err.message);
       }
     }
   };

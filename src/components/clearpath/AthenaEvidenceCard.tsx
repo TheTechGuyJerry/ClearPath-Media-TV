@@ -33,27 +33,27 @@ export const AthenaEvidenceCard: React.FC<AthenaEvidenceCardProps> = ({ publicat
           <span>EVIDENCE FROM ATHENA</span>
         </div>
         <span className="text-[10px] font-mono font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full">
-          {publication.type}
+          {pub.type}
         </span>
       </div>
 
       <div className="flex flex-col justify-between">
         <div>
           <h3 className="text-base sm:text-lg font-bold text-on-surface leading-snug mb-2">
-            {publication.title}
+            {pub.title}
           </h3>
           <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed mb-4">
-            {publication.summary}
+            {pub.summary}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-outline-variant/40">
           <span className="text-[11px] text-on-surface-variant font-medium">
-            {publication.publishedAt}
+            {pub.publishedAt}
           </span>
 
           <a
-            href={publication.url}
+            href={pub.url}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 text-white hover:bg-emerald-800 font-bold text-xs uppercase tracking-wider rounded-lg transition-colors shadow-sm"

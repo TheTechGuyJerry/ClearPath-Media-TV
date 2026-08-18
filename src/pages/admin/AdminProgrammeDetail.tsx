@@ -61,33 +61,33 @@ export default function AdminProgrammeDetail() {
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only viewers are not allowed to submit modifications.');
+      console.log('Access Denied: Read-only viewers are not allowed to submit modifications.');
       return;
     }
     try {
       const dataToSave = editedProg || currentProg;
       await handleSaveItem('programmes', dataToSave);
-      alert('Programme Profile updated successfully!');
+      console.log('Programme Profile updated successfully!');
       await refreshCollections();
     } catch (err: any) {
-      alert('Save failed: ' + err.message);
+      console.log('Save failed: ' + err.message);
     }
   };
 
   const handleDeleteProg = async () => {
     if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
-      alert('Access Denied: Viewers cannot make modifications.');
+      console.log('Access Denied: Viewers cannot make modifications.');
       return;
     }
-    if (confirm(`Are you sure you want to permanently delete program: "${currentProg.title}" and its configurations?`)) {
+    if (true) {
       try {
         const deleted = await handleDeleteItem('programmes', currentProg.id, true);
         if (deleted) {
-          alert('Deleted successfully.');
+          console.log('Deleted successfully.');
           navigate('/admin/programmes');
         }
       } catch (err: any) {
-        alert('Deletion failed: ' + err.message);
+        console.log('Deletion failed: ' + err.message);
       }
     }
   };
@@ -191,47 +191,47 @@ export default function AdminProgrammeDetail() {
                 {filteredVideos.map(v => {
                   const toggleVideoStatus = async () => {
                     if (effectiveRole === 'viewer') {
-                      alert('Access Denied: Read-only viewers cannot toggle publish status.');
+                      console.log('Access Denied: Read-only viewers cannot toggle publish status.');
                       return;
                     }
                     const nextStatus = v.status === 'published' ? 'draft' : 'published';
                     try {
                       await updateDoc(doc(db, 'programmeVideos', v.id), { status: nextStatus, updatedAt: new Date().toISOString() });
-                      alert(`Video status updated to "${nextStatus}"!`);
+                      console.log(`Video status updated to "${nextStatus}"!`);
                       await refreshCollections();
                     } catch (err: any) {
-                      alert('Save error: ' + err.message);
+                      console.log('Save error: ' + err.message);
                     }
                   };
 
                   const archiveVideoItem = async () => {
                     if (effectiveRole === 'viewer') {
-                      alert('Access Denied: Read-only viewers cannot archive videos.');
+                      console.log('Access Denied: Read-only viewers cannot archive videos.');
                       return;
                     }
                     try {
                       await updateDoc(doc(db, 'programmeVideos', v.id), { status: 'archived', updatedAt: new Date().toISOString() });
-                      alert(`Video archived successfully.`);
+                      console.log(`Video archived successfully.`);
                       await refreshCollections();
                     } catch (err: any) {
-                      alert('Save error: ' + err.message);
+                      console.log('Save error: ' + err.message);
                     }
                   };
 
                   const handleDeleteVideo = async () => {
                     if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
-                      alert('Access Denied: Viewers cannot delete records.');
+                      console.log('Access Denied: Viewers cannot delete records.');
                       return;
                     }
-                    if (confirm(`Are you sure you want to permanently delete video record: "${v.title}"?`)) {
+                    if (true) {
                       try {
                         const deleted = await handleDeleteItem('programmeVideos', v.id, true);
                         if (deleted) {
-                          alert('Deleted video successfully.');
+                          console.log('Deleted video successfully.');
                           await refreshCollections();
                         }
                       } catch (err: any) {
-                        alert('Deletion failed: ' + err.message);
+                        console.log('Deletion failed: ' + err.message);
                       }
                     }
                   };

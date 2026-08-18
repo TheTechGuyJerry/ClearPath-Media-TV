@@ -357,10 +357,8 @@ export default function AdminClearPathDaily() {
                       </button>
                       {effectiveRole !== 'viewer_admin' && (
                         <button 
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this article?')) {
-                              handleDeleteItem('clearpath_daily_articles', article.id);
-                            }
+                          onClick={async () => {
+                            await handleDeleteItem('clearpath_daily_articles', article.id, true);
                           }} 
                           className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors" 
                           title="Delete"

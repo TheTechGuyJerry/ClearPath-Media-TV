@@ -20,23 +20,23 @@ export default function AdminConsoleHome() {
 
   const handleSeed = async () => {
     const confirmMsg = 'Are you sure you want to run the ClearPath Catalog Seed? This will safely seed default programmes, explainers, and base siteSettings into your Firestore database.';
-    if (!confirm(confirmMsg)) return;
+    
     try {
       await runSeeder();
-      alert('ClearPath Catalog seeded successfully!');
+      console.log('ClearPath Catalog seeded successfully!');
     } catch (err: any) {
-      alert('Error seeding database: ' + err.message);
+      console.log('Error seeding database: ' + err.message);
     }
   };
 
   const handleSeedVideos = async () => {
     const confirmMsg = 'Are you sure you want to seed/restore all 70 daily-briefs videos from the complete static catalog? This runs safely client-side in your browser.';
-    if (!confirm(confirmMsg)) return;
+    
     try {
       await runVideosSeeder();
-      alert('Seeded 70 complete catalog videos successfully!');
+      console.log('Seeded 70 complete catalog videos successfully!');
     } catch (err: any) {
-      alert('Error seeding videos: ' + err.message);
+      console.log('Error seeding videos: ' + err.message);
     }
   };
 

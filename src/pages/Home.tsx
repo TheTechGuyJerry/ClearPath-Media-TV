@@ -23,7 +23,6 @@ import { audienceTracker } from '../services/audienceTracker';
 import { formatFirestoreDate, renderSafe } from '../utils/formatters';
 import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
-import { CURRENT_DAILY_EDITION } from '../data/clearpath_daily_data';
 import { AnalysisAndFeaturesSection } from '../components/clearpath/AnalysisAndFeaturesSection';
 
 function getProgrammeImageUrl(p: Programme): string {
@@ -232,6 +231,19 @@ export default function Home() {
       }
 
       // 5. Briefings result (Client-side fail-safe logic skipped for Featured display)
+      // 6. ClearPath Daily Articles
+      if (results[5].status === 'fulfilled') {
+        const cpDocs = results[5].value.docs.map((d) => ({ id: d.id, ...d.data() } as ClearPathDailyArticle));
+        cpDocs.sort((a, b) => {
+          const tA = new Date(a.publishedAt || a.createdAt || 0).getTime();
+          const tB = new Date(b.publishedAt || b.createdAt || 0).getTime();
+          return tB - tA;
+        });
+        setCpArticles(cpDocs);
+      } else {
+        console.error('CP Articles Load Error: ', results[5].reason);
+      }
+
       const isProgActive = (p: Programme) => p.status === 'active' || p.isActive === true;
       const activeProgsOnly = loadedProgrammes.filter(isProgActive);
       
@@ -446,7 +458,7 @@ export default function Home() {
 
         <div className="relative w-full px-margin-mobile md:px-margin-desktop py-unit-xl md:py-24 max-w-container-max mx-auto z-10">
           <div className="max-w-4xl flex flex-col gap-unit-md">
-            <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-5xl md:font-display-lg md:text-display-lg text-white font-bold leading-tight font-display tracking-tight sm:whitespace-nowrap">
+            <h1 className="font-headline-lg-mobile text-headline-lg-mobile text-5xl md:font-display-lg md:text-display-lg text-white font-bold leading-tight font-display tracking-tight whitespace-nowrap">
               Clear context for public life.
             </h1>
             <p className="font-body-lg text-body-lg text-white/90 max-w-2xl mt-unit-sm leading-relaxed">
@@ -539,7 +551,7 @@ export default function Home() {
           mainFeaturedAnalysis={cpArticles.find(a => a.categorySlug === 'todays-brief')}
           inFocusStories={cpArticles.filter(a => a.categorySlug === 'in-focus').slice(0, 2)}
           lensStory={cpArticles.find(a => a.categorySlug === 'clearpath-lens')}
-          latestStoriesList={cpArticles.slice(0, 5).map(a => ({ id: a.id, category: a.category, title: a.title, link: '/daily/' + a.categorySlug + '/' + a.slug, date: a.publishedAt }))}
+          latestStoriesList={cpArticles.filter(a => a.categorySlug !== 'todays-brief').slice(0, 5).map(a => ({ id: a.id, category: a.category, title: a.title, link: '/daily/' + a.categorySlug + '/' + a.slug, date: a.publishedAt }))}
           videoFeed={renderedFeedList}
         />
       </div>

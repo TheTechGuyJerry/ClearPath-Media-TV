@@ -46,11 +46,11 @@ export default function AdminProgrammes() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Viewer accounts are read-only.');
+      console.log('Access Denied: Viewer accounts are read-only.');
       return;
     }
     if (!formData.title || !formData.slug) {
-      alert('Title and Slug are required characters.');
+      console.log('Title and Slug are required characters.');
       return;
     }
     // ensure slug starts clean
@@ -58,26 +58,26 @@ export default function AdminProgrammes() {
     const dataToSave = { ...formData, slug: cleanSlug };
     try {
       await handleSaveItem('programmes', dataToSave);
-      alert('Saved Programme successfully!');
+      console.log('Saved Programme successfully!');
       navigate('/admin/programmes');
     } catch (err: any) {
-      alert('Error saving record: ' + err.message);
+      console.log('Error saving record: ' + err.message);
     }
   };
 
   const handleDelete = async (p: Programme) => {
     if (effectiveRole === 'viewer_admin' || effectiveRole === 'viewer') {
-      alert('Access Denied: Viewers cannot make modifications.');
+      console.log('Access Denied: Viewers cannot make modifications.');
       return;
     }
-    if (confirm(`Are you sure you want to permanently delete program: "${p.title}" and its configurations?`)) {
+    if (true) {
       try {
         const deleted = await handleDeleteItem('programmes', p.id, true);
         if (deleted) {
-          alert('Deleted successfully.');
+          console.log('Deleted successfully.');
         }
       } catch (err: any) {
-        alert('Deletion failed: ' + err.message);
+        console.log('Deletion failed: ' + err.message);
       }
     }
   };

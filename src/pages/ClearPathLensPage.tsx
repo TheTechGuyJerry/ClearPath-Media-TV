@@ -5,7 +5,6 @@ import { Search, ExternalLink, ArrowRight, BookOpen, Layers, Play } from 'lucide
 import SEO from '../components/SEO';
 import { AthenaEvidenceCard } from '../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../components/clearpath/ClearPathDailySidebar';
-import { ATHENA_PUBLICATIONS } from '../data/clearpath_daily_data';
 import { SubscriptionSection } from '../components/clearpath/SubscriptionSection';
 import ReactMarkdown from 'react-markdown';
 import { useClearPathArticles } from '../hooks/useClearPathArticles';

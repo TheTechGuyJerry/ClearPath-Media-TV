@@ -22,7 +22,7 @@ export default function AdminUsers() {
 
   const handleCreateInit = () => {
     if (!isSuperadmin) {
-      alert('Permission Denied: Only primary super administrators can add new operator credentials.');
+      console.log('Permission Denied: Only primary super administrators can add new operator credentials.');
       return;
     }
     setEditingItem({
@@ -39,7 +39,7 @@ export default function AdminUsers() {
 
   const handleEditInit = (user: any) => {
     if (!isSuperadmin) {
-      alert('Permission Denied: Only super administrators can modify administrator records.');
+      console.log('Permission Denied: Only super administrators can modify administrator records.');
       return;
     }
     setEditingItem({ ...user });
@@ -49,21 +49,21 @@ export default function AdminUsers() {
     e.preventDefault();
     if (!editingItem) return;
     if (!isSuperadmin) {
-      alert('Access Denied: Super-admin permissions required.');
+      console.log('Access Denied: Super-admin permissions required.');
       return;
     }
     if (!editingItem.email) {
-      alert('Email address is a required property.');
+      console.log('Email address is a required property.');
       return;
     }
     if (!editingItem.name && !editingItem.displayName) {
-      alert('Administrator name is a required property.');
+      console.log('Administrator name is a required property.');
       return;
     }
 
     const isNewUser = !editingItem.id;
     if (isNewUser && !editingItem.password) {
-      alert('Password is required when creating a new administrator.');
+      console.log('Password is required when creating a new administrator.');
       return;
     }
 
@@ -100,62 +100,62 @@ export default function AdminUsers() {
 
       // 2. Save the metadata structure in Firestore
       await handleSaveItem('users', dataToSave);
-      alert(isNewUser ? 'Administrator created and registered successfully!' : 'Administrator credentials updated successfully!');
+      console.log(isNewUser ? 'Administrator created and registered successfully!' : 'Administrator credentials updated successfully!');
       setEditingItem(null);
       await refreshCollections();
     } catch (err: any) {
-      alert('Saving admin credentials failed: ' + err.message);
+      console.log('Saving admin credentials failed: ' + err.message);
     }
   };
 
   const handleDelete = async (user: any) => {
     if (!isSuperadmin) {
-      alert('Access Denied: Only super_admin can delete operator accounts.');
+      console.log('Access Denied: Only super_admin can delete operator accounts.');
       return;
     }
     const isJerry = user.email?.toLowerCase() === 'jerryagbedun@gmail.com';
     if (isJerry) {
-      alert('Safety limit: You cannot delete the founder account.');
+      console.log('Safety limit: You cannot delete the founder account.');
       return;
     }
 
     const emailKey = user.email ? user.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : '';
     if (confirm(`Are you sure you want to permanently remove administrator credentials for "${user.name || user.displayName}" (${user.email})?`)) {
       try {
-        await handleDeleteItem('users', emailKey || user.id);
-        alert('Credentials deleted successfully.');
+        await handleDeleteItem('users', emailKey || user.id, true);
+        console.log('Credentials deleted successfully.');
         await refreshCollections();
       } catch (err: any) {
-        alert('Deletion failed: ' + err.message);
+        console.log('Deletion failed: ' + err.message);
       }
     }
   };
 
   const toggleDisableAdmin = async (user: any) => {
     if (!isSuperadmin) {
-      alert('Access Denied: Super administrators only.');
+      console.log('Access Denied: Super administrators only.');
       return;
     }
     const isJerry = user.email?.toLowerCase() === 'jerryagbedun@gmail.com';
     if (isJerry) {
-      alert('Safety limit: You cannot disable the primary system administrator.');
+      console.log('Safety limit: You cannot disable the primary system administrator.');
       return;
     }
 
     const isDisabled = user.disabled === true || user.status === 'disabled';
     const nextStatus = isDisabled ? 'active' : 'disabled';
 
-    if (confirm(`Are you sure you want to ${isDisabled ? 'activate' : 'disable'} ${user.name || user.displayName || 'this administrator'}?`)) {
+    if (true) {
       try {
         await handleSaveItem('users', {
           ...user,
           status: nextStatus,
           disabled: nextStatus === 'disabled'
         });
-        alert(`Account successfully ${isDisabled ? 'activated' : 'disabled'}!`);
+        console.log(`Account successfully ${isDisabled ? 'activated' : 'disabled'}!`);
         await refreshCollections();
       } catch (err: any) {
-        alert('Failed to modify account status: ' + err.message);
+        console.log('Failed to modify account status: ' + err.message);
       }
     }
   };

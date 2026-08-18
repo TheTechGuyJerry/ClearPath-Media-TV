@@ -43,7 +43,7 @@ export default function AdminSiteSettings() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only viewers cannot modify site parameters.');
+      console.log('Access Denied: Read-only viewers cannot modify site parameters.');
       return;
     }
 
@@ -60,9 +60,9 @@ export default function AdminSiteSettings() {
 
     try {
       await handleUpdateSiteSettings(updatedSettings);
-      alert('Global settings saved successfully!');
+      console.log('Global settings saved successfully!');
     } catch (err: any) {
-      alert('Saving settings failed: ' + err.message);
+      console.log('Saving settings failed: ' + err.message);
     }
   };
 

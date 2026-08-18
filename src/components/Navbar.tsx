@@ -102,7 +102,6 @@ export default function Navbar() {
                     <Link to="/clearpath-daily/the-public-record" className="block px-4 py-1.5 text-xs text-on-surface hover:bg-primary/10 hover:text-primary font-medium transition-colors">The Public Record</Link>
                     <Link to="/clearpath-daily/clearpath-lens" className="block px-4 py-1.5 text-xs text-on-surface hover:bg-primary/10 hover:text-primary font-medium transition-colors">The ClearPath Lens</Link>
                     <Link to="/clearpath-daily/signals-to-watch" className="block px-4 py-1.5 text-xs text-on-surface hover:bg-primary/10 hover:text-primary font-medium transition-colors">Signals to Watch</Link>
-                    <Link to="/archive" className="block px-4 py-1.5 text-xs text-primary font-bold hover:bg-primary/10 transition-colors border-t border-outline-variant/30 mt-1 pt-1.5">Previous Editions</Link>
                   </div>
                 </div>
               </div>
@@ -250,13 +249,6 @@ export default function Navbar() {
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         Signals to Watch
-                      </Link>
-                      <Link 
-                        to="/archive" 
-                        className="block py-1.5 text-xs text-primary font-bold pt-1 border-t border-outline-variant/30 mt-1"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Previous Editions
                       </Link>
                     </div>
                   )}

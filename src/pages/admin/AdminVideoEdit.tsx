@@ -52,11 +52,11 @@ export default function AdminVideoEdit() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only viewers are not allowed to submit modifications.');
+      console.log('Access Denied: Read-only viewers are not allowed to submit modifications.');
       return;
     }
     if (!formData.title || !formData.slug) {
-      alert('Title and Slug are required.');
+      console.log('Title and Slug are required.');
       return;
     }
 
@@ -71,10 +71,10 @@ export default function AdminVideoEdit() {
 
     try {
       await handleSaveItem('programmeVideos', dataToSave);
-      alert('Saved Video successfully!');
+      console.log('Saved Video successfully!');
       navigate('/admin/videos');
     } catch (err: any) {
-      alert('Error saving video record: ' + err.message);
+      console.log('Error saving video record: ' + err.message);
     }
   };
 

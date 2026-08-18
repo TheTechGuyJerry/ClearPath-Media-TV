@@ -61,11 +61,11 @@ export default function AdminBriefings() {
     e.preventDefault();
     if (!editingItem) return;
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Read-only accounts cannot submit changes.');
+      console.log('Access Denied: Read-only accounts cannot submit changes.');
       return;
     }
     if (!editingItem.title || !editingItem.slug) {
-      alert('Title and Slug are required fields.');
+      console.log('Title and Slug are required fields.');
       return;
     }
 
@@ -74,7 +74,7 @@ export default function AdminBriefings() {
 
     try {
       await handleSaveItem('briefings', dataToSave);
-      alert('Saved Briefing successfully!');
+      console.log('Saved Briefing successfully!');
       setEditingItem(null);
       if (isCreateParam) {
         navigate('/admin/briefing');
@@ -82,22 +82,22 @@ export default function AdminBriefings() {
         await refreshCollections();
       }
     } catch (err: any) {
-      alert('Error saving record: ' + err.message);
+      console.log('Error saving record: ' + err.message);
     }
   };
 
   const handleDelete = async (b: Briefing) => {
     if (effectiveRole === 'viewer') {
-      alert('Access Denied: Viewers cannot make deletions.');
+      console.log('Access Denied: Viewers cannot make deletions.');
       return;
     }
-    if (confirm(`Are you sure you want to permanently delete Briefing: "${b.title}"?`)) {
+    if (true) {
       try {
-        await handleDeleteItem('briefings', b.id);
-        alert('Deleted successfully.');
+        await handleDeleteItem('briefings', b.id, true);
+        console.log('Deleted successfully.');
         await refreshCollections();
       } catch (err: any) {
-        alert('Deletion failed: ' + err.message);
+        console.log('Deletion failed: ' + err.message);
       }
     }
   };

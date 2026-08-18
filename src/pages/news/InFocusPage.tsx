@@ -6,7 +6,6 @@ import { Target, Clock, ArrowRight, BookOpen, Layers, Sparkles } from 'lucide-re
 import SEO from '../../components/SEO';
 import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDailySidebar';
-import { ATHENA_PUBLICATIONS } from '../../data/clearpath_daily_data';
 import { SubscriptionSection } from '../../components/clearpath/SubscriptionSection';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 
@@ -86,14 +85,16 @@ export default function InFocusPage() {
                   </div>
 
                   <div className="pt-4 flex items-center justify-between border-t border-outline-variant/40 mt-auto">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-on-surface">
-                        {story.authorName?.[0] || 'CP'}
+                    {story.authorName && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-on-surface">
+                          {story.authorName[0]}
+                        </div>
+                        <span className="text-[11px] font-bold text-on-surface uppercase tracking-wide">
+                          {story.authorName}
+                        </span>
                       </div>
-                      <span className="text-[11px] font-bold text-on-surface uppercase tracking-wide">
-                        {story.authorName || 'ClearPath'}
-                      </span>
-                    </div>
+                    )}
                     <Link
                       to={getArticleUrl(story, 'in-focus')}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-surface-container hover:bg-primary hover:text-white text-on-surface font-bold text-xs uppercase tracking-wider rounded-xl transition-colors"
