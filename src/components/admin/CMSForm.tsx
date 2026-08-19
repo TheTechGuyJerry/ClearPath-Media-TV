@@ -112,23 +112,153 @@ export default function CMSForm({
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Cover Image URL</label>
-              <input type="text" value={data.coverImage || ''} onChange={(e) => setField('coverImage', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 300 * 1024) {
+                      alert('Image must be less than 300KB');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setField('coverImage', reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
+                {data.coverImage && typeof data.coverImage === 'string' && data.coverImage.length > 0 && (
+                  <div className="relative w-32 h-20 rounded overflow-hidden border border-outline">
+                    <img src={data.coverImage} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Thumbnail Image URL</label>
-              <input type="text" value={data.thumbnailImage || ''} onChange={(e) => setField('thumbnailImage', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 300 * 1024) {
+                      alert('Image must be less than 300KB');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setField('thumbnailImage', reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
+                {data.thumbnailImage && typeof data.thumbnailImage === 'string' && data.thumbnailImage.length > 0 && (
+                  <div className="relative w-32 h-20 rounded overflow-hidden border border-outline">
+                    <img src={data.thumbnailImage} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Programme Card Image URL</label>
-              <input type="text" value={data.cardImageUrl || ''} onChange={(e) => setField('cardImageUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 300 * 1024) {
+                      alert('Image must be less than 300KB');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setField('cardImageUrl', reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
+                {data.cardImageUrl && typeof data.cardImageUrl === 'string' && data.cardImageUrl.length > 0 && (
+                  <div className="relative w-32 h-20 rounded overflow-hidden border border-outline">
+                    <img src={data.cardImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Programme Cover Image URL</label>
-              <input type="text" value={data.coverImageUrl || ''} onChange={(e) => setField('coverImageUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 300 * 1024) {
+                      alert('Image must be less than 300KB');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setField('coverImageUrl', reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
+                {data.coverImageUrl && typeof data.coverImageUrl === 'string' && data.coverImageUrl.length > 0 && (
+                  <div className="relative w-32 h-20 rounded overflow-hidden border border-outline">
+                    <img src={data.coverImageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Programme Thumbnail URL</label>
-              <input type="text" value={data.thumbnailUrl || ''} onChange={(e) => setField('thumbnailUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 300 * 1024) {
+                      alert('Image must be less than 300KB');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setField('thumbnailUrl', reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
+                {data.thumbnailUrl && typeof data.thumbnailUrl === 'string' && data.thumbnailUrl.length > 0 && (
+                  <div className="relative w-32 h-20 rounded overflow-hidden border border-outline">
+                    <img src={data.thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">YouTube Playlist URL</label>
@@ -261,7 +391,33 @@ export default function CMSForm({
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Thumbnail URL</label>
-              <input type="text" value={data.thumbnailUrl || ''} onChange={(e) => setField('thumbnailUrl', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 300 * 1024) {
+                      alert('Image must be less than 300KB');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setField('thumbnailUrl', reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
+                {data.thumbnailUrl && typeof data.thumbnailUrl === 'string' && data.thumbnailUrl.length > 0 && (
+                  <div className="relative w-32 h-20 rounded overflow-hidden border border-outline">
+                    <img src={data.thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Embed URL</label>
@@ -413,7 +569,33 @@ export default function CMSForm({
             </div>
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Cover Image</label>
-              <input type="text" value={data.coverImage || ''} onChange={(e) => setField('coverImage', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+              
+              <div className="flex flex-col gap-3">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 300 * 1024) {
+                      alert('Image must be less than 300KB');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setField('coverImage', reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
+                {data.coverImage && typeof data.coverImage === 'string' && data.coverImage.length > 0 && (
+                  <div className="relative w-32 h-20 rounded overflow-hidden border border-outline">
+                    <img src={data.coverImage} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
         )}

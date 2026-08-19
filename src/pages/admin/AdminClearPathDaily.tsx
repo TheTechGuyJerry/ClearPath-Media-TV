@@ -115,10 +115,9 @@ export default function AdminClearPathDaily() {
       { name: 'title', label: 'Title', type: 'text', required: true },
       { name: 'subtitle', label: 'Subtitle', type: 'text' },
       { name: 'publishedAt', label: 'Published Date', type: 'text' },
-      { name: 'authorName', label: 'Author Name', type: 'text' },
-      { name: 'authorTitle', label: 'Author Title', type: 'text' },
+      
       { name: 'readingTime', label: 'Reading Time (e.g., 5 min read)', type: 'text' },
-      { name: 'coverImage', label: 'Cover Image URL', type: 'text' },
+      { name: 'coverImage', label: 'Cover Image URL', type: 'image' },
       { name: 'imageCaption', label: 'Image Caption', type: 'text' },
       { name: 'imageCredit', label: 'Image Credit', type: 'text' },
       { name: 'excerpt', label: 'Excerpt', type: 'textarea' },
@@ -126,18 +125,18 @@ export default function AdminClearPathDaily() {
       { name: 'whyItMatters', label: 'Why It Matters', type: 'textarea' },
       { name: 'whatToWatchNext', label: 'What To Watch Next', type: 'textarea' },
     ];
-  } else if (menuSlug === 'in-focus') {
+    } else if (menuSlug === 'in-focus') {
     allFields = [
       ...systemFields,
-      { name: 'goldNumber', label: 'Gold Number (01 or 02)', type: 'select', options: ['01', '02'] },
-      { name: 'title', label: 'Title', type: 'text', required: true },
-      { name: 'publishedAt', label: 'Published Date', type: 'text' },
-      { name: 'authorName', label: 'Author Name', type: 'text' },
-      { name: 'authorTitle', label: 'Author Title', type: 'text' },
+      { name: 'publishedAt', label: 'Published Date', type: 'text' },      
       { name: 'readingTime', label: 'Reading Time (e.g., 5 min read)', type: 'text' },
-      { name: 'coverImage', label: 'Cover Image URL', type: 'text' },
-      { name: 'excerpt', label: 'Excerpt', type: 'textarea' },
-      { name: 'content', label: 'Main Content (Markdown)', type: 'textarea' },
+      { name: 'coverImage', label: 'Cover Image URL', type: 'image' },
+      { name: 'title1', label: 'Focus 1 Title', type: 'text', required: true },
+      { name: 'excerpt1', label: 'Focus 1 Excerpt', type: 'textarea' },
+      { name: 'content1', label: 'Focus 1 Main Content (Markdown)', type: 'textarea' },
+      { name: 'title2', label: 'Focus 2 Title', type: 'text' },
+      { name: 'excerpt2', label: 'Focus 2 Excerpt', type: 'textarea' },
+      { name: 'content2', label: 'Focus 2 Main Content (Markdown)', type: 'textarea' },
       { name: 'whyItMatters', label: 'Why It Matters', type: 'textarea' },
     ];
   } else if (menuSlug === 'the-indicator') {
@@ -148,8 +147,8 @@ export default function AdminClearPathDaily() {
       { name: 'publishedAt', label: 'Published Date', type: 'text' },
       { name: 'excerpt', label: 'Description', type: 'textarea' },
       { name: 'whyItMatters', label: 'Why It Matters', type: 'textarea' },
-      { name: 'supportingSourceTitle', label: 'Supporting Source Title', type: 'text' },
-      { name: 'supportingSourceUrl', label: 'Supporting Source URL', type: 'text' },
+      
+      
     ];
   } else if (menuSlug === 'the-public-record') {
     allFields = [
@@ -161,27 +160,29 @@ export default function AdminClearPathDaily() {
       { name: 'speakerSetting', label: 'Setting (e.g., Press Conference)', type: 'text' },
       { name: 'publishedAt', label: 'Date', type: 'text' },
       { name: 'content', label: 'Context', type: 'textarea' },
-      { name: 'supportingSourceTitle', label: 'Source Link Title', type: 'text' },
-      { name: 'supportingSourceUrl', label: 'Source Link URL', type: 'text' },
+      
+      
     ];
   } else if (menuSlug === 'clearpath-lens') {
     allFields = [
       ...systemFields,
-      { name: 'lensHeadline', label: 'Headline', type: 'text', required: true },
+      
       { name: 'publishedAt', label: 'Published Date', type: 'text' },
-      { name: 'coverImage', label: 'Featured Image URL', type: 'text' },
+      { name: 'coverImage', label: 'Featured Image URL', type: 'image' },
       { name: 'introductorySummary', label: 'Introductory Summary (Markdown)', type: 'textarea' },
       { name: 'institutionalAnalysis', label: 'Institutional Analysis (Markdown)', type: 'textarea' },
     ];
   } else if (menuSlug === 'signals-to-watch') {
     allFields = [
       ...systemFields,
-      { name: 'signalEvent', label: 'Event Name', type: 'text', required: true },
-      { name: 'signalDateOrDay', label: 'Date or Day', type: 'text' },
-      { name: 'excerpt', label: 'Short Explanation', type: 'textarea' },
-      { name: 'whyItMatters', label: 'Why It Matters', type: 'textarea' },
-      { name: 'relatedLinkTitle', label: 'Related Link Title', type: 'text' },
-      { name: 'relatedLinkUrl', label: 'Related Link URL', type: 'text' },
+      { name: 'signalEvent1', label: 'Event 1 Name', type: 'text', required: true },
+      { name: 'signalDateOrDay1', label: 'Event 1 Date or Day', type: 'text' },
+      { name: 'relatedLinkTitle1', label: 'Event 1 Related Link Title', type: 'text' },
+      { name: 'relatedLinkUrl1', label: 'Event 1 Related Link URL', type: 'text' },
+      { name: 'signalEvent2', label: 'Event 2 Name', type: 'text' },
+      { name: 'signalDateOrDay2', label: 'Event 2 Date or Day', type: 'text' },
+      { name: 'relatedLinkTitle2', label: 'Event 2 Related Link Title', type: 'text' },
+      { name: 'relatedLinkUrl2', label: 'Event 2 Related Link URL', type: 'text' },
     ];
   } else {
     allFields = systemFields;
@@ -229,6 +230,32 @@ export default function AdminClearPathDaily() {
                       <option value="false">No</option>
                       <option value="true">Yes</option>
                     </select>
+                  ) : f.type === 'image' ? (
+                    <div className="flex flex-col gap-3">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 300 * 1024) {
+                            alert('Image must be less than 300KB');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setFormData({...formData, [f.name]: reader.result as string});
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                        className="block w-full text-sm text-on-surface-variant file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                      />
+                      {formData[f.name as keyof typeof formData] && typeof formData[f.name as keyof typeof formData] === 'string' && (formData[f.name as keyof typeof formData] as string).length > 0 && (
+                        <div className="relative w-32 h-20 rounded overflow-hidden border border-outline">
+                          <img src={formData[f.name as keyof typeof formData] as string} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <input 
                       type={f.type}

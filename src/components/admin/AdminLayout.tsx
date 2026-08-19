@@ -6,7 +6,7 @@ import {
   BarChart3,
   Plus, 
   Tv, 
-  BookOpen, 
+  BookOpen, FileText, 
   Users, 
   Mail, 
   MessageSquare, 
@@ -275,6 +275,17 @@ export default function AdminLayout() {
 
           {/* Main system views */}
           <div className="space-y-1 pt-2 border-t border-white/10">
+            {userRole === 'super_admin' && (
+              <Link
+                to="/admin/election-matters"
+                className={getLinkClass('/admin/election-matters')}
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-4 h-4" />
+                  <span>Election Matters Weekly</span>
+                </div>
+              </Link>
+            )}
             {(userRole === 'super_admin' || userRole === 'admin' || userRole === 'content_admin' || userRole === 'viewer_admin') && (
               <Link
                 to="/admin/briefing"

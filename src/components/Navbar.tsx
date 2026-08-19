@@ -108,7 +108,7 @@ export default function Navbar() {
 
 
 
-              <Link to="/explainers" className={getLinkClass('/explainers')}>Analysis</Link>
+              <Link to="/election-matters-weekly" className={getLinkClass('/election-matters-weekly')}>Election Matters Weekly</Link>
 
               <Link to="/about" className={getLinkClass('/about')}>About</Link>
             </div>
@@ -256,7 +256,7 @@ export default function Navbar() {
 
 
 
-                <Link to="/explainers" className={getLinkClass('/explainers', true)} onClick={() => setIsMobileMenuOpen(false)}>Analysis</Link>
+                <Link to="/election-matters-weekly" className={getLinkClass('/election-matters-weekly', true)} onClick={() => setIsMobileMenuOpen(false)}>Election Matters Weekly</Link>
 
                 <Link to="/about" className={getLinkClass('/about', true)} onClick={() => setIsMobileMenuOpen(false)}>About</Link>
               </div>

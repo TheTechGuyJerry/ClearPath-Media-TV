@@ -955,7 +955,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           return false;
         }
         
-        if (!skipConfirm && !confirm('Are you sure you want to delete this administrator account permanently?')) return false;
+        if (!skipConfirm && false) return false;
         setLoading(true);
         try {
           await deleteDoc(userRef);
@@ -992,7 +992,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
       
-      if (!skipConfirm && !confirm('Are you sure you want to delete this content item permanently?')) return false;
+      if (!skipConfirm && false) return false;
       setLoading(true);
       try {
         await deleteDoc(doc(db, collectionName, docId));

@@ -62,7 +62,7 @@ export default function ClearPathLensPage() {
               <div className="relative h-64 sm:h-80 md:h-96 w-full">
                 <img 
                   src={currentLens.coverImage || 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80'} 
-                  alt={currentLens.lensHeadline || currentLens.title} 
+                  alt={currentLens.title} 
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#18181b] via-[#18181b]/60 to-transparent"></div>
@@ -71,7 +71,7 @@ export default function ClearPathLensPage() {
                     WEEKLY LENS • {currentLens.publishedAt}
                   </span>
                   <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-serif text-white leading-tight max-w-4xl text-balance">
-                    {currentLens.lensHeadline || currentLens.title}
+                    {currentLens.title}
                   </h2>
                 </div>
               </div>
@@ -126,7 +126,7 @@ export default function ClearPathLensPage() {
                   <ClearPathDailySidebar
                     currentDate={currentLens.publishedAt}
                     currentSectionSlug="clearpath-lens"
-                    articleTitleOrSubject={currentLens.lensHeadline || currentLens.title}
+                    articleTitleOrSubject={currentLens.title}
                   />
                 </div>
               </div>
@@ -156,7 +156,7 @@ export default function ClearPathLensPage() {
                       <div className="shrink-0 w-full sm:w-24 h-40 sm:h-24 rounded-lg overflow-hidden border border-outline-variant">
                         <img 
                           src={item.coverImage || 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80'} 
-                          alt={item.lensHeadline || item.title} 
+                          alt={item.title} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       </div>
@@ -165,12 +165,12 @@ export default function ClearPathLensPage() {
                           {item.publishedAt}
                         </span>
                         <h3 className="font-serif font-bold text-base text-on-surface leading-tight mb-2 group-hover:text-primary transition-colors">
-                          <Link to={`/clearpath-lens/${item.slug}`}>
-                            {item.lensHeadline || item.title}
+                          <Link to={`{getArticleUrl(item, 'clearpath-lens')}`}>
+                            {item.title}
                           </Link>
                         </h3>
                         <Link
-                          to={`/clearpath-lens/${item.slug}`}
+                          to={`{getArticleUrl(item, 'clearpath-lens')}`}
                           className="text-xs font-bold text-secondary hover:text-primary transition-colors inline-flex items-center gap-1 mt-auto"
                         >
                           Read Analysis <ArrowRight className="w-3 h-3" />

@@ -120,7 +120,7 @@ export default function AdminUsers() {
     }
 
     const emailKey = user.email ? user.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : '';
-    if (confirm(`Are you sure you want to permanently remove administrator credentials for "${user.name || user.displayName}" (${user.email})?`)) {
+    if (true) {
       try {
         await handleDeleteItem('users', emailKey || user.id, true);
         console.log('Credentials deleted successfully.');

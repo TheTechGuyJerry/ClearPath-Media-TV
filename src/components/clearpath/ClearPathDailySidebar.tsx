@@ -257,7 +257,7 @@ export function ClearPathDailySidebar({
                   to={getArticleUrl(clearpathLens as any, 'clearpath-lens')}
                   className="font-serif font-bold text-xs sm:text-sm text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
                 >
-                  {clearpathLens?.lensHeadline}
+                  {clearpathLens?.title}
                 </Link>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
                   <span>{dynPublicationDate}</span>
@@ -291,7 +291,7 @@ export function ClearPathDailySidebar({
                     to="/clearpath-daily/signals-to-watch"
                     className="font-serif font-bold text-xs text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
                   >
-                    {topSignal?.signalEvent}
+                    {topSignal?.signalEvent1 || topSignal?.title}
                   </Link>
                 )}
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">

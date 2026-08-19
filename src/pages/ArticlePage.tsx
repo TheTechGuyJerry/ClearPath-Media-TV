@@ -177,11 +177,32 @@ export default function ArticlePage() {
               </figure>
             )}
 
-            <div className="prose prose-slate lg:prose-lg prose-headings:font-serif prose-headings:font-bold prose-p:leading-relaxed prose-a:text-primary max-w-none text-on-surface font-medium">
-              <ReactMarkdown>
-                {article.content || 'Content not found.'}
-              </ReactMarkdown>
-            </div>
+            
+            {article.categorySlug === 'in-focus' && article.title1 ? (
+              <div className="space-y-16">
+                <div>
+                  <h2 className="text-3xl font-bold font-serif mb-4 text-on-surface">{article.title1}</h2>
+                  <div className="prose prose-slate lg:prose-lg prose-headings:font-serif prose-headings:font-bold prose-p:leading-relaxed prose-a:text-primary max-w-none text-on-surface font-medium">
+                    <ReactMarkdown>{article.content1 || article.content || ''}</ReactMarkdown>
+                  </div>
+                </div>
+                {article.title2 && (
+                  <div>
+                    <h2 className="text-3xl font-bold font-serif mb-4 text-on-surface">{article.title2}</h2>
+                    <div className="prose prose-slate lg:prose-lg prose-headings:font-serif prose-headings:font-bold prose-p:leading-relaxed prose-a:text-primary max-w-none text-on-surface font-medium">
+                      <ReactMarkdown>{article.content2 || ''}</ReactMarkdown>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="prose prose-slate lg:prose-lg prose-headings:font-serif prose-headings:font-bold prose-p:leading-relaxed prose-a:text-primary max-w-none text-on-surface font-medium">
+                <ReactMarkdown>
+                  {article.content || 'Content not found.'}
+                </ReactMarkdown>
+              </div>
+            )}
+
             
             <div className="mt-12 pt-8 border-t border-outline-variant/60 flex flex-wrap gap-2">
               <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mr-2 self-center">Tags:</span>

@@ -96,18 +96,7 @@ export default function TheIndicatorPage() {
                       </p>
                     </div>
 
-                    {currentIndicator.supportingSourceUrl && (
-                      <div className="pt-2">
-                        <a 
-                          href={currentIndicator.supportingSourceUrl}
-                          target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-emerald-700 transition-colors bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          Source: {currentIndicator.supportingSourceTitle || 'Official Document'}
-                        </a>
-                      </div>
-                    )}
+                    
                   </div>
                 </div>
               </div>

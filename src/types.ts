@@ -9,6 +9,12 @@ export interface UserProfile {
 export interface Programme {
   id: string; // Document ID (slug or generated ID)
   title: string;
+  title1?: string;
+  title2?: string;
+  excerpt1?: string;
+  excerpt2?: string;
+  content1?: string;
+  content2?: string;
   slug: string;
   shortDescription: string;
   fullDescription: string;
@@ -62,6 +68,12 @@ export interface ProgrammeVideo {
   programmeId: string; // ID or Slug reference to Programme
   programmeTitle?: string;
   title: string;
+  title1?: string;
+  title2?: string;
+  excerpt1?: string;
+  excerpt2?: string;
+  content1?: string;
+  content2?: string;
   slug: string;
   shortSummary: string;
   fullDescription: string;
@@ -104,6 +116,12 @@ export interface ProgrammeVideo {
 export interface Explainer {
   id: string; // Document ID (slug or generated ID)
   title: string;
+  title1?: string;
+  title2?: string;
+  excerpt1?: string;
+  excerpt2?: string;
+  content1?: string;
+  content2?: string;
   slug: string;
   shortDescription: string;
   fullDescription: string;
@@ -127,6 +145,12 @@ export interface ExplainerItem {
   id: string;
   explainerId: string; // references Explainer slug or ID
   title: string;
+  title1?: string;
+  title2?: string;
+  excerpt1?: string;
+  excerpt2?: string;
+  content1?: string;
+  content2?: string;
   slug: string;
   excerpt: string;
   content: string;
@@ -157,6 +181,12 @@ export interface ExplainerItem {
 export interface Briefing {
   id: string;
   title: string;
+  title1?: string;
+  title2?: string;
+  excerpt1?: string;
+  excerpt2?: string;
+  content1?: string;
+  content2?: string;
   slug: string;
   excerpt: string;
   content: string;
@@ -191,6 +221,12 @@ export interface SiteSettings {
   siteTagline: string;
   heroTitle: string;
   heroSubtitle: string;
+  title1?: string;
+  title2?: string;
+  excerpt1?: string;
+  excerpt2?: string;
+  content1?: string;
+  content2?: string;
   heroVideoUrl: string;
   heroVideoId: string;
   featuredProgrammeId: string;
@@ -298,6 +334,12 @@ export interface ClearPathDailyArticle {
   categorySlug: string;
   topicTags: string[];
   title: string;
+  title1?: string;
+  title2?: string;
+  excerpt1?: string;
+  excerpt2?: string;
+  content1?: string;
+  content2?: string;
   subtitle?: string;
   excerpt: string;
   whyItMatters: string;
@@ -333,7 +375,15 @@ export interface ClearPathDailyArticle {
   speakerName?: string; // For The Public Record
   speakerTitle?: string; // For The Public Record
   lensHeadline?: string; // For The ClearPath Lens
-  signalEvent?: string; // For Signals to Watch
+  signalEvent?: string;
+  signalEvent1?: string;
+  signalEvent2?: string;
+  signalDateOrDay1?: string;
+  signalDateOrDay2?: string;
+  relatedLinkTitle1?: string;
+  relatedLinkTitle2?: string;
+  relatedLinkUrl1?: string;
+  relatedLinkUrl2?: string; // For Signals to Watch
   signalDateOrDay?: string; // For Signals to Watch
   signalDescription?: string; // For Signals to Watch
   

@@ -58,12 +58,13 @@ export default function SignalsToWatchPage() {
                 {articles.map((item, index) => (
                   <section 
                     key={item.id} 
-                    className={`bg-surface-bright border ${index === 0 ? 'border-indigo-200 shadow-md' : 'border-outline-variant shadow-sm'} rounded-2xl p-6 sm:p-8 relative overflow-hidden transition-all hover:border-indigo-300 group`}
+                    className={`bg-surface-bright border ${index === 0 ? 'border-indigo-200 shadow-md' : 'border-outline-variant shadow-sm'} rounded-2xl p-6 sm:p-8 relative overflow-hidden transition-all hover:border-indigo-300 group space-y-8`}
                   >
                     {index === 0 && (
                       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2"></div>
                     )}
                     
+                    {/* Event 1 */}
                     <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
                       {/* Date Block */}
                       <div className="shrink-0 flex sm:flex-col items-center sm:items-start gap-3 sm:gap-1">
@@ -71,43 +72,67 @@ export default function SignalsToWatchPage() {
                           <Calendar className="w-6 h-6 sm:w-8 sm:h-8" />
                         </div>
                         <span className="text-sm sm:text-xs font-mono font-bold text-indigo-900 uppercase tracking-wider mt-0 sm:mt-2">
-                          {item.signalDateOrDay || item.publishedAt}
+                          {item.signalDateOrDay1 || item.publishedAt}
                         </span>
                       </div>
-
+                      
                       {/* Content Block */}
-                      <div className="flex-grow space-y-4">
+                      <div className="flex-grow space-y-4 pt-2">
                         <div>
                           <h2 className="text-xl sm:text-2xl font-extrabold font-serif text-on-surface leading-tight mb-2">
-                            {item.signalEvent || item.title}
+                            {item.signalEvent1 || item.title}
                           </h2>
-                          <p className="text-sm text-on-surface-variant font-medium leading-relaxed">
-                            {item.excerpt}
-                          </p>
                         </div>
-
-                        <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60">
-                          <h3 className="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-2 font-mono flex items-center gap-1.5">
-                            <AlertCircle className="w-3.5 h-3.5" /> Why It Matters
-                          </h3>
-                          <p className="text-sm text-on-surface leading-relaxed">
-                            {item.whyItMatters}
-                          </p>
-                        </div>
-
-                        {item.relatedLinkUrl && (
+                        
+                        {item.relatedLinkUrl1 && (
                           <div className="pt-2">
                             <a 
-                              href={item.relatedLinkUrl}
+                              href={item.relatedLinkUrl1}
                               target="_blank" rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-indigo-700 transition-colors"
                             >
-                              {item.relatedLinkTitle || 'Read Background Document'} <ArrowRight className="w-3 h-3" />
+                              {item.relatedLinkTitle1 || 'Read Background Document'} <ArrowRight className="w-3 h-3" />
                             </a>
                           </div>
                         )}
                       </div>
                     </div>
+
+                    {/* Event 2 */}
+                    {(item.signalEvent2 || item.signalDateOrDay2) && (
+                      <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 pt-6 border-t border-outline-variant/60">
+                        {/* Date Block */}
+                        <div className="shrink-0 flex sm:flex-col items-center sm:items-start gap-3 sm:gap-1">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50/50 border border-indigo-100/50 flex items-center justify-center text-indigo-900/70 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                            <Calendar className="w-6 h-6 sm:w-8 sm:h-8" />
+                          </div>
+                          <span className="text-sm sm:text-xs font-mono font-bold text-indigo-900/70 uppercase tracking-wider mt-0 sm:mt-2">
+                            {item.signalDateOrDay2}
+                          </span>
+                        </div>
+                        
+                        {/* Content Block */}
+                        <div className="flex-grow space-y-4 pt-2">
+                          <div>
+                            <h2 className="text-xl sm:text-2xl font-extrabold font-serif text-on-surface leading-tight mb-2">
+                              {item.signalEvent2}
+                            </h2>
+                          </div>
+                          
+                          {item.relatedLinkUrl2 && (
+                            <div className="pt-2">
+                              <a 
+                                href={item.relatedLinkUrl2}
+                                target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-indigo-700 transition-colors"
+                              >
+                                {item.relatedLinkTitle2 || 'Read Background Document'} <ArrowRight className="w-3 h-3" />
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </section>
                 ))}
               </div>
@@ -115,9 +140,9 @@ export default function SignalsToWatchPage() {
               {/* Sidebar Column */}
               <div className="lg:col-span-4">
                 <ClearPathDailySidebar
-                  currentDate={articles[0]?.signalDateOrDay || articles[0]?.publishedAt || ''}
+                  currentDate={articles[0]?.signalDateOrDay1 || articles[0]?.publishedAt || ''}
                   currentSectionSlug="signals-to-watch"
-                  articleTitleOrSubject={articles[0]?.signalEvent || articles[0]?.title}
+                  articleTitleOrSubject={articles[0]?.signalEvent1 || articles[0]?.title}
                 />
               </div>
             </div>

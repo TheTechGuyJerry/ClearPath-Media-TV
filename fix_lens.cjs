@@ -1,10 +1,9 @@
 const fs = require('fs');
-const p = 'src/pages/ClearPathLensPage.tsx';
-let txt = fs.readFileSync(p, 'utf8');
+let content = fs.readFileSync('src/pages/ClearPathLensPage.tsx', 'utf8');
 
-txt = txt.replace(/lens\.topic/g, '"STRUCTURAL ANALYSIS"');
-txt = txt.replace(/lens\.title/g, 'lens.headline');
-txt = txt.replace(/lens\.detailedAnalysis/g, 'lens.introductorySummary');
-txt = txt.replace(/lens\.coreFinding/g, 'lens.institutionalAnalysis');
+content = content.replace(
+  /\/clearpath-lens\/\$\{item\.slug\}/g,
+  "{getArticleUrl(item, 'clearpath-lens')}"
+);
 
-fs.writeFileSync(p, txt);
+fs.writeFileSync('src/pages/ClearPathLensPage.tsx', content);

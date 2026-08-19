@@ -12,6 +12,8 @@ import Home from './pages/Home';
 import Programmes from './pages/Programmes';
 import Briefing from './pages/Briefing';
 import Explainers from './pages/Explainers';
+import ElectionMattersWeekly from './pages/ElectionMattersWeekly';
+import AdminElectionMatters from './pages/admin/AdminElectionMatters';
 import About from './pages/About';
 import Partner from './pages/Partner';
 import ThreeThings from './pages/ThreeThings';
@@ -166,6 +168,7 @@ function AppRoutes() {
             <Route path="/explainers/insights" element={<Explainers />} />
             <Route path="/explainers/:id" element={<Explainers />} />
 
+            <Route path="/election-matters-weekly" element={<ElectionMattersWeekly />} />
             <Route path="/about" element={<About />} />
             <Route path="/partner" element={<Partner />} />
             <Route path="/subscribe" element={<Subscribe />} />
@@ -182,6 +185,7 @@ function AppRoutes() {
                   <Route element={<AdminLayout />}>
                     <Route index element={<AdminConsoleHome />} />
                     <Route path="programmes" element={<AdminProgrammes />} />
+                    <Route path="clearpath-daily" element={<Navigate to="/admin/clearpath-daily/todays-brief" replace />} />
                     <Route path="clearpath-daily/:menuSlug" element={<AdminClearPathDaily />} />
                     <Route path="programmes/:slug" element={<AdminProgrammeDetail />} />
                     <Route path="videos" element={<AdminVideos />} />
@@ -189,6 +193,7 @@ function AppRoutes() {
                     <Route path="videos/:videoId/edit" element={<AdminVideoEdit />} />
                     <Route path="explainers" element={<AdminExplainers />} />
                     <Route path="explainers/:slug" element={<AdminExplainerDetail />} />
+                    <Route path="election-matters" element={<AdminElectionMatters />} />
                     <Route path="briefing" element={<AdminBriefings />} />
                     <Route path="partnerships" element={<AdminPartnerships />} />
                     <Route path="subscribers" element={<AdminSubscribers />} />
