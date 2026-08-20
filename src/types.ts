@@ -342,6 +342,7 @@ export interface ClearPathDailyArticle {
   content2?: string;
   subtitle?: string;
   excerpt: string;
+  executiveSummary?: string;
   whyItMatters: string;
   whatToWatchNext?: string;
   authorName: string;
@@ -368,6 +369,7 @@ export interface ClearPathDailyArticle {
   athenaEvidenceDate?: string;
 
   // Specific fields for different categories:
+  weeklyFeatureType?: string; // For Weekly Features (e.g. State in Focus, LGA Brief, West African Governance Monitor, Governance Brief, BCCN News)
   goldNumber?: '01' | '02'; // For In Focus
   indicatorNumber?: string; // For The Indicator
   indicatorContext?: string; // For The Indicator

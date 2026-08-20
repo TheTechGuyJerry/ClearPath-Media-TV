@@ -1,7 +1,20 @@
 import { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { ClearPathDailyArticle } from '../types';
+import { slugify } from '../utils/slugUtils';
+
+const WEEKLY_CATEGORY_SLUGS = [
+  'weekly-features',
+  'weekly-feature',
+  'west-african-monitor',
+  'west-african-governance-monitor',
+  'state-in-focus',
+  'lga-brief',
+  'governance-brief',
+  'bccn-news',
+  'special-investigation'
+];
 
 export function useClearPathArticles(categorySlug?: string, limitCount?: number) {
   const [articles, setArticles] = useState<ClearPathDailyArticle[]>([]);
@@ -11,36 +24,42 @@ export function useClearPathArticles(categorySlug?: string, limitCount?: number)
     async function fetchArticles() {
       setLoading(true);
       try {
-        let q = query(
-          collection(db, 'clearpath_daily_articles'),
-          where('status', '==', 'published')
-        );
-
-        if (categorySlug) {
-          q = query(q, where('categorySlug', '==', categorySlug));
-        }
-
-        const snapshot = await getDocs(q);
-        const fetchedArticles = snapshot.docs.map(doc => ({
+        const snapshot = await getDocs(collection(db, 'clearpath_daily_articles'));
+        let rawArticles = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as ClearPathDailyArticle[];
 
-        // Sort in memory because string dates can be tricky if not stored as ISO, or we can use createdAt
-        // We'll rely on string dates for now but parse them, or fallback to createdAt.
-        fetchedArticles.sort((a, b) => {
+        // Exclude archived only
+        let validArticles = rawArticles.filter(a => a.status !== 'archived');
+
+        const normalizedReqCategory = categorySlug ? slugify(categorySlug) : undefined;
+        const isWeeklyReq = normalizedReqCategory && WEEKLY_CATEGORY_SLUGS.includes(normalizedReqCategory);
+
+        let filtered = validArticles.filter(a => {
+          if (!normalizedReqCategory) return true;
+          const aCat = slugify(a.categorySlug || a.category || '');
+          if (isWeeklyReq) {
+            return WEEKLY_CATEGORY_SLUGS.includes(aCat) || !!a.weeklyFeatureType;
+          }
+          return aCat === normalizedReqCategory || aCat.includes(normalizedReqCategory);
+        });
+
+        // Sort in memory by published date or creation
+        filtered.sort((a, b) => {
           const dateA = new Date(a.publishedAt || a.signalDateOrDay || a.createdAt || 0).getTime();
           const dateB = new Date(b.publishedAt || b.signalDateOrDay || b.createdAt || 0).getTime();
           return dateB - dateA;
         });
 
         if (limitCount && limitCount > 0) {
-          setArticles(fetchedArticles.slice(0, limitCount));
+          setArticles(filtered.slice(0, limitCount));
         } else {
-          setArticles(fetchedArticles);
+          setArticles(filtered);
         }
       } catch (err) {
         console.error("Error fetching ClearPath articles:", err);
+        setArticles([]);
       } finally {
         setLoading(false);
       }
@@ -51,3 +70,4 @@ export function useClearPathArticles(categorySlug?: string, limitCount?: number)
 
   return { articles, loading };
 }
+

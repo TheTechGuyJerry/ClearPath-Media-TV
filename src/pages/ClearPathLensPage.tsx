@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ExternalLink, ArrowRight, BookOpen, Layers } from 'lucide-react';
+import { Search, ExternalLink, ArrowRight, BookOpen, Layers, Clock } from 'lucide-react';
 import SEO from '../components/SEO';
 import { AthenaEvidenceCard } from '../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../components/clearpath/ClearPathDailySidebar';
@@ -27,7 +27,7 @@ export default function ClearPathLensPage() {
     <div className="w-full min-h-screen bg-background font-sans">
       <SEO
         title="The ClearPath Lens — ClearPath Daily"
-        description="A weekly panoramic view connecting seemingly disparate events into a cohesive institutional analysis."
+        description="A daily panoramic view connecting seemingly disparate events into a cohesive institutional analysis."
       />
 
       {/* Header Banner */}
@@ -41,7 +41,7 @@ export default function ClearPathLensPage() {
               The ClearPath Lens
             </h1>
             <p className="text-base sm:text-lg text-zinc-400 max-w-3xl leading-relaxed font-medium">
-              A weekly panoramic view connecting seemingly disparate events into a cohesive institutional analysis.
+              A daily panoramic view connecting seemingly disparate events into a cohesive institutional analysis.
             </p>
           </div>
         </div>
@@ -58,22 +58,26 @@ export default function ClearPathLensPage() {
           <>
             {/* Featured Lens Article */}
             <article className="bg-surface-bright border border-outline-variant rounded-2xl shadow-sm overflow-hidden">
-              {/* Header Image & Title */}
-              <div className="relative h-64 sm:h-80 md:h-96 w-full">
-                <img 
-                  src={currentLens.coverImage || 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80'} 
-                  alt={currentLens.title} 
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#18181b] via-[#18181b]/60 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-                  <span className="text-xs font-mono font-bold text-white uppercase tracking-wider bg-zinc-800/80 backdrop-blur-sm px-3 py-1 rounded-full mb-4 inline-block border border-zinc-600">
-                    WEEKLY LENS • {currentLens.publishedAt}
+              {/* Editorial Header (Text & Typography Focus - No Image) */}
+              <div className="bg-gradient-to-br from-[#18181b] via-[#232328] to-[#121215] text-white p-6 sm:p-10 md:p-12 border-b border-zinc-800">
+                <div className="flex flex-wrap items-center gap-3 mb-5">
+                  <span className="text-xs font-mono font-bold text-zinc-200 uppercase tracking-wider bg-zinc-800/90 px-3 py-1 rounded-full border border-zinc-700">
+                    CLEARPATH LENS • {currentLens.publishedAt}
                   </span>
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-serif text-white leading-tight max-w-4xl text-balance">
-                    {currentLens.title}
-                  </h2>
+                  {currentLens.readingTime && (
+                    <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-zinc-400" /> {currentLens.readingTime}
+                    </span>
+                  )}
                 </div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif text-white leading-tight max-w-4xl text-balance">
+                  {currentLens.title}
+                </h2>
+                {currentLens.subtitle && (
+                  <p className="mt-4 text-base sm:text-lg text-zinc-300 max-w-3xl leading-relaxed font-serif italic">
+                    {currentLens.subtitle}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start p-6 md:p-10">
@@ -81,21 +85,21 @@ export default function ClearPathLensPage() {
                 <div className="lg:col-span-8 space-y-10 min-w-0 w-full">
                   {/* Introductory Summary */}
                   {(currentLens.introductorySummary || currentLens.excerpt) && (
-                    <section>
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-1.5 h-6 bg-zinc-800 rounded-full"></div>
-                        <h3 className="text-lg font-bold font-serif text-on-surface uppercase tracking-wide">The Summary</h3>
+                    <section className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/60">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-1.5 h-5 bg-zinc-800 dark:bg-zinc-200 rounded-full"></div>
+                        <h3 className="text-sm font-mono font-bold text-on-surface uppercase tracking-wider">The Summary</h3>
                       </div>
                       <RichContentRenderer 
                         content={currentLens.introductorySummary || currentLens.excerpt} 
-                        className="text-base sm:text-lg leading-relaxed font-medium"
+                        className="text-base sm:text-lg leading-relaxed font-serif font-medium italic text-on-surface"
                       />
                     </section>
                   )}
 
                   {/* Institutional Analysis */}
                   {(currentLens.institutionalAnalysis || currentLens.content) && (
-                    <section className="pt-6 border-t border-outline-variant/60">
+                    <section className="pt-2">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="w-1.5 h-6 bg-primary rounded-full"></div>
                         <h3 className="text-lg font-bold font-serif text-on-surface uppercase tracking-wide">Institutional Analysis</h3>
@@ -157,30 +161,28 @@ export default function ClearPathLensPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {previousLenses.map((item) => (
-                    <div key={item.id} className="group bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/60 rounded-xl p-5 transition-all flex flex-col sm:flex-row gap-5">
-                      <div className="shrink-0 w-full sm:w-24 h-40 sm:h-24 rounded-lg overflow-hidden border border-outline-variant">
-                        <img 
-                          src={item.coverImage || 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&q=80'} 
-                          alt={item.title} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-                      <div className="flex-grow flex flex-col justify-center">
-                        <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1 block">
+                    <div key={item.id} className="group bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/60 rounded-xl p-5 transition-all flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5 block">
                           {item.publishedAt}
                         </span>
-                        <h3 className="font-serif font-bold text-base text-on-surface leading-tight mb-2 group-hover:text-primary transition-colors">
+                        <h3 className="font-serif font-bold text-base text-on-surface leading-snug mb-3 group-hover:text-primary transition-colors">
                           <Link to={getArticleUrl(item, 'clearpath-lens')}>
                             {item.title}
                           </Link>
                         </h3>
-                        <Link
-                          to={getArticleUrl(item, 'clearpath-lens')}
-                          className="text-xs font-bold text-secondary hover:text-primary transition-colors inline-flex items-center gap-1 mt-auto"
-                        >
-                          Read Analysis <ArrowRight className="w-3 h-3" />
-                        </Link>
+                        {item.excerpt && (
+                          <p className="text-xs text-on-surface-variant line-clamp-2 mb-4 leading-relaxed">
+                            {item.excerpt}
+                          </p>
+                        )}
                       </div>
+                      <Link
+                        to={getArticleUrl(item, 'clearpath-lens')}
+                        className="text-xs font-bold text-secondary hover:text-primary transition-colors inline-flex items-center gap-1 pt-2 border-t border-outline-variant/40"
+                      >
+                        Read Analysis <ArrowRight className="w-3 h-3" />
+                      </Link>
                     </div>
                   ))}
                 </div>

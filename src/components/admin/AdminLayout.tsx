@@ -269,6 +269,7 @@ export default function AdminLayout() {
                 <Link to="/admin/clearpath-daily/the-public-record" className={getSubLinkClass('/admin/clearpath-daily/the-public-record')}>The Public Record</Link>
                 <Link to="/admin/clearpath-daily/clearpath-lens" className={getSubLinkClass('/admin/clearpath-daily/clearpath-lens')}>The ClearPath Lens</Link>
                 <Link to="/admin/clearpath-daily/signals-to-watch" className={getSubLinkClass('/admin/clearpath-daily/signals-to-watch')}>Signals to Watch</Link>
+                <Link to="/admin/clearpath-daily/weekly-features" className={getSubLinkClass('/admin/clearpath-daily/weekly-features')}>Weekly Features</Link>
               </div>
             </div>
           )}

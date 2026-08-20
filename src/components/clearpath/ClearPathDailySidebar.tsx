@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getArticleUrl } from '../../utils/urlUtils';
 import { Link } from 'react-router-dom';
-import { Play, Calendar, ExternalLink, ArrowRight, BookOpen, Layers, BarChart3, Quote, Target, Radio, CheckCircle2, Clock } from 'lucide-react';
+import { Play, Calendar, ExternalLink, ArrowRight, BookOpen, Layers, BarChart3, Quote, Target, Radio, CheckCircle2, Clock, BookmarkCheck } from 'lucide-react';
 import { CURRENT_DAILY_EDITION, DailyEdition, DailyArticle } from '../../data/clearpath_daily_data';
 import { getPublishedProgrammeVideos } from '../../services/publicContentService';
 import { ProgrammeVideo } from '../../types';
@@ -9,7 +9,7 @@ import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 
 export interface ClearPathDailySidebarProps {
   currentDate?: string;
-  currentSectionSlug?: 'todays-brief' | 'in-focus' | 'the-indicator' | 'the-public-record' | 'clearpath-lens' | 'signals-to-watch' | 'weekly-feature' | string;
+  currentSectionSlug?: 'todays-brief' | 'in-focus' | 'the-indicator' | 'the-public-record' | 'clearpath-lens' | 'signals-to-watch' | 'weekly-features' | 'weekly-feature' | string;
   currentArticleSlug?: string;
   articleTitleOrSubject?: string;
   edition?: DailyEdition;
@@ -31,6 +31,7 @@ export function ClearPathDailySidebar({
   const publicRecord = allArticles.find(a => a.categorySlug === 'the-public-record');
   const clearpathLens = allArticles.find(a => a.categorySlug === 'clearpath-lens');
   const topSignal = allArticles.find(a => a.categorySlug === 'signals-to-watch');
+  const weeklyFeature = allArticles.find(a => a.categorySlug === 'weekly-features' || a.categorySlug === 'weekly-feature');
 
   const dynPublicationDate = currentDate || todaysBrief?.publishedAt || mainInFocus?.publishedAt || edition.formattedDate;
 
@@ -295,6 +296,41 @@ export function ClearPathDailySidebar({
                   <span>{dynPublicationDate}</span>
                   <Link to={getArticleUrl(topSignal as any, 'signals-to-watch')} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     View Signals <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* 7. Weekly Features */}
+          {(() => {
+            const isCurrent = currentSectionSlug === 'weekly-features' || currentSectionSlug === 'weekly-feature';
+            if (!weeklyFeature || isCurrent) return null;
+            return (
+              <div className={`p-3 rounded-xl border transition-all ${isCurrent ? 'bg-primary/5 border-primary/40' : 'bg-surface-container-low hover:bg-surface-container border-outline-variant/60'}`}>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+                    <BookmarkCheck className="w-3 h-3" />
+                    WEEKLY FEATURES
+                  </span>
+                  {isCurrent && (
+                    <span className="text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-500/15 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="w-2.5 h-2.5" /> Reading
+                    </span>
+                  )}
+                </div>
+                {weeklyFeature && (
+                  <Link
+                    to={getArticleUrl(weeklyFeature as any, 'weekly-features')}
+                    className="font-serif font-bold text-xs text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
+                  >
+                    {weeklyFeature?.title}
+                  </Link>
+                )}
+                <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
+                  <span>{weeklyFeature?.publishedAt || dynPublicationDate}</span>
+                  <Link to={getArticleUrl(weeklyFeature as any, 'weekly-features')} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
+                    Read Feature <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
               </div>

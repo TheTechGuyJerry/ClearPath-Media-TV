@@ -3,10 +3,12 @@ export interface DailyArticle {
   slug: string;
   category: string;
   categorySlug: string;
+  weeklyFeatureType?: string;
   topicTags: string[];
   title: string;
   subtitle?: string;
   excerpt: string;
+  executiveSummary?: string;
   whyItMatters: string;
   whatToWatchNext?: string;
   authorName: string;
@@ -19,6 +21,11 @@ export interface DailyArticle {
   imageCaption?: string;
   imageCredit?: string;
   content: string;
+  athenaEvidenceType?: string;
+  athenaEvidenceTitle?: string;
+  athenaEvidenceDate?: string;
+  athenaEvidenceUrl?: string;
+  athenaEvidenceSummary?: string;
   supportingSources?: { title: string; url: string }[];
   relatedArticles?: { title: string; slug: string; category: string }[];
   relatedAthenaPublication?: {
@@ -148,6 +155,7 @@ export const ALL_CATEGORIES = [
   { id: 'the-public-record', name: 'The Public Record', description: 'Verified public statements from official authorities and democratic institutions.' },
   { id: 'clearpath-lens', name: 'The ClearPath Lens', description: 'Comprehensive structural breakdowns connecting current events to long-term systemic dynamics.' },
   { id: 'signals-to-watch', name: 'Signals to Watch', description: 'Key upcoming hearings, policy decisions, and democratic milestones.' },
+  { id: 'weekly-features', name: 'Weekly Features', description: 'In-depth weekly investigations, analytical long-reads, and systemic policy features.' },
   { id: 'explainers', name: 'Explainers & Analysis', description: 'Clear, patient explanations of complex civil systems and policy frameworks.' },
 ];
 
@@ -350,6 +358,54 @@ All filings must now be transmitted through a unified digital court management r
     content: `### Civil Service Digitization & Payroll Audits
 
 Administrative reform remains the linchpin of institutional effectiveness in Nigeria. The ongoing transition from physical paper archives to enterprise digital workflows is reducing bureaucratic turnarounds across federal ministries.`
+  },
+  {
+    id: 'cpd-weekly-feature-2026',
+    slug: 'sub-national-energy-autonomy-blueprint',
+    category: 'WEEKLY FEATURES',
+    categorySlug: 'weekly-features',
+    weeklyFeatureType: 'State in Focus',
+    topicTags: ['economy', 'governance', 'public-policy'],
+    title: 'Decentralized Power Grids: The Sub-National Energy Autonomy Blueprint',
+    subtitle: 'How state-level electricity markets are restructuring the national grid and attracting private infrastructure capital.',
+    excerpt: 'State governments across Nigeria are establishing independent electricity regulatory commissions, unlocking embedded generation and decentralized mini-grids to bypass national transmission bottlenecks.',
+    executiveSummary: 'State governments across Nigeria are establishing independent electricity regulatory commissions, unlocking embedded generation and decentralized mini-grids to bypass national transmission bottlenecks.',
+    whyItMatters: 'Decentralized power regulation enables industrial clusters to contract power directly from independent power producers, accelerating local manufacturing and lowering reliance on erratic national grid collapses.',
+    whatToWatchNext: 'Watch for initial state-licensed commercial power purchase agreements (PPAs) in Lagos, Edo, Kaduna, and Enugu states.',
+    authorName: 'Dr. Chinedu Eze',
+    authorTitle: 'Senior Infrastructure Fellow, ClearPath Media',
+    publishedAt: 'August 16, 2026',
+    updatedAt: 'August 16, 2026',
+    readingTime: '7 min read',
+    coverImage: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&q=80&w=1200',
+    imageCaption: 'Sub-station transformer banks connected to regional distributed generation circuits.',
+    imageCredit: 'ClearPath Media / Visual Desk',
+    content: `### The Constitutional Pivot to State-Level Electricity Markets
+
+For over six decades, Nigeria's electricity supply industry operated under an intensely centralized framework where generation, transmission, and regional distribution were governed exclusively by federal statutes. The enactment of the Electricity Act 2023 and subsequent constitutional amendments effectively transferred regulatory jurisdiction over intra-state electricity markets to state governments.
+
+This structural devolution is reshaping the investment architecture for sub-national power generation.
+
+#### 1. Establishing State Electricity Regulatory Commissions (SERCs)
+Several states—including Enugu, Ekiti, Ondo, Edo, and Lagos—have enacted state electricity laws and formed dedicated regulatory bodies. These commissions now possess statutory powers to issue generation, transmission, and distribution licenses within their geographical boundaries, as well as set cost-reflective local retail tariffs.
+
+#### 2. Embedded Generation and Industrial Ring-Fencing
+Rather than relying on the single national grid operated by the Transmission Company of Nigeria (TCN), industrial corridors are transitioning to embedded generation models. Under this approach:
+- Private power developers generate power directly within industrial zones.
+- Independent distribution networks supply dedicated power with 98%+ uptime.
+- Currency risk is mitigated through structured local-currency tariff indexing.
+
+#### 3. Financing the Sub-National Grid Transition
+The viability of state electricity markets hinges on bankable commercial contracts. State governments are partnering with multilateral development banks and domestic pension funds to provide credit enhancement facilities and first-loss guarantees, ensuring that independent power producers (IPPs) can deploy generation assets without sovereign debt exposure.`,
+    supportingSources: [
+      { title: 'Nigerian Electricity Regulatory Commission (NERC) State Transition Orders', url: 'https://nerc.gov.ng' },
+      { title: 'Athena Centre Study on Sub-National Energy Markets', url: 'https://athenacentre.org' }
+    ],
+    athenaEvidenceType: 'Athena Perspectives',
+    athenaEvidenceTitle: 'Energy Transition Metrics in Sub-Saharan Africa: Balancing Off-Grid Expansion with Tariffs',
+    athenaEvidenceDate: 'July 12, 2026',
+    athenaEvidenceUrl: 'https://athenacentre.org/research/energy-transition-metrics',
+    athenaEvidenceSummary: 'Macroeconomic analysis of off-grid solar deployment, utility cost recovery, and industrial tariff frameworks in West Africa.'
   }
 ];
 
@@ -543,7 +599,7 @@ export const WEEKLY_FEATURE_PUBLICATIONS: Record<string, { category: string; tit
     date: 'Thursday Feature'
   },
   'bccn-news': {
-    category: 'BCCN NEWS',
+    category: 'BCCN NEWS (BENIN, CHAD, CAMEROUN, NIGER)',
     title: 'BCCN News: Sustainable Off-Grid Energy Corridors for Agro-Processing',
     slug: 'bccn-news',
     image: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&q=80&w=1200',

@@ -12,7 +12,9 @@ const CATEGORY_NAMES: Record<string, string> = {
   'the-indicator': 'The Indicator',
   'the-public-record': 'The Public Record',
   'clearpath-lens': 'The ClearPath Lens',
-  'signals-to-watch': 'Signals to Watch'
+  'signals-to-watch': 'Signals to Watch',
+  'weekly-features': 'Weekly Features',
+  'weekly-feature': 'Weekly Features'
 };
 
 export default function AdminClearPathDaily() {
@@ -70,7 +72,9 @@ export default function AdminClearPathDaily() {
 
 
   // Filter articles by the current category
-  const currentCategoryArticles = clearpathDailyArticles.filter(a => a.categorySlug === menuSlug);
+  const currentCategoryArticles = clearpathDailyArticles.filter(
+    a => a.categorySlug === menuSlug || ((menuSlug === 'weekly-features' || menuSlug === 'weekly-feature') && (a.categorySlug === 'weekly-features' || a.categorySlug === 'weekly-feature'))
+  );
 
   const handleEdit = (article: ClearPathDailyArticle) => {
     setFormData(article);
@@ -203,6 +207,39 @@ export default function AdminClearPathDaily() {
       { name: 'relatedLinkTitle2', label: 'Event 2 Related Link Title', type: 'text' },
       { name: 'relatedLinkUrl2', label: 'Event 2 Related Link URL', type: 'text' },
     ];
+  } else if (menuSlug === 'weekly-features' || menuSlug === 'weekly-feature') {
+    allFields = [
+      ...systemFields,
+      { 
+        name: 'weeklyFeatureType', 
+        label: 'Weekly Feature Type', 
+        type: 'select', 
+        options: [
+          'State in Focus',
+          'LGA Brief',
+          'West African Governance Monitor',
+          'Governance Brief',
+          'BCCN News (Benin, Chad, Cameroun, Niger)',
+          'Special Investigation'
+        ],
+        required: true 
+      },
+      { name: 'title', label: 'Title', type: 'text', required: true },
+      { name: 'subtitle', label: 'Subtitle', type: 'text' },
+      { name: 'authorName', label: 'Author Name', type: 'text', required: true },
+      { name: 'authorTitle', label: 'Author Title / Role', type: 'text' },
+      { name: 'authorAvatar', label: 'Author Avatar URL', type: 'text' },
+      { name: 'publishedAt', label: 'Published Date', type: 'text', required: true },
+      { name: 'readingTime', label: 'Reading Time (e.g. 7 min read)', type: 'text' },
+      { name: 'coverImage', label: 'Cover Image URL', type: 'image' },
+      { name: 'imageCaption', label: 'Image Caption', type: 'text' },
+      { name: 'imageCredit', label: 'Image Credit', type: 'text' },
+      { name: 'excerpt', label: 'Executive Summary', type: 'textarea', required: true },
+      { name: 'content', label: 'Main Content (Markdown)', type: 'textarea', required: true },
+      { name: 'whyItMatters', label: 'Why It Matters', type: 'textarea' },
+      { name: 'whatToWatchNext', label: 'What To Watch Next', type: 'textarea' },
+      { name: 'supportingSourcesJson', label: 'Supporting Sources JSON (e.g. [{"title":"Source","url":"https://..."}])', type: 'textarea' },
+    ];
   } else {
     allFields = systemFields;
   }
@@ -241,15 +278,35 @@ export default function AdminClearPathDaily() {
                       />
                     )
                   ) : f.type === 'select' ? (
-                    <select
-                      required={f.required}
-                      value={formData[f.name as keyof typeof formData] as string || ''}
-                      onChange={(e) => setFormData({...formData, [f.name]: e.target.value})}
-                      className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent"
-                    >
-                      <option value="">-- Select --</option>
-                      {f.options?.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
-                    </select>
+                    <div className="space-y-2">
+                      <select
+                        required={f.required}
+                        value={formData[f.name as keyof typeof formData] as string || ''}
+                        onChange={(e) => setFormData({...formData, [f.name]: e.target.value})}
+                        className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent font-medium"
+                      >
+                        <option value="">-- Select {f.label} --</option>
+                        {f.options?.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                      {f.name === 'weeklyFeatureType' && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {f.options?.map((opt: string) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => setFormData({...formData, weeklyFeatureType: opt})}
+                              className={`text-xs px-2.5 py-1 rounded-md border transition-all cursor-pointer ${
+                                (formData as any).weeklyFeatureType === opt
+                                  ? 'bg-primary text-white border-primary font-bold shadow-xs'
+                                  : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant border-outline-variant'
+                              }`}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ) : f.type === 'boolean' ? (
                     <select
                       value={formData[f.name as keyof typeof formData] ? 'true' : 'false'}
@@ -407,6 +464,13 @@ export default function AdminClearPathDaily() {
               currentCategoryArticles.map(article => (
                 <tr key={article.id} className="border-b border-outline-variant last:border-0 hover:bg-surface-container-lowest transition-colors">
                   <td className="p-4">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      {article.weeklyFeatureType && (
+                        <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300 text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border border-indigo-200 dark:border-indigo-800/60">
+                          {article.weeklyFeatureType}
+                        </span>
+                      )}
+                    </div>
                     <p className="font-bold text-primary text-sm">{article.title || article.lensHeadline || article.quote || article.signalEvent || 'Untitled'}</p>
                     <p className="text-xs text-on-surface-variant font-mono mt-1">{article.id}</p>
                   </td>

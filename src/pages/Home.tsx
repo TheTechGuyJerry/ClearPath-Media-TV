@@ -26,6 +26,7 @@ import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
 import { AnalysisAndFeaturesSection } from '../components/clearpath/AnalysisAndFeaturesSection';
 
+
 function getProgrammeImageUrl(p: Programme): string {
   const pid = (p.id || p.slug || p.title || '').toLowerCase().trim();
   if (pid.includes('osita') || pid === 'ositainsight') {
@@ -234,7 +235,7 @@ export default function Home() {
       // 5. Briefings result (Client-side fail-safe logic skipped for Featured display)
       // 6. ClearPath Daily Articles
       if (results[5].status === 'fulfilled') {
-        const cpDocs = results[5].value.docs.map((d) => ({ id: d.id, ...d.data() } as ClearPathDailyArticle));
+        let cpDocs = results[5].value.docs.map((d) => ({ id: d.id, ...d.data() } as ClearPathDailyArticle));
         cpDocs.sort((a, b) => {
           const tA = new Date(a.publishedAt || a.createdAt || 0).getTime();
           const tB = new Date(b.publishedAt || b.createdAt || 0).getTime();
@@ -243,6 +244,7 @@ export default function Home() {
         setCpArticles(cpDocs);
       } else {
         console.error('CP Articles Load Error: ', results[5].reason);
+        setCpArticles([]);
       }
 
       const isProgActive = (p: Programme) => p.status === 'active' || p.isActive === true;
@@ -553,12 +555,12 @@ export default function Home() {
           inFocusStories={cpArticles.filter(a => a.categorySlug === 'in-focus').slice(0, 2)}
           lensStory={cpArticles.find(a => a.categorySlug === 'clearpath-lens')}
           latestStoriesList={
-            ['in-focus', 'the-indicator', 'the-public-record', 'clearpath-lens', 'signals-to-watch']
-              .map(slug => cpArticles.find(a => a.categorySlug === slug))
+            ['in-focus', 'the-indicator', 'the-public-record', 'clearpath-lens', 'signals-to-watch', 'weekly-features']
+              .map(slug => cpArticles.find(a => a.categorySlug === slug || (slug === 'weekly-features' && a.categorySlug === 'weekly-feature')))
               .filter(Boolean)
               .map(a => ({ 
                 id: a.id, 
-                category: a.category, 
+                category: a.category || (a.categorySlug === 'weekly-features' ? 'WEEKLY FEATURES' : 'ClearPath Daily'), 
                 title: a.categorySlug === 'the-indicator' ? (a.indicatorNumber || 'View Indicator') : a.categorySlug === 'the-public-record' ? (a.title || a.quote || 'The Public Record') : (a.title || 'Read ' + a.category), 
                 link: getArticleUrl(a, a.categorySlug), 
                 date: a.publishedAt 

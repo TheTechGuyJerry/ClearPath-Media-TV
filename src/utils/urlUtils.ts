@@ -1,14 +1,30 @@
+import { slugify } from './slugUtils';
+
 export function getArticleUrl(article: any, fallbackCategorySlug = 'todays-brief'): string {
-  if (!article || !article.slug) return '#';
+  if (!article) return '/clearpath-daily/todays-brief';
   
-  const slug = article.slug;
-  const categorySlug = article.categorySlug || fallbackCategorySlug;
+  const rawSlug = article.slug || article.id || article.title || article.title1 || article.lensHeadline || article.quote || 'article';
+  const cleanSlug = slugify(rawSlug) || 'article';
   
-  const weeklySlugs = ['west-african-monitor', 'state-in-focus', 'lga-brief', 'governance-brief', 'bccn-news'];
+  const categorySlug = (article.categorySlug || fallbackCategorySlug || 'todays-brief').toLowerCase().trim();
   
-  if (weeklySlugs.includes(categorySlug)) {
-    return `/weekly-feature/${slug}`;
+  if (categorySlug === 'weekly-features' || categorySlug === 'weekly-feature') {
+    return `/clearpath-daily/weekly-features/${cleanSlug}`;
   }
   
-  return `/clearpath-daily/${categorySlug}/${slug}`;
+  const weeklySlugs = [
+    'west-african-monitor',
+    'west-african-governance-monitor',
+    'state-in-focus',
+    'lga-brief',
+    'governance-brief',
+    'bccn-news'
+  ];
+  
+  if (weeklySlugs.includes(categorySlug)) {
+    return `/clearpath-daily/weekly-features/${cleanSlug}`;
+  }
+  
+  return `/clearpath-daily/${categorySlug}/${cleanSlug}`;
 }
+

@@ -7,11 +7,12 @@ import { ClearPathDailySidebar } from '../components/clearpath/ClearPathDailySid
 import { SubscriptionSection } from '../components/clearpath/SubscriptionSection';
 import { RichContentRenderer } from '../components/common/RichContentRenderer';
 import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, doc, getDoc } from 'firebase/firestore';
 import { ClearPathDailyArticle } from '../types';
+import { matchesArticle, slugify } from '../utils/slugUtils';
 
 export default function ArticlePage() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, menuSlug } = useParams<{ slug: string; menuSlug?: string }>();
   const [article, setArticle] = useState<ClearPathDailyArticle | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -26,25 +27,102 @@ export default function ArticlePage() {
 
   useEffect(() => {
     async function fetchArticle() {
-      if (!slug) return;
+      if (!slug) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
+      const cleanSlug = slugify(decodeURIComponent(slug));
+
       try {
-        const q = query(collection(db, 'clearpath_daily_articles'), where('slug', '==', slug), limit(1));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          const doc = snapshot.docs[0];
-          setArticle({ id: doc.id, ...doc.data() } as ClearPathDailyArticle);
-        } else {
-          setArticle(null);
+        // 1. Direct document ID lookup in 'clearpath_daily_articles'
+        try {
+          const directSnap = await getDoc(doc(db, 'clearpath_daily_articles', slug));
+          if (directSnap.exists()) {
+            setArticle({ id: directSnap.id, ...directSnap.data() } as ClearPathDailyArticle);
+            setLoading(false);
+            return;
+          }
+        } catch {}
+
+        if (cleanSlug && cleanSlug !== slug) {
+          try {
+            const cleanDirectSnap = await getDoc(doc(db, 'clearpath_daily_articles', cleanSlug));
+            if (cleanDirectSnap.exists()) {
+              setArticle({ id: cleanDirectSnap.id, ...cleanDirectSnap.data() } as ClearPathDailyArticle);
+              setLoading(false);
+              return;
+            }
+          } catch {}
         }
+
+        // 2. Query Firestore by slug field
+        try {
+          const qSlug = query(collection(db, 'clearpath_daily_articles'), where('slug', '==', slug), limit(1));
+          const snapSlug = await getDocs(qSlug);
+          if (!snapSlug.empty) {
+            const docSnap = snapSlug.docs[0];
+            setArticle({ id: docSnap.id, ...docSnap.data() } as ClearPathDailyArticle);
+            setLoading(false);
+            return;
+          }
+        } catch {}
+
+        if (cleanSlug && cleanSlug !== slug) {
+          try {
+            const qClean = query(collection(db, 'clearpath_daily_articles'), where('slug', '==', cleanSlug), limit(1));
+            const snapClean = await getDocs(qClean);
+            if (!snapClean.empty) {
+              const docSnap = snapClean.docs[0];
+              setArticle({ id: docSnap.id, ...docSnap.data() } as ClearPathDailyArticle);
+              setLoading(false);
+              return;
+            }
+          } catch {}
+        }
+
+        // 3. Scan all clearpath_daily_articles documents for fuzzy/title/id match
+        try {
+          const allDocsSnap = await getDocs(collection(db, 'clearpath_daily_articles'));
+          const foundDoc = allDocsSnap.docs.find(d => {
+            const data = { id: d.id, ...d.data() };
+            return matchesArticle(data, slug) || (cleanSlug ? matchesArticle(data, cleanSlug) : false);
+          });
+          if (foundDoc) {
+            setArticle({ id: foundDoc.id, ...foundDoc.data() } as ClearPathDailyArticle);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.warn("Scan clearpath_daily_articles failed:", e);
+        }
+
+        // 4. Also scan 'briefings' collection
+        try {
+          const briefingsSnap = await getDocs(collection(db, 'briefings'));
+          const foundBriefing = briefingsSnap.docs.find(d => {
+            const data = { id: d.id, ...d.data() };
+            return matchesArticle(data, slug) || (cleanSlug ? matchesArticle(data, cleanSlug) : false);
+          });
+          if (foundBriefing) {
+            setArticle({ id: foundBriefing.id, ...foundBriefing.data() } as ClearPathDailyArticle);
+            setLoading(false);
+            return;
+          }
+        } catch {}
+
+        setArticle(null);
       } catch (e) {
         console.error("Error fetching article:", e);
+        setArticle(null);
       } finally {
         setLoading(false);
       }
     }
+
     fetchArticle();
   }, [slug]);
+
 
   if (loading) {
     return (
@@ -61,7 +139,7 @@ export default function ArticlePage() {
         <p className="text-on-surface-variant mb-8 text-center max-w-md">
           The article you are looking for does not exist or has been removed.
         </p>
-        <Link to="/daily/todays-brief" className="px-6 py-3 bg-primary text-white rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors">
+        <Link to="/clearpath-daily/todays-brief" className="px-6 py-3 bg-primary text-white rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Return to Today's Brief
         </Link>
       </div>

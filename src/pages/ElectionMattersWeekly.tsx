@@ -11,9 +11,15 @@ export default function ElectionMattersWeekly() {
   useEffect(() => {
     const fetchPubs = async () => {
       try {
-        const q = query(collection(db, 'electionMattersWeekly'), orderBy('publishedAt', 'desc'));
-        const snap = await getDocs(q);
+        let snap;
+        try {
+          const q = query(collection(db, 'electionMattersWeekly'), orderBy('publishedAt', 'desc'));
+          snap = await getDocs(q);
+        } catch {
+          snap = await getDocs(collection(db, 'electionMattersWeekly'));
+        }
         const pubs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        pubs.sort((a: any, b: any) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime());
         setPublications(pubs);
       } catch (err) {
         console.error('Error fetching publications', err);

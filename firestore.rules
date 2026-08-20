@@ -98,37 +98,37 @@ service cloud.firestore {
 
     // 2. Programmes Collection
     match /programmes/{docId} {
-      allow read: if isActiveAdmin();
+      allow read: if true;
       allow write: if isEditorOrSuperAdmin();
     }
 
     // 3. ProgrammeVideos Collection
     match /programmeVideos/{docId} {
-      allow read: if isActiveAdmin();
+      allow read: if true;
       allow write: if isEditorOrSuperAdmin();
     }
 
     // 4. Explainers Collection
     match /explainers/{docId} {
-      allow read: if isActiveAdmin();
+      allow read: if true;
       allow write: if isEditorOrSuperAdmin();
     }
 
     // 5. ExplainerItems Collection
     match /explainerItems/{docId} {
-      allow read: if isActiveAdmin();
+      allow read: if true;
       allow write: if isEditorOrSuperAdmin();
     }
 
     // 6. Briefings Collection
     match /briefings/{docId} {
-      allow read: if isActiveAdmin();
+      allow read: if true;
       allow write: if isEditorOrSuperAdmin();
     }
 
     // 7. SiteSettings Collection
     match /siteSettings/{docId} {
-      allow read: if isActiveAdmin();
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 
@@ -166,7 +166,13 @@ service cloud.firestore {
 
     // 13. ClearPath Daily Articles
     match /clearpath_daily_articles/{docId} {
-      allow read: if isActiveAdmin();
+      allow read: if true;
+      allow write: if isEditorOrSuperAdmin();
+    }
+
+    // 14. Election Matters Weekly Publications
+    match /electionMattersWeekly/{docId} {
+      allow read: if true;
       allow write: if isEditorOrSuperAdmin();
     }
   }

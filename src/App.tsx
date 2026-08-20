@@ -146,6 +146,16 @@ function AppRoutes() {
             <Route path="/news/signals-to-watch" element={<Navigate to="/clearpath-daily/signals-to-watch" replace />} />
             <Route path="/clearpath-daily/signals-to-watch" element={<SignalsToWatchPage />} />
             <Route path="/signals-to-watch" element={<Navigate to="/clearpath-daily/signals-to-watch" replace />} />
+            <Route path="/news/weekly-features" element={<Navigate to="/clearpath-daily/weekly-features" replace />} />
+            <Route path="/news/weekly-feature" element={<Navigate to="/clearpath-daily/weekly-features" replace />} />
+            <Route path="/clearpath-daily/weekly-features" element={<WeeklyFeaturePage />} />
+            <Route path="/clearpath-daily/weekly-features/:slug" element={<WeeklyFeaturePage />} />
+            <Route path="/clearpath-daily/weekly-feature/:slug" element={<WeeklyFeaturePage />} />
+            <Route path="/clearpath-daily/weekly-feature" element={<Navigate to="/clearpath-daily/weekly-features" replace />} />
+            <Route path="/weekly-features" element={<Navigate to="/clearpath-daily/weekly-features" replace />} />
+            <Route path="/weekly-features/:slug" element={<WeeklyFeaturePage />} />
+            <Route path="/weekly-feature" element={<Navigate to="/clearpath-daily/weekly-features" replace />} />
+            <Route path="/weekly-feature/:slug" element={<WeeklyFeaturePage />} />
             <Route path="/daily/:year/:month/:day" element={<DailyEditionPage />} />
             <Route path="/daily/:year/:month/:day/:slug" element={<ArticlePage />} />
             <Route path="/article/:slug" element={<ArticlePage />} />
