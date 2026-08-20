@@ -234,7 +234,6 @@ export default function AdminClearPathDaily() {
       { name: 'coverImage', label: 'Cover Image URL', type: 'image' },
       { name: 'imageCaption', label: 'Image Caption', type: 'text' },
       { name: 'imageCredit', label: 'Image Credit', type: 'text' },
-      { name: 'excerpt', label: 'Executive Summary', type: 'textarea', required: true },
       { name: 'content', label: 'Main Content (Markdown)', type: 'textarea', required: true },
       { name: 'whyItMatters', label: 'Why It Matters', type: 'textarea' },
       { name: 'whatToWatchNext', label: 'What To Watch Next', type: 'textarea' },

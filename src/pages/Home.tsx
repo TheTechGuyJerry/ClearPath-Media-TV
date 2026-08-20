@@ -70,6 +70,7 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(true);
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const [cpArticles, setCpArticles] = useState<ClearPathDailyArticle[]>([]);
+  const [latestWeeklyUpdate, setLatestWeeklyUpdate] = useState<any | null>(null);
 
   // Diagnostics states
   const [diagProgrammes, setDiagProgrammes] = useState<number>(0);
@@ -106,7 +107,8 @@ export default function Home() {
         getActiveExplainers(),
         getPublishedProgrammeVideos(),
         getDocs(collection(db, 'briefings')),
-        getDocs(query(collection(db, 'clearpath_daily_articles'), where('status', '==', 'published'), limit(50)))
+        getDocs(query(collection(db, 'clearpath_daily_articles'), where('status', '==', 'published'), limit(50))),
+        getDocs(collection(db, 'electionMattersWeekly'))
       ]);
 
       let siteSettingsConfig: any = null;
@@ -245,6 +247,15 @@ export default function Home() {
       } else {
         console.error('CP Articles Load Error: ', results[5].reason);
         setCpArticles([]);
+      }
+
+      // 7. Election Matters Weekly Updates
+      if (results[6].status === 'fulfilled') {
+        const weeklyDocs = results[6].value.docs.map(d => ({ id: d.id, ...d.data() }));
+        weeklyDocs.sort((a: any, b: any) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime());
+        setLatestWeeklyUpdate(weeklyDocs[0] || null);
+      } else {
+        console.error('Weekly Updates Load Error:', results[6].reason);
       }
 
       const isProgActive = (p: Programme) => p.status === 'active' || p.isActive === true;
@@ -554,8 +565,15 @@ export default function Home() {
           mainFeaturedAnalysis={cpArticles.find(a => a.categorySlug === 'todays-brief')}
           inFocusStories={cpArticles.filter(a => a.categorySlug === 'in-focus').slice(0, 2)}
           lensStory={cpArticles.find(a => a.categorySlug === 'clearpath-lens')}
-          latestStoriesList={
-            ['in-focus', 'the-indicator', 'the-public-record', 'clearpath-lens', 'signals-to-watch', 'weekly-features']
+          latestStoriesList={[
+            ...(latestWeeklyUpdate ? [{
+              id: latestWeeklyUpdate.id,
+              category: 'WEEKLY UPDATE',
+              title: latestWeeklyUpdate.title || 'Election Matters Weekly Update',
+              link: '/election-matters-weekly',
+              date: latestWeeklyUpdate.publishedAt
+            }] : []),
+            ...(['in-focus', 'the-indicator', 'the-public-record', 'clearpath-lens', 'signals-to-watch', 'weekly-features']
               .map(slug => cpArticles.find(a => a.categorySlug === slug || (slug === 'weekly-features' && a.categorySlug === 'weekly-feature')))
               .filter(Boolean)
               .map(a => ({ 
@@ -565,7 +583,8 @@ export default function Home() {
                 link: getArticleUrl(a, a.categorySlug), 
                 date: a.publishedAt 
               }))
-          }
+            )
+          ].slice(0, 5)}
           videoFeed={renderedFeedList}
         />
       </div>
