@@ -80,58 +80,79 @@ export default function InFocusPage() {
            </div>
         ) : (
           <>
-            {/* The Top 2 "In Focus" Stories (Gold Numbers) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {inFocusStories.map((story, idx) => (
-                <section key={story.id} className="bg-surface-bright border border-outline-variant hover:border-primary/40 rounded-2xl p-6 md:p-8 flex flex-col justify-between transition-all group">
-                  <div>
-                    <div className="flex items-center justify-between mb-4 pb-4 border-b border-outline-variant">
-                      <div className="bg-[#1e293b] text-[#facc15] font-serif font-black text-2xl w-12 h-12 flex items-center justify-center rounded-xl shadow-inner">
-                        {story.goldNumber || `0${idx + 1}`}
-                      </div>
-                      <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider bg-primary/10 px-3 py-1 rounded-full">
-                        {story.publishedAt}
-                      </span>
-                    </div>
-
-                    <div className="space-y-4 mb-6">
-                      <span className="text-xs font-mono font-bold text-secondary uppercase tracking-wider block">
-                        {story.category || 'DEEP DIVE'}
-                      </span>
-                      <h2 className="text-2xl sm:text-3xl font-extrabold font-serif text-on-surface leading-tight group-hover:text-primary transition-colors">
-                        <Link to={getArticleUrl(story, 'in-focus')}>
-                          {story.title}
-                        </Link>
-                      </h2>
-                      <p className="text-sm font-medium text-on-surface-variant/90 leading-relaxed line-clamp-3">
-                        {story.excerpt}
-                      </p>
-                    </div>
+            {/* The Latest "In Focus" Story */}
+            {latestDoc && (
+              <section id="in-focus-hero-card" className="bg-surface-bright border border-outline-variant hover:border-primary/40 rounded-2xl p-6 sm:p-8 md:p-10 transition-all shadow-xs group">
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-outline-variant/60 mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+                    <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider">
+                      Today's In Focus
+                    </span>
                   </div>
+                  {latestDoc.publishedAt && (
+                    <span className="text-xs font-mono font-bold text-on-surface-variant bg-surface-container px-3.5 py-1.5 rounded-full">
+                      {latestDoc.publishedAt}
+                    </span>
+                  )}
+                </div>
 
-                  <div className="pt-4 flex items-center justify-between border-t border-outline-variant/40 mt-auto">
-                    {story.authorName && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-[10px] font-bold text-on-surface">
-                          {story.authorName[0]}
-                        </div>
-                        <span className="text-[11px] font-bold text-on-surface uppercase tracking-wide">
-                          {story.authorName}
-                        </span>
-                      </div>
-                    )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
+                  {/* Focus Item 1 */}
+                  <Link
+                    to={getArticleUrl(latestDoc, 'in-focus')}
+                    className="flex items-start gap-4 p-5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors border border-outline-variant/50 group/item"
+                  >
+                    <div className="bg-[#1e293b] text-[#facc15] font-serif font-black text-xl w-10 h-10 flex items-center justify-center rounded-lg shrink-0 shadow-inner">
+                      01
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-wider block">
+                        Focus 1
+                      </span>
+                      <h3 className="font-serif font-bold text-base sm:text-lg text-on-surface leading-snug group-hover/item:text-primary transition-colors">
+                        {latestDoc.title1 || latestDoc.title || 'In Focus Topic 1'}
+                      </h3>
+                    </div>
+                  </Link>
+
+                  {/* Focus Item 2 (if available) */}
+                  {latestDoc.title2 ? (
                     <Link
-                      to={getArticleUrl(story, 'in-focus')}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-surface-container hover:bg-primary hover:text-white text-on-surface font-bold text-xs uppercase tracking-wider rounded-xl transition-colors"
+                      to={getArticleUrl(latestDoc, 'in-focus')}
+                      className="flex items-start gap-4 p-5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors border border-outline-variant/50 group/item"
                     >
-                      <span>Read Story</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <div className="bg-[#1e293b] text-[#facc15] font-serif font-black text-xl w-10 h-10 flex items-center justify-center rounded-lg shrink-0 shadow-inner">
+                        02
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-wider block">
+                          Focus 2
+                        </span>
+                        <h3 className="font-serif font-bold text-base sm:text-lg text-on-surface leading-snug group-hover/item:text-primary transition-colors">
+                          {latestDoc.title2}
+                        </h3>
+                      </div>
                     </Link>
-                  </div>
-                </section>
-              ))}
-            </div>
+                  ) : (
+                    <div className="hidden md:flex items-center justify-center p-5 rounded-xl bg-surface-container-low/50 border border-dashed border-outline-variant/50 text-xs text-on-surface-variant italic">
+                      Single comprehensive deep dive edition
+                    </div>
+                  )}
+                </div>
 
+                <div className="flex justify-end pt-2 border-t border-outline-variant/40">
+                  <Link
+                    to={getArticleUrl(latestDoc, 'in-focus')}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer"
+                  >
+                    <span>Read Story</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </section>
+            )}
+            
             {/* Side-by-Side: More Deep Dives & Sidebar */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Main Content Column: Previous Deep Dives */}

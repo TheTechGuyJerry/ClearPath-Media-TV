@@ -104,3 +104,10 @@ export function adjustObjectFormatting<T>(obj: T): T {
   }
   return copy as T;
 }
+
+export function calculateReadTime(text: string = ''): string {
+  if (!text) return '3 mins read';
+  const words = text.trim().split(/\s+/).length;
+  const mins = Math.max(1, Math.ceil(words / 200));
+  return `${mins} mins read`;
+}

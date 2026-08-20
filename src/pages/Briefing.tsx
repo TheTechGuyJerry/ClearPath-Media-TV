@@ -26,6 +26,7 @@ import LiteYouTube from '../components/LiteYouTube';
 import SEO from '../components/SEO';
 import { motion } from 'motion/react';
 import { formatFirestoreDate } from '../utils/formatters';
+import { RichContentRenderer } from '../components/common/RichContentRenderer';
 
 // =========================================================================
 // HIGH-SIGNAL REALISTIC FALLBACK BRIEFINGS (WEST AFRICAN MACROECONOMIC EXAMPLES)
@@ -307,12 +308,8 @@ export default function Briefing() {
               </div>
 
               {/* Main Content Area */}
-              <div className="text-on-surface font-sans text-sm md:text-base leading-relaxed space-y-6 pt-4 border-t border-outline-variant/60">
-                {currentArticle.content?.split('\n\n').map((para, index) => (
-                  <p key={index} className="text-on-surface/90">
-                    {para}
-                  </p>
-                )) || <p className="italic text-on-surface-variant">No content available for this edition.</p>}
+              <div className="pt-4 border-t border-outline-variant/60">
+                <RichContentRenderer content={currentArticle.content} />
               </div>
 
               {/* Today's Key Bullet Points inside Standalone Page */}

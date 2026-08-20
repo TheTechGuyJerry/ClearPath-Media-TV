@@ -21,6 +21,7 @@ import {
 } from '../services/publicContentService';
 import { audienceTracker } from '../services/audienceTracker';
 import { formatFirestoreDate, renderSafe } from '../utils/formatters';
+import { getArticleUrl } from '../utils/urlUtils';
 import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
 import { AnalysisAndFeaturesSection } from '../components/clearpath/AnalysisAndFeaturesSection';
@@ -104,7 +105,7 @@ export default function Home() {
         getActiveExplainers(),
         getPublishedProgrammeVideos(),
         getDocs(collection(db, 'briefings')),
-        getDocs(query(collection(db, 'clearpath_daily_articles'), where('status', '==', 'published'), limit(15)))
+        getDocs(query(collection(db, 'clearpath_daily_articles'), where('status', '==', 'published'), limit(50)))
       ]);
 
       let siteSettingsConfig: any = null;
@@ -551,7 +552,18 @@ export default function Home() {
           mainFeaturedAnalysis={cpArticles.find(a => a.categorySlug === 'todays-brief')}
           inFocusStories={cpArticles.filter(a => a.categorySlug === 'in-focus').slice(0, 2)}
           lensStory={cpArticles.find(a => a.categorySlug === 'clearpath-lens')}
-          latestStoriesList={cpArticles.filter(a => a.categorySlug !== 'todays-brief').slice(0, 5).map(a => ({ id: a.id, category: a.category, title: a.title, link: '/daily/' + a.categorySlug + '/' + a.slug, date: a.publishedAt }))}
+          latestStoriesList={
+            ['in-focus', 'the-indicator', 'the-public-record', 'clearpath-lens', 'signals-to-watch']
+              .map(slug => cpArticles.find(a => a.categorySlug === slug))
+              .filter(Boolean)
+              .map(a => ({ 
+                id: a.id, 
+                category: a.category, 
+                title: a.categorySlug === 'the-indicator' ? (a.indicatorNumber || 'View Indicator') : a.categorySlug === 'the-public-record' ? (a.title || a.quote || 'The Public Record') : (a.title || 'Read ' + a.category), 
+                link: getArticleUrl(a, a.categorySlug), 
+                date: a.publishedAt 
+              }))
+          }
           videoFeed={renderedFeedList}
         />
       </div>

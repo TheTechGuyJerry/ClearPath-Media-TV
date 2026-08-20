@@ -1,3 +1,4 @@
+import { calculateReadTime } from '../../utils/formatters';
 
 import React from 'react';
 import { getArticleUrl } from '../../utils/urlUtils';
@@ -59,7 +60,7 @@ export default function TodaysBriefPage() {
                 </span>
                 <span className="text-xs font-mono text-on-surface-variant flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-primary" />
-                  {brief.readingTime}
+                  {brief.readingTime || calculateReadTime(brief.content || brief.excerpt)}
                 </span>
               </div>
 

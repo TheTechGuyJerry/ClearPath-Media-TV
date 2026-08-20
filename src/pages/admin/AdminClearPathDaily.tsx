@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAdmin } from './AdminContext';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2 } from 'lucide-react';
+import { RichTextEditor } from '../../components/admin/RichTextEditor';
+import { EditorErrorBoundary } from '../../components/admin/EditorErrorBoundary';
 import { ClearPathDailyArticle } from '../../types';
 
 const CATEGORY_NAMES: Record<string, string> = {
@@ -29,6 +31,7 @@ export default function AdminClearPathDaily() {
   const navigate = useNavigate();
   const isCreateMode = searchParams.get('new') === 'true';
 
+  
   const [formData, setFormData] = useState<ClearPathDailyArticle>({
     id: '',
     slug: '',
@@ -49,6 +52,22 @@ export default function AdminClearPathDaily() {
   });
 
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  React.useEffect(() => {
+    if (!formData || !selectedArticleId || selectedArticleId === 'new') return;
+    const timer = setTimeout(async () => {
+       // Only auto-save if status is draft or we want to save anyway.
+       // The prompt says "Add automatic draft saving"
+       try {
+         await handleSaveItem('clearpath_daily_articles', formData);
+         setLastSaved(new Date());
+       } catch(e) {}
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [formData, selectedArticleId, handleSaveItem]);
+
 
   // Filter articles by the current category
   const currentCategoryArticles = clearpathDailyArticles.filter(a => a.categorySlug === menuSlug);
@@ -204,13 +223,23 @@ export default function AdminClearPathDaily() {
                 <div key={i} className={f.type === 'textarea' ? 'md:col-span-2' : ''}>
                   <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">{f.label} {f.required && '*'}</label>
                   {f.type === 'textarea' ? (
-                    <textarea 
-                      required={f.required}
-                      value={formData[f.name as keyof typeof formData] as string || ''}
-                      onChange={(e) => setFormData({...formData, [f.name]: e.target.value})}
-                      rows={5}
-                      className="w-full px-3 py-2 border border-outline rounded text-sm font-mono bg-transparent"
-                    />
+                    ['content', 'content1', 'content2', 'introductorySummary', 'institutionalAnalysis'].includes(f.name) ? (
+                      <EditorErrorBoundary>
+                        <RichTextEditor 
+                          value={formData[f.name as keyof typeof formData] as string || ''}
+                          onChange={(val) => setFormData({...formData, [f.name]: val})}
+                          placeholder={f.label}
+                        />
+                      </EditorErrorBoundary>
+                    ) : (
+                      <textarea 
+                        required={f.required}
+                        value={formData[f.name as keyof typeof formData] as string || ''}
+                        onChange={(e) => setFormData({...formData, [f.name]: e.target.value})}
+                        rows={5}
+                        className="w-full px-3 py-2 border border-outline rounded text-sm font-mono bg-transparent"
+                      />
+                    )
                   ) : f.type === 'select' ? (
                     <select
                       required={f.required}
@@ -281,17 +310,28 @@ export default function AdminClearPathDaily() {
                   { name: 'athenaEvidenceDate', label: 'Published Date', type: 'text' },
                   { name: 'athenaEvidenceUrl', label: 'Link URL (must start with https://)', type: 'text' },
                   { name: 'athenaEvidenceSummary', label: 'Summary', type: 'textarea' },
-                ].map((f, i) => (
+                ].map((f: any, i) => (
                   <div key={i} className={f.type === 'textarea' ? 'md:col-span-2' : ''}>
                     <label className="block text-xs uppercase font-bold text-emerald-800/70 mb-1">{f.label}</label>
                     {f.type === 'textarea' ? (
+                    ['content', 'content1', 'content2', 'introductorySummary', 'institutionalAnalysis'].includes(f.name) ? (
+                      <EditorErrorBoundary>
+                        <RichTextEditor 
+                          value={formData[f.name as keyof typeof formData] as string || ''}
+                          onChange={(val) => setFormData({...formData, [f.name]: val})}
+                          placeholder={f.label}
+                        />
+                      </EditorErrorBoundary>
+                    ) : (
                       <textarea 
+                        required={f.required}
                         value={formData[f.name as keyof typeof formData] as string || ''}
                         onChange={(e) => setFormData({...formData, [f.name]: e.target.value})}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-emerald-200 focus:border-emerald-500 rounded text-sm font-mono bg-white"
+                        rows={5}
+                        className="w-full px-3 py-2 border border-outline rounded text-sm font-mono bg-transparent"
                       />
-                    ) : f.type === 'select' ? (
+                    )
+                  ) : f.type === 'select' ? (
                       <select
                         value={formData[f.name as keyof typeof formData] as string || ''}
                         onChange={(e) => setFormData({...formData, [f.name]: e.target.value})}
@@ -314,6 +354,7 @@ export default function AdminClearPathDaily() {
             </div>
 
             <div className="flex gap-3 justify-end border-t border-outline-variant pt-4 mt-4">
+              {lastSaved && <span className="text-xs text-on-surface-variant self-center mr-4">Draft auto-saved {lastSaved.toLocaleTimeString()}</span>}
               <button type="button" onClick={handleCancel} className="px-4 py-2 border border-outline hover:bg-surface-container-high rounded text-sm font-semibold cursor-pointer">
                 Cancel
               </button>

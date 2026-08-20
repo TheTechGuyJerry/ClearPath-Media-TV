@@ -131,3 +131,53 @@ body {
   background-color: var(--color-background);
   color: var(--color-on-surface);
 }
+/* Quill Editor Overrides */
+.custom-quill-container {
+  display: flex;
+  flex-direction: column;
+  height: 400px;
+}
+.custom-quill-container .ql-container {
+  flex: 1;
+  overflow-y: auto;
+  font-family: inherit;
+  font-size: 1rem;
+}
+.custom-quill-container .ql-editor {
+  min-height: 100%;
+}
+
+/* Rich Content & Rendered CMS Typography */
+.rich-content-container {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.rich-content-container img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+.rich-content-container iframe,
+.rich-content-container video {
+  max-width: 100% !important;
+}
+.rich-content-container .ql-align-center {
+  text-align: center;
+}
+.rich-content-container .ql-align-right {
+  text-align: right;
+}
+.rich-content-container .ql-align-justify {
+  text-align: justify;
+}
+.rich-content-container .ql-size-small {
+  font-size: 0.85em;
+}
+.rich-content-container .ql-size-large {
+  font-size: 1.35em;
+  line-height: 1.3;
+}
+.rich-content-container .ql-size-huge {
+  font-size: 1.75em;
+  line-height: 1.2;
+}
+

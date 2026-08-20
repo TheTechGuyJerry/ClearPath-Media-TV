@@ -6,6 +6,7 @@ import { Play, Clock, ArrowRight } from 'lucide-react';
 import { ClearPathDailyArticle } from '../../types';
 import { ProgrammeVideo } from '../../types';
 import { slugify } from '../../services/publicContentService';
+import { calculateReadTime } from '../../utils/formatters';
 
 interface LatestStoryItem {
   id: string;
@@ -23,6 +24,9 @@ interface AnalysisAndFeaturesSectionProps {
   latestStoriesList?: LatestStoryItem[];
   videoFeed?: ProgrammeVideo[];
 }
+
+
+
 
 export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProps> = ({
   inFocusStories,
@@ -70,10 +74,6 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
               </Link>
             </h2>
 
-            <p className="text-sm sm:text-base text-slate-600 dark:text-on-surface-variant leading-relaxed max-w-3xl line-clamp-3">
-              {mainAnalysis?.excerpt || 'No featured analysis is available at the moment.'}
-            </p>
-            
             {mainAnalysis?.coverImage && (
               <div className="w-full aspect-[21/9] sm:aspect-[16/6] md:aspect-[21/9] rounded-2xl overflow-hidden shadow-xs mt-4 group">
                 <Link to={mainAnalysis ? getArticleUrl(mainAnalysis as any, 'todays-brief') : '#'}>
@@ -86,15 +86,18 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
                 </Link>
               </div>
             )}
+            <p className="text-sm sm:text-base text-slate-600 dark:text-on-surface-variant leading-relaxed max-w-3xl line-clamp-3">
+              {mainAnalysis?.excerpt || 'No featured analysis is available at the moment.'}
+            </p>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-500 dark:text-on-surface-variant mb-5">
               <span>{dateDisplay}</span>
-              {mainAnalysis?.readingTime && (
+              {mainAnalysis && (
                 <>
                   <span>•</span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    {mainAnalysis.readingTime}
+                    {mainAnalysis.readingTime || calculateReadTime(mainAnalysis.content || mainAnalysis.excerpt)}
                   </span>
                 </>
               )}

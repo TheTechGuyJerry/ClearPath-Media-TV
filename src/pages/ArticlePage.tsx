@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Clock, Share2, Printer, BookmarkPlus, ArrowRight, Copy, Check, Facebook, Twitter, Linkedin, Mail } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 import SEO from '../components/SEO';
 import { AthenaEvidenceCard } from '../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../components/clearpath/ClearPathDailySidebar';
 import { SubscriptionSection } from '../components/clearpath/SubscriptionSection';
+import { RichContentRenderer } from '../components/common/RichContentRenderer';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { ClearPathDailyArticle } from '../types';
@@ -16,6 +15,7 @@ export default function ArticlePage() {
   const [article, setArticle] = useState<ClearPathDailyArticle | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(true);
   const currentUrl = window.location.href;
 
   const handleCopyLink = () => {
@@ -23,7 +23,6 @@ export default function ArticlePage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchArticle() {
@@ -49,8 +48,8 @@ export default function ArticlePage() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center">
-        <p className="text-primary font-mono text-sm uppercase tracking-wider">Loading Article...</p>
+      <div className="w-full min-h-[60vh] flex items-center justify-center">
+        <p className="text-primary font-mono text-sm uppercase tracking-wider animate-pulse">Loading Article...</p>
       </div>
     );
   }
@@ -69,16 +68,26 @@ export default function ArticlePage() {
     );
   }
 
-  const calculatedReadingTime = Math.max(1, Math.ceil((article?.content || '').split(/\s+/).length / 200)) + ' Min Read';
+  const allWords = [
+    article.content,
+    article.content1,
+    article.content2,
+    article.excerpt,
+    article.whyItMatters,
+    article.institutionalAnalysis
+  ].filter(Boolean).join(' ');
+
+  const calculatedReadingTime = article.readingTime || (Math.max(1, Math.ceil(allWords.split(/\s+/).length / 200)) + ' Min Read');
 
   return (
-    <div className="w-full min-h-screen bg-background font-sans">
+    <div className="w-full min-h-screen bg-background font-sans overflow-x-hidden">
       <SEO
         title={`${article.title} — ClearPath Daily`}
-        description={article.excerpt || article.title}
+        description={article.excerpt || article.subtitle || article.title}
         image={article.coverImage}
       />
 
+      {/* Top Action Bar */}
       <div className="bg-surface-bright border-b border-outline-variant">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-4 flex items-center justify-between">
           <Link to="/" className="text-sm font-bold text-on-surface-variant hover:text-primary transition-colors flex items-center gap-2">
@@ -114,104 +123,273 @@ export default function ArticlePage() {
                 </div>
               )}
             </div>
-            <button className="w-9 h-9 rounded-full bg-surface hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors" aria-label="Bookmark">
-              <BookmarkPlus className="w-4 h-4" />
+            <button 
+              onClick={() => window.print()} 
+              className="w-9 h-9 rounded-full bg-surface hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors" 
+              aria-label="Print"
+              title="Print Article"
+            >
+              <Printer className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-10 md:py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
-          <article className="lg:col-span-8">
-            <header className="mb-10 space-y-6 sticky top-0 z-30 bg-background/95 backdrop-blur-sm py-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+      {/* Main Article Container */}
+      <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          
+          {/* Main Article Content Column */}
+          <article className="lg:col-span-8 w-full max-w-full min-w-0">
+            {/* Editorial Header */}
+            <header className="mb-8 space-y-5">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider bg-primary/10 px-3 py-1 rounded-full">
-                  {article.category || article.categorySlug?.replace('-', ' ')}
+                  {article.category || article.categorySlug?.replace('-', ' ') || 'ClearPath Daily'}
                 </span>
                 <span className="text-xs font-mono text-on-surface-variant flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" /> {calculatedReadingTime}
+                  <Clock className="w-3.5 h-3.5 text-primary" /> {calculatedReadingTime}
                 </span>
+                {article.publishedAt && (
+                  <span className="text-xs font-mono text-on-surface-variant">
+                    • {article.publishedAt}
+                  </span>
+                )}
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif text-on-surface leading-tight text-balance">
+
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black font-serif text-on-surface leading-tight break-words">
                 {article.title}
               </h1>
+
               {article.subtitle && (
                 <p className="text-lg sm:text-xl text-on-surface-variant font-medium leading-relaxed">
                   {article.subtitle}
                 </p>
               )}
               
-              <div className="flex items-center justify-between pt-6 border-t border-outline-variant/60">
+              <div className="flex items-center justify-between pt-4 border-t border-outline-variant/60">
                 <div className="flex items-center gap-3">
                   {article.authorName ? (
                     <>
-                      <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-xs font-bold text-on-surface">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
                         {article.authorName[0]}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-on-surface leading-none">{article.authorName}</p>
-                        <p className="text-xs text-on-surface-variant mt-1">{article.publishedAt}</p>
+                        {article.authorTitle && (
+                          <p className="text-xs text-on-surface-variant mt-1">{article.authorTitle}</p>
+                        )}
                       </div>
                     </>
                   ) : (
                     <div>
-                      <p className="text-xs text-on-surface-variant">{article.publishedAt}</p>
+                      <p className="text-xs text-on-surface-variant font-mono">{article.publishedAt}</p>
                     </div>
                   )}
                 </div>
               </div>
             </header>
 
+            {/* Cover Image */}
             {article.coverImage && (
-              <figure className="mb-12 rounded-2xl overflow-hidden border border-outline-variant shadow-sm bg-surface-container-low">
-                <div className="aspect-[16/9] w-full">
-                  <img src={article.coverImage} alt={article.title} className="w-full h-full object-cover" />
+              <figure className="mb-10 rounded-2xl overflow-hidden border border-outline-variant shadow-xs bg-surface-container-low">
+                <div className="aspect-[16/9] w-full max-w-full">
+                  <img 
+                    src={article.coverImage} 
+                    alt={article.title} 
+                    className="w-full h-full object-cover" 
+                  />
                 </div>
                 {(article.imageCaption || article.imageCredit) && (
-                  <figcaption className="px-4 py-3 text-xs text-on-surface-variant border-t border-outline-variant flex justify-between bg-surface-bright">
+                  <figcaption className="px-4 py-3 text-xs text-on-surface-variant border-t border-outline-variant flex flex-wrap justify-between gap-2 bg-surface-bright">
                     <span>{article.imageCaption}</span>
-                    <span className="font-mono text-[10px] uppercase">{article.imageCredit}</span>
+                    {article.imageCredit && (
+                      <span className="font-mono text-[10px] uppercase text-on-surface-variant/80">{article.imageCredit}</span>
+                    )}
                   </figcaption>
                 )}
               </figure>
             )}
 
-            
-            {article.categorySlug === 'in-focus' && article.title1 ? (
-              <div className="space-y-16">
-                <div>
-                  <h2 className="text-3xl font-bold font-serif mb-4 text-on-surface">{article.title1}</h2>
-                  <div className="prose prose-slate lg:prose-lg prose-headings:font-serif prose-headings:font-bold prose-p:leading-relaxed prose-a:text-primary max-w-none text-on-surface font-medium">
-                    <ReactMarkdown>{article.content1 || article.content || ''}</ReactMarkdown>
-                  </div>
-                </div>
-                {article.title2 && (
-                  <div>
-                    <h2 className="text-3xl font-bold font-serif mb-4 text-on-surface">{article.title2}</h2>
-                    <div className="prose prose-slate lg:prose-lg prose-headings:font-serif prose-headings:font-bold prose-p:leading-relaxed prose-a:text-primary max-w-none text-on-surface font-medium">
-                      <ReactMarkdown>{article.content2 || ''}</ReactMarkdown>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="prose prose-slate lg:prose-lg prose-headings:font-serif prose-headings:font-bold prose-p:leading-relaxed prose-a:text-primary max-w-none text-on-surface font-medium">
-                <ReactMarkdown>
-                  {article.content || 'Content not found.'}
-                </ReactMarkdown>
+            {/* Executive Summary / Excerpt Callout */}
+            {article.excerpt && article.categorySlug !== 'in-focus' && (
+              <div className="mb-8 p-5 sm:p-6 bg-surface-container-low rounded-2xl border-l-4 border-primary border border-outline-variant/60 shadow-xs">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-primary block mb-2">
+                  Executive Summary
+                </span>
+                <p className="text-base sm:text-lg text-on-surface font-serif font-medium leading-relaxed italic">
+                  "{article.excerpt}"
+                </p>
               </div>
             )}
 
-            
-            <div className="mt-12 pt-8 border-t border-outline-variant/60 flex flex-wrap gap-2">
-              <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mr-2 self-center">Tags:</span>
-              <span className="text-xs font-mono bg-surface-container px-3 py-1.5 rounded text-on-surface-variant">Policy</span>
-              <span className="text-xs font-mono bg-surface-container px-3 py-1.5 rounded text-on-surface-variant">Governance</span>
-            </div>
+            {/* Specialized Indicator Callout */}
+            {(article.categorySlug === 'the-indicator' || article.indicatorNumber) && article.indicatorNumber && (
+              <div className="mb-8 p-6 sm:p-8 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-2xl shadow-xs">
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300 block mb-2">
+                  The Indicator
+                </span>
+                <div className="text-4xl sm:text-5xl md:text-6xl font-black font-mono text-emerald-950 dark:text-emerald-100 tracking-tight break-words">
+                  {article.indicatorNumber}
+                </div>
+                {article.indicatorContext && (
+                  <p className="mt-3 text-sm sm:text-base text-on-surface-variant font-medium leading-relaxed">
+                    {article.indicatorContext}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Specialized Public Record Quote Callout */}
+            {(article.categorySlug === 'the-public-record' || article.quote) && article.quote && (
+              <blockquote className="mb-8 p-6 sm:p-8 bg-amber-500/10 border-l-4 border-amber-500 rounded-r-2xl border-y border-r border-amber-500/20 shadow-xs">
+                <p className="text-xl sm:text-2xl font-serif font-bold text-on-surface italic leading-snug mb-4">
+                  "{article.quote}"
+                </p>
+                {(article.speakerName || article.speakerPosition || article.speakerInstitution) && (
+                  <footer className="flex flex-col text-sm text-on-surface-variant font-sans not-italic pt-2 border-t border-amber-500/20">
+                    {article.speakerName && (
+                      <cite className="font-bold text-on-surface not-italic text-base">
+                        {article.speakerName}
+                      </cite>
+                    )}
+                    {(article.speakerPosition || article.speakerInstitution) && (
+                      <span className="text-xs sm:text-sm text-on-surface-variant mt-0.5">
+                        {[article.speakerPosition, article.speakerInstitution].filter(Boolean).join(' • ')}
+                      </span>
+                    )}
+                    {article.speakerSetting && (
+                      <span className="text-xs font-mono text-amber-800 dark:text-amber-400 mt-1">
+                        Setting: {article.speakerSetting}
+                      </span>
+                    )}
+                  </footer>
+                )}
+              </blockquote>
+            )}
+
+            {/* Body Content Rendering */}
+            {article.categorySlug === 'in-focus' && (article.title1 || article.content1) ? (
+              <div className="space-y-12">
+                {/* Focus Story 1 */}
+                <section className="space-y-4">
+                  {article.title1 && (
+                    <div className="flex items-start gap-3">
+                      <span className="shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary font-mono font-bold text-sm flex items-center justify-center">
+                        01
+                      </span>
+                      <h2 className="text-2xl sm:text-3xl font-bold font-serif text-on-surface">
+                        {article.title1}
+                      </h2>
+                    </div>
+                  )}
+                  {article.excerpt1 && (
+                    <p className="text-base sm:text-lg text-on-surface-variant font-medium leading-relaxed italic pl-0 sm:pl-11">
+                      {article.excerpt1}
+                    </p>
+                  )}
+                  <div className="pt-2">
+                    <RichContentRenderer content={article.content1 || article.content} />
+                  </div>
+                </section>
+
+                {/* Focus Story 2 */}
+                {(article.title2 || article.content2) && (
+                  <section className="space-y-4 pt-8 border-t border-outline-variant/60">
+                    {article.title2 && (
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 w-8 h-8 rounded-full bg-secondary/10 text-secondary font-mono font-bold text-sm flex items-center justify-center">
+                          02
+                        </span>
+                        <h2 className="text-2xl sm:text-3xl font-bold font-serif text-on-surface">
+                          {article.title2}
+                        </h2>
+                      </div>
+                    )}
+                    {article.excerpt2 && (
+                      <p className="text-base sm:text-lg text-on-surface-variant font-medium leading-relaxed italic pl-0 sm:pl-11">
+                        {article.excerpt2}
+                      </p>
+                    )}
+                    <div className="pt-2">
+                      <RichContentRenderer content={article.content2} />
+                    </div>
+                  </section>
+                )}
+              </div>
+            ) : article.categorySlug === 'clearpath-lens' && (article.introductorySummary || article.institutionalAnalysis) ? (
+              <div className="space-y-10">
+                {article.introductorySummary && (
+                  <section className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-5 bg-zinc-800 dark:bg-zinc-200 rounded-full" />
+                      <h3 className="text-lg font-bold font-serif uppercase tracking-wider text-on-surface">
+                        The Summary
+                      </h3>
+                    </div>
+                    <RichContentRenderer content={article.introductorySummary} />
+                  </section>
+                )}
+                {article.institutionalAnalysis && (
+                  <section className="space-y-3 pt-6 border-t border-outline-variant/60">
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-5 bg-primary rounded-full" />
+                      <h3 className="text-lg font-bold font-serif uppercase tracking-wider text-on-surface">
+                        Institutional Analysis
+                      </h3>
+                    </div>
+                    <RichContentRenderer content={article.institutionalAnalysis} />
+                  </section>
+                )}
+                {article.content && (
+                  <section className="pt-6 border-t border-outline-variant/60">
+                    <RichContentRenderer content={article.content} />
+                  </section>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <RichContentRenderer content={article.content} />
+              </div>
+            )}
+
+            {/* Why It Matters Callout */}
+            {article.whyItMatters && (
+              <div className="mt-10 p-6 bg-primary/5 border border-primary/20 rounded-2xl shadow-xs">
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-primary block mb-2">
+                  Why It Matters
+                </span>
+                <RichContentRenderer content={article.whyItMatters} />
+              </div>
+            )}
+
+            {/* What To Watch Next Callout */}
+            {article.whatToWatchNext && (
+              <div className="mt-6 p-6 bg-surface-container-low border border-outline-variant rounded-2xl shadow-xs">
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-secondary block mb-2">
+                  What To Watch Next
+                </span>
+                <RichContentRenderer content={article.whatToWatchNext} />
+              </div>
+            )}
+
+            {/* Tags */}
+            {article.topicTags && article.topicTags.length > 0 && (
+              <div className="mt-12 pt-8 border-t border-outline-variant/60 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mr-2">
+                  Topic Tags:
+                </span>
+                {article.topicTags.map((tag, i) => (
+                  <span key={i} className="text-xs font-mono bg-surface-container px-3 py-1.5 rounded-full text-on-surface-variant">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </article>
 
-          <aside className="lg:col-span-4 space-y-8">
+          {/* Sidebar */}
+          <aside className="lg:col-span-4 space-y-8 w-full max-w-full min-w-0">
             <ClearPathDailySidebar 
               currentDate={article.publishedAt || ''}
               currentSectionSlug={article.categorySlug || 'todays-brief'}
@@ -221,6 +399,7 @@ export default function ArticlePage() {
         </div>
       </main>
 
+      {/* Athena Evidence Bottom Card */}
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pb-10">
         <AthenaEvidenceCard article={article} />
       </div>

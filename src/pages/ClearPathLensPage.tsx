@@ -1,13 +1,13 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ExternalLink, ArrowRight, BookOpen, Layers, Play } from 'lucide-react';
+import { Search, ExternalLink, ArrowRight, BookOpen, Layers } from 'lucide-react';
 import SEO from '../components/SEO';
 import { AthenaEvidenceCard } from '../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../components/clearpath/ClearPathDailySidebar';
 import { SubscriptionSection } from '../components/clearpath/SubscriptionSection';
-import ReactMarkdown from 'react-markdown';
+import { RichContentRenderer } from '../components/common/RichContentRenderer';
 import { useClearPathArticles } from '../hooks/useClearPathArticles';
+import { getArticleUrl } from '../utils/urlUtils';
 
 export default function ClearPathLensPage() {
   const { articles, loading } = useClearPathArticles('clearpath-lens');
@@ -15,7 +15,7 @@ export default function ClearPathLensPage() {
   if (loading) {
     return (
       <div className="w-full min-h-[50vh] flex items-center justify-center">
-        <p className="text-primary font-mono text-sm uppercase tracking-wider">Loading The ClearPath Lens...</p>
+        <p className="text-primary font-mono text-sm uppercase tracking-wider animate-pulse">Loading The ClearPath Lens...</p>
       </div>
     );
   }
@@ -78,36 +78,41 @@ export default function ClearPathLensPage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start p-6 md:p-10">
                 {/* Main Content */}
-                <div className="lg:col-span-8 space-y-10">
+                <div className="lg:col-span-8 space-y-10 min-w-0 w-full">
                   {/* Introductory Summary */}
-                  <section>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-1 h-6 bg-zinc-800 rounded-full"></div>
-                      <h3 className="text-lg font-bold font-serif text-on-surface uppercase tracking-wide">The Summary</h3>
-                    </div>
-                    <div className="prose prose-slate max-w-none text-base sm:text-lg leading-relaxed text-on-surface font-medium">
-                      <ReactMarkdown>{currentLens.introductorySummary || currentLens.excerpt || ''}</ReactMarkdown>
-                    </div>
-                  </section>
+                  {(currentLens.introductorySummary || currentLens.excerpt) && (
+                    <section>
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-1.5 h-6 bg-zinc-800 rounded-full"></div>
+                        <h3 className="text-lg font-bold font-serif text-on-surface uppercase tracking-wide">The Summary</h3>
+                      </div>
+                      <RichContentRenderer 
+                        content={currentLens.introductorySummary || currentLens.excerpt} 
+                        className="text-base sm:text-lg leading-relaxed font-medium"
+                      />
+                    </section>
+                  )}
 
                   {/* Institutional Analysis */}
-                  <section>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-1 h-6 bg-primary rounded-full"></div>
-                      <h3 className="text-lg font-bold font-serif text-on-surface uppercase tracking-wide">Institutional Analysis</h3>
-                    </div>
-                    <div className="prose prose-slate prose-headings:font-serif prose-headings:font-bold prose-p:leading-relaxed max-w-none text-on-surface-variant">
-                      <ReactMarkdown>{currentLens.institutionalAnalysis || currentLens.content || ''}</ReactMarkdown>
-                    </div>
-                  </section>
+                  {(currentLens.institutionalAnalysis || currentLens.content) && (
+                    <section className="pt-6 border-t border-outline-variant/60">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-1.5 h-6 bg-primary rounded-full"></div>
+                        <h3 className="text-lg font-bold font-serif text-on-surface uppercase tracking-wide">Institutional Analysis</h3>
+                      </div>
+                      <RichContentRenderer 
+                        content={currentLens.institutionalAnalysis || currentLens.content} 
+                      />
+                    </section>
+                  )}
                 </div>
 
                 {/* Meta Sidebar (Right column for Lens) */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-6 min-w-0 w-full">
                   {/* Supporting Sources */}
                   {currentLens.supportingSourcesJson && (
                     <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant">
-                      <h4 className="text-xs font-bold text-zinc-800 uppercase tracking-wider mb-4 font-mono flex items-center gap-2 pb-2 border-b border-outline-variant">
+                      <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider mb-4 font-mono flex items-center gap-2 pb-2 border-b border-outline-variant">
                         <Layers className="w-3.5 h-3.5" /> Core Primary Sources
                       </h4>
                       <ul className="space-y-3">
@@ -165,12 +170,12 @@ export default function ClearPathLensPage() {
                           {item.publishedAt}
                         </span>
                         <h3 className="font-serif font-bold text-base text-on-surface leading-tight mb-2 group-hover:text-primary transition-colors">
-                          <Link to={`{getArticleUrl(item, 'clearpath-lens')}`}>
+                          <Link to={getArticleUrl(item, 'clearpath-lens')}>
                             {item.title}
                           </Link>
                         </h3>
                         <Link
-                          to={`{getArticleUrl(item, 'clearpath-lens')}`}
+                          to={getArticleUrl(item, 'clearpath-lens')}
                           className="text-xs font-bold text-secondary hover:text-primary transition-colors inline-flex items-center gap-1 mt-auto"
                         >
                           Read Analysis <ArrowRight className="w-3 h-3" />

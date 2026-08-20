@@ -76,27 +76,11 @@ export default function TheIndicatorPage() {
                 </div>
 
                 {/* Context Column */}
-                <div className="lg:col-span-7 space-y-6">
+                <div className="lg:col-span-7 space-y-6 flex flex-col justify-center">
                   <div>
-                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold font-serif text-on-surface leading-tight mb-3">
-                      {currentIndicator.title}
-                    </h2>
                     <p className="text-base sm:text-lg text-on-surface-variant font-medium leading-relaxed">
                       {currentIndicator.excerpt}
                     </p>
-                  </div>
-
-                  <div className="space-y-4 pt-4 border-t border-outline-variant/60">
-                    <div>
-                      <h3 className="text-sm font-bold text-emerald-800 uppercase tracking-wider mb-2 font-mono flex items-center gap-2">
-                        <ArrowRight className="w-4 h-4" /> Why It Matters
-                      </h3>
-                      <p className="text-sm sm:text-base text-on-surface leading-relaxed">
-                        {currentIndicator.whyItMatters}
-                      </p>
-                    </div>
-
-                    
                   </div>
                 </div>
               </div>

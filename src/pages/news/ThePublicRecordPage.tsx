@@ -59,8 +59,8 @@ export default function ThePublicRecordPage() {
             <section className="bg-surface-bright border-2 border-orange-900/20 rounded-3xl p-6 sm:p-10 shadow-sm relative overflow-hidden">
               <Quote className="absolute top-4 sm:top-10 right-6 sm:right-10 w-24 sm:w-40 h-24 sm:h-40 text-orange-900/5 rotate-12 -z-0" />
               
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
-                <div className="lg:col-span-8">
+              <div className="relative z-10">
+                <div>
                   <span className="text-xs font-mono font-bold text-orange-900 uppercase tracking-wider bg-orange-100 px-3 py-1 rounded-full mb-6 inline-flex items-center gap-2">
                     <UserCheck className="w-3.5 h-3.5" />
                     ON THE RECORD • {currentRecord.publishedAt}
@@ -82,30 +82,6 @@ export default function ThePublicRecordPage() {
                         <p className="text-sm font-medium text-on-surface-variant mt-1">{currentRecord.speakerTitle || currentRecord.speakerPosition}</p>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-4 bg-surface-container-low rounded-2xl p-6 border border-outline-variant">
-                  <h3 className="text-xs font-bold text-orange-900 uppercase tracking-wider mb-4 font-mono flex items-center gap-2 pb-2 border-b border-outline-variant">
-                    <Shield className="w-3.5 h-3.5" /> Context & Setting
-                  </h3>
-                  
-                  <div className="space-y-4 text-sm text-on-surface leading-relaxed">
-                    <p><span className="font-bold text-on-surface-variant">Setting:</span> {currentRecord.speakerSetting || currentRecord.speakerInstitution}</p>
-                    <p><span className="font-bold text-on-surface-variant">Context:</span> {currentRecord.content || currentRecord.context}</p>
-                    
-                    {currentRecord.supportingSourceUrl && (
-                      <div className="pt-2">
-                        <a 
-                          href={currentRecord.supportingSourceUrl}
-                          target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-orange-900 transition-colors"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          Source: {currentRecord.supportingSourceTitle || 'Official Transcript'}
-                        </a>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

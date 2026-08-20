@@ -124,7 +124,7 @@ export function ClearPathDailySidebar({
                 </Link>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
                   <span>{dynPublicationDate}</span>
-                  <Link to="/daily/todays-brief" className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
+                  <Link to={getArticleUrl(todaysBrief, 'todays-brief')} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     Read Brief <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -157,7 +157,7 @@ export function ClearPathDailySidebar({
                 </Link>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
                   <span>{dynPublicationDate}</span>
-                  <Link to={`/clearpath-daily/in-focus`} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
+                  <Link to={getArticleUrl(mainInFocus, 'in-focus')} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     Deep Analysis <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -183,19 +183,16 @@ export function ClearPathDailySidebar({
                   )}
                 </div>
                 <Link
-                  to="/clearpath-daily/the-indicator"
+                  to={getArticleUrl(indicator as any, 'the-indicator')}
                   className="flex items-baseline gap-2 group"
                 >
-                  <span className="text-base font-black font-mono text-primary group-hover:underline">
-                    {indicator?.indicatorNumber}
-                  </span>
-                  <span className="font-serif font-bold text-xs text-on-surface group-hover:text-primary transition-colors line-clamp-1">
-                    {indicator?.title}
+                  <span className="text-base font-black font-mono text-primary group-hover:underline line-clamp-1">
+                    {indicator?.indicatorNumber || 'View Indicator'}
                   </span>
                 </Link>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
                   <span>{dynPublicationDate}</span>
-                  <Link to="/clearpath-daily/the-indicator" className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
+                  <Link to={getArticleUrl(indicator as any, 'the-indicator')} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     View Data <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -221,14 +218,14 @@ export function ClearPathDailySidebar({
                   )}
                 </div>
                 <Link
-                  to="/clearpath-daily/the-public-record"
-                  className="font-serif italic text-xs text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
+                  to={getArticleUrl(publicRecord as any, 'the-public-record')}
+                  className="font-serif font-bold text-xs sm:text-sm text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
                 >
-                  "{publicRecord?.quote}"
+                  {publicRecord?.title || publicRecord?.quote}
                 </Link>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
                   <span className="font-sans font-semibold text-on-surface">{publicRecord?.speakerName}</span>
-                  <Link to="/clearpath-daily/the-public-record" className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
+                  <Link to={getArticleUrl(publicRecord as any, 'the-public-record')} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     View Record <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -288,15 +285,15 @@ export function ClearPathDailySidebar({
                 </div>
                 {topSignal && (
                   <Link
-                    to="/clearpath-daily/signals-to-watch"
+                    to={getArticleUrl(topSignal as any, 'signals-to-watch')}
                     className="font-serif font-bold text-xs text-on-surface hover:text-primary transition-colors line-clamp-2 block leading-snug"
                   >
-                    {topSignal?.signalEvent1 || topSignal?.title}
+                    {topSignal?.title}
                   </Link>
                 )}
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
                   <span>{dynPublicationDate}</span>
-                  <Link to="/clearpath-daily/signals-to-watch" className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
+                  <Link to={getArticleUrl(topSignal as any, 'signals-to-watch')} className="text-primary font-bold hover:underline inline-flex items-center gap-0.5">
                     View Signals <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
