@@ -3,6 +3,7 @@ import { Download, FileText } from 'lucide-react';
 import SEO from '../components/SEO';
 import { db } from '../lib/firebase';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { getDownloadablePdfUrl } from '../utils/urlUtils';
 
 export default function ElectionMattersWeekly() {
   const [publications, setPublications] = useState<any[]>([]);
@@ -81,7 +82,7 @@ export default function ElectionMattersWeekly() {
                  </div>
                  <div className="mt-auto pt-4 border-t border-outline-variant/50">
                     <a 
-                      href={pub.pdfUrl} 
+                      href={getDownloadablePdfUrl(pub.pdfUrl)} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors w-full justify-center"

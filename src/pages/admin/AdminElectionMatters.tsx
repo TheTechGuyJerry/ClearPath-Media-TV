@@ -3,6 +3,7 @@ import { db } from '../../lib/firebase';
 import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { FileText, Plus, Edit2, Trash2, Save, X, ExternalLink } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../../lib/firebase';
+import { getDownloadablePdfUrl } from '../../utils/urlUtils';
 
 export default function AdminElectionMatters() {
   const [items, setItems] = useState<any[]>([]);
@@ -44,10 +45,15 @@ export default function AdminElectionMatters() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const dataToSave = {
+        ...formData,
+        pdfUrl: getDownloadablePdfUrl(formData.pdfUrl)
+      };
+      
       if (isEditing === 'new') {
-        await addDoc(collection(db, 'electionMattersWeekly'), formData);
+        await addDoc(collection(db, 'electionMattersWeekly'), dataToSave);
       } else if (isEditing) {
-        await updateDoc(doc(db, 'electionMattersWeekly', isEditing), formData);
+        await updateDoc(doc(db, 'electionMattersWeekly', isEditing), dataToSave);
       }
       setIsEditing(null);
       fetchData();
@@ -161,7 +167,7 @@ export default function AdminElectionMatters() {
                   <td className="p-4 font-medium">{item.title}</td>
                   <td className="p-4 text-on-surface-variant">{item.publishedAt}</td>
                   <td className="p-4">
-                    <a href={item.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                    <a href={getDownloadablePdfUrl(item.pdfUrl)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
                       View <ExternalLink className="w-3 h-3" />
                     </a>
                   </td>

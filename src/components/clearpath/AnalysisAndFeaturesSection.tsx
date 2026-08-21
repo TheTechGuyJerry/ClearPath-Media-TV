@@ -123,9 +123,9 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
             <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#001e40] dark:text-on-surface tracking-tight shrink-0">
               Latest
             </h3>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-on-surface-variant">
-              STORIES & BRIEFINGS
-            </span>
+            <Link to="/clearpath-daily/weekly-features" className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary hover:underline flex items-center gap-1">
+              WEEKLY FEATURES <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
 
           <div className="space-y-4">
