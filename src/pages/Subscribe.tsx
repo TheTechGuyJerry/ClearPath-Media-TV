@@ -43,7 +43,7 @@ export default function Subscribe() {
   const [activeModalEmail, setActiveModalEmail] = useState('');
 
   // Hero Form States
-  const [emailA, setEmailA] = useState('');
+  const [emailA, setEmailA] = useState(searchParams.get('email') || '');
   const [firstNameA, setFirstNameA] = useState('');
   const [surnameA, setSurnameA] = useState('');
   const [occupationA, setOccupationA] = useState('');

@@ -15,7 +15,110 @@ import { formatFirestoreDate, renderSafe } from '../utils/formatters';
 import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
 import LiteYouTube from '../components/LiteYouTube';
+import CheckEmailModal from '../components/CheckEmailModal';
 import { audienceTracker } from '../services/audienceTracker';
+
+function CompactSubscribeForm({ 
+  title, 
+  subtitle, 
+  disclaimer, 
+  buttonText,
+  buttonContext
+}: { 
+  title: string; 
+  subtitle: string; 
+  disclaimer: string; 
+  buttonText: string;
+  buttonContext?: string;
+}) {
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  
+  // Check Email Modal States
+  const [checkEmailOpen, setCheckEmailOpen] = useState(false);
+  const [activeModalEmail, setActiveModalEmail] = useState('');
+  const [continuationToken, setContinuationToken] = useState('');
+
+  const handleStep1 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const emailLower = email.toLowerCase().trim();
+    if (!emailLower || !emailLower.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailLower }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        if (data.status === 'already_subscribed') {
+          setError(data.message || 'This email address is already subscribed.');
+        } else {
+          setActiveModalEmail(emailLower);
+          if (data.token) {
+            setContinuationToken(data.token);
+          }
+          setCheckEmailOpen(true);
+          setEmail('');
+        }
+      } else {
+        setError(data.error || 'Failed to start subscription. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Subscribe API error:', err);
+      setError(err.message || 'Network error starting subscription.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="mt-6 mb-6 p-6 bg-surface-container-low border border-outline-variant rounded-lg font-sans text-left">
+        <form onSubmit={handleStep1}>
+          <h3 className="text-lg font-bold text-primary mb-2">{title}</h3>
+          <p className="text-sm text-on-surface-variant mb-4 leading-relaxed">{subtitle}</p>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter email address" 
+              required
+              className="flex-grow px-4 py-3 border border-outline-variant rounded focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm bg-white"
+            />
+            <button 
+              type="submit" 
+              disabled={submitting}
+              className="whitespace-nowrap px-6 py-3 bg-primary text-white rounded font-bold text-sm hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50"
+            >
+              {submitting ? 'Sending...' : buttonText}
+            </button>
+          </div>
+          {error && <p className="text-xs text-red-600 font-semibold mt-2">{error}</p>}
+          <p className="text-xs text-outline mt-3 font-medium">{disclaimer}</p>
+        </form>
+      </div>
+
+      <CheckEmailModal 
+        isOpen={checkEmailOpen}
+        onClose={() => setCheckEmailOpen(false)}
+        email={activeModalEmail}
+        continuationToken={continuationToken}
+      />
+    </>
+  );
+}
 
 const fallbackProgramGrid: ProgrammeVideo[] = [
   {
@@ -340,9 +443,18 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
                     </button>
                   )}
                 </div>
+                
                 {activeVideoId && videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription && (
                   <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">{videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription}</p>
                 )}
+
+                <CompactSubscribeForm 
+                  title={`Get ${shownProg.title} in Your Inbox`}
+                  subtitle={`New episodes every ${shownProg.scheduleText || 'Tuesday and Thursday'}, plus ClearPath's latest analysis and explainers.`}
+                  disclaimer="No spam. Just ClearPath's latest programmes and analysis."
+                  buttonText="Subscribe"
+                  buttonContext={`to ${shownProg.title}`}
+                />
               </div>
             </>
           )}
@@ -477,6 +589,17 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
                   </button>
                 </article>
               ))}
+            </div>
+          )}
+
+          {videos.length > 0 && (
+            <div className="mt-12">
+              <CompactSubscribeForm 
+                title="Stay with the conversation. Join the ClearPath email list."
+                subtitle="Get ClearPath Updates and the latest analysis delivered straight to your inbox."
+                disclaimer="No spam. Just ClearPath's latest programmes and analysis."
+                buttonText="Get ClearPath Updates"
+              />
             </div>
           )}
         </section>
