@@ -471,10 +471,12 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
                 <span className="font-label-md text-label-md text-on-surface-variant">Cadence</span>
                 <span className="font-label-md text-label-md text-primary font-bold">{shownProg.scheduleText || 'Periodic'}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="font-label-md text-label-md text-on-surface-variant">Format</span>
-                <span className="font-label-md text-label-md text-primary font-bold uppercase">{shownProg.formatType || 'Video'}</span>
-              </div>
+              {shownProg.id !== 'osita-insights' && (
+                <div className="flex justify-between items-center">
+                  <span className="font-label-md text-label-md text-on-surface-variant">Format</span>
+                  <span className="font-label-md text-label-md text-primary font-bold uppercase">{shownProg.formatType || 'Video'}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="font-label-md text-label-md text-on-surface-variant">Coverage</span>
                 <span className="font-label-md text-label-md text-primary font-bold">{shownProg.coverageArea || 'Nigeria'}</span>

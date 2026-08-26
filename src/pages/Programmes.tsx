@@ -377,10 +377,12 @@ export default function Programmes() {
                         <span className="font-label-md text-on-surface-variant font-medium">Cadence</span>
                         <span className="font-label-md text-primary font-bold">{prog.scheduleText || 'Periodic'}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="font-label-md text-on-surface-variant font-medium">Format</span>
-                        <span className="font-label-md text-primary font-bold uppercase">{prog.formatType || 'Interview'}</span>
-                      </div>
+                      {prog.id !== 'osita-insights' && (
+                        <div className="flex justify-between items-center">
+                          <span className="font-label-md text-on-surface-variant font-medium">Format</span>
+                          <span className="font-label-md text-primary font-bold uppercase">{prog.formatType || 'Interview'}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center">
                         <span className="font-label-md text-on-surface-variant font-medium">Coverage</span>
                         <span className="font-label-md text-primary font-bold">{prog.coverageArea || 'Nigeria'}</span>
