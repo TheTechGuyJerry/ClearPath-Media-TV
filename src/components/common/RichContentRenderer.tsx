@@ -18,7 +18,9 @@ export function RichContentRenderer({
   className = '',
   fallbackText = 'No content available.'
 }: RichContentRendererProps) {
-  if (!content || !content.trim()) {
+  const normalizedContent = content ? content.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ') : '';
+
+  if (!normalizedContent || !normalizedContent.trim()) {
     return (
       <p className="text-on-surface-variant italic text-sm md:text-base">
         {fallbackText}
@@ -27,7 +29,7 @@ export function RichContentRenderer({
   }
 
   // Safe DOMPurify config that supports standard rich HTML + embeds
-  const cleanHtml = DOMPurify.sanitize(content, {
+  const cleanHtml = DOMPurify.sanitize(normalizedContent, {
     USE_PROFILES: { html: true },
     ADD_TAGS: ['iframe', 'video', 'source', 'figure', 'figcaption', 'u', 's', 'span'],
     ADD_ATTR: [
@@ -47,12 +49,12 @@ export function RichContentRenderer({
     ]
   });
 
-  const isHtml = /<[a-z][\s\S]*>/i.test(content);
+  const isHtml = /<[a-z][\s\S]*>/i.test(normalizedContent);
 
   const baseProseClasses = `
     rich-content-container
-    w-full max-w-full min-w-0
-    break-words [word-break:break-word] [overflow-wrap:anywhere]
+    w-full max-w-full min-w-0 break-words
+    
     text-on-surface text-base md:text-lg leading-relaxed font-normal
     [&_p]:mb-5 [&_p]:leading-[1.75] [&_p]:text-on-surface/90
     [&_h1]:font-serif [&_h1]:font-black [&_h1]:text-3xl md:[&_h1]:text-4xl [&_h1]:text-on-surface [&_h1]:mt-10 [&_h1]:mb-4 [&_h1]:leading-tight

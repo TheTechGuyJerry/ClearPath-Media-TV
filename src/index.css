@@ -148,10 +148,6 @@ body {
 }
 
 /* Rich Content & Rendered CMS Typography */
-.rich-content-container {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
 .rich-content-container img {
   max-width: 100% !important;
   height: auto !important;
