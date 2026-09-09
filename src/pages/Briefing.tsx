@@ -42,7 +42,7 @@ const FALLBACK_BRIEFINGS: BriefingType[] = [
     presenter: 'Annabel Orji',
     youtubeUrl: 'https://www.youtube.com/watch?v=3H95x0BV9nA',
     youtubeVideoId: '3H95x0BV9nA',
-    thumbnailUrl: 'https://img.youtube.com/vi/3H95x0BV9nA/maxresdefault.jpg',
+    thumbnailUrl: 'https://img.youtube.com/vi/3H95x0BV9nA/hqdefault.jpg',
     featuredImage: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&q=80&w=1200',
     keyPoints: "Central Bank raised MPR to 27.25% to stabilize inflation.\nDomestic commercial interest rates soar past 30%, choking SME liquidity.\nHot money portfolio inflows respond to 1-year Treasury yields surpassing 22%.",
     sourceLinks: "Central Bank of Nigeria Communiqué No. 154 of the MPC Meeting\nNational Bureau of Statistics (NBS) CPI and Inflation Report\nFederal Ministry of Finance Debt Management Office (DMO) Auction Results",

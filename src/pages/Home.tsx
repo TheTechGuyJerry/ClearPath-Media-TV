@@ -25,6 +25,7 @@ import { getArticleUrl } from '../utils/urlUtils';
 import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
 import { AnalysisAndFeaturesSection } from '../components/clearpath/AnalysisAndFeaturesSection';
+import { extractYouTubeId } from '../components/LiteYouTube';
 
 
 function getProgrammeImageUrl(p: Programme): string {
@@ -497,7 +498,7 @@ export default function Home() {
                 <iframe 
                   width="100%" 
                   height="100%" 
-                  src={`https://www.youtube.com/embed/${featuredVideo?.youtubeVideoId || '3H95x0BV9nA'}?rel=0&autoplay=1`} 
+                  src={`https://www.youtube.com/embed/${extractYouTubeId(featuredVideo?.youtubeVideoId || '3H95x0BV9nA')}?rel=0&autoplay=1`} 
                   title={featuredVideo?.title || "Today's Featured Video"} 
                   frameBorder="0" 
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -507,7 +508,7 @@ export default function Home() {
               ) : (
                 <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-900">
                   <img 
-                    src={featuredVideo?.thumbnailUrl || `https://img.youtube.com/vi/${featuredVideo?.youtubeVideoId || '3H95x0BV9nA'}/hqdefault.jpg`} 
+                    src={featuredVideo?.thumbnailUrl || `https://img.youtube.com/vi/${extractYouTubeId(featuredVideo?.youtubeVideoId || '3H95x0BV9nA')}/hqdefault.jpg`} 
                     alt={featuredVideo?.title} 
                     className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-500"
                     referrerPolicy="no-referrer"

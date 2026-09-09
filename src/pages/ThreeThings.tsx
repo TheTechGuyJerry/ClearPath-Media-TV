@@ -1,6 +1,6 @@
 import { Play, ArrowRight, Filter, Search, Clock, Users, Share2, Check } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Programme, ProgrammeVideo } from '../types';
@@ -14,7 +14,7 @@ import {
 import { formatFirestoreDate, renderSafe } from '../utils/formatters';
 import SEO from '../components/SEO';
 import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
-import LiteYouTube from '../components/LiteYouTube';
+import LiteYouTube, { extractYouTubeId } from '../components/LiteYouTube';
 import CheckEmailModal from '../components/CheckEmailModal';
 import { audienceTracker } from '../services/audienceTracker';
 
@@ -343,6 +343,18 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
     }
   };
 
+  const activeVideo = useMemo(() => {
+    if (!activeVideoId) return null;
+    const cleanId = extractYouTubeId(activeVideoId);
+    return (Array.isArray(videos) ? videos : []).find(
+      (v: any) => 
+        v.youtubeVideoId === activeVideoId || 
+        v.id === activeVideoId ||
+        (v.youtubeVideoId && extractYouTubeId(v.youtubeVideoId) === cleanId) ||
+        (v.youtubeUrl && extractYouTubeId(v.youtubeUrl) === cleanId)
+    ) || null;
+  }, [videos, activeVideoId]);
+
   const filteredEpisodes = (Array.isArray(videos) ? videos : []).filter(v => 
     (v.title || '').toLowerCase().includes((searchTerm || '').toLowerCase()) || 
     (v.guests && v.guests.toLowerCase().includes((searchTerm || '').toLowerCase())) ||
@@ -410,7 +422,11 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
           ) : (
             <>
               {activeVideoId ? (
-                <LiteYouTube videoId={activeVideoId} title={activeTitle} />
+                <LiteYouTube 
+                  videoId={activeVideoId} 
+                  title={activeTitle || activeVideo?.title || 'Video Player'} 
+                  thumbnailUrl={activeVideo?.thumbnailUrl}
+                />
               ) : (
                 <div className="relative aspect-video bg-black rounded-lg overflow-hidden border border-outline-variant shadow-sm group font-sans">
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-container-high text-on-surface-variant p-6 text-center">
@@ -444,8 +460,8 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
                   )}
                 </div>
                 
-                {activeVideoId && videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription && (
-                  <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">{videos.find(v => v.youtubeVideoId === activeVideoId)?.fullDescription}</p>
+                {(activeVideo?.fullDescription || activeVideo?.shortSummary) && (
+                  <p className="text-sm text-on-surface-variant mt-2 leading-relaxed">{activeVideo.fullDescription || activeVideo.shortSummary}</p>
                 )}
 
                 <CompactSubscribeForm 

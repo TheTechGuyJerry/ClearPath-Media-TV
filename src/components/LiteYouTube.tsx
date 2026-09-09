@@ -1,27 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play } from 'lucide-react';
 
 interface LiteYouTubeProps {
   videoId: string;
   title: string;
   className?: string;
+  thumbnailUrl?: string;
 }
 
-export default function LiteYouTube({ videoId, title, className = '' }: LiteYouTubeProps) {
+export function extractYouTubeId(urlOrId: string): string {
+  if (!urlOrId) return '';
+  const trimmed = urlOrId.trim();
+  if (!trimmed.includes('/') && !trimmed.includes('=')) return trimmed;
+  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = trimmed.match(regExp);
+  return (match && match[7].length === 11) ? match[7] : trimmed;
+}
+
+export default function LiteYouTube({ videoId, title, className = '', thumbnailUrl }: LiteYouTubeProps) {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const parsedVideoId = extractYouTubeId(videoId);
 
-  // Fallback pattern for maximum resolution vs standard high definition thumbnails
-  const thumbnailUrl = videoId 
-    ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` 
-    : '';
+  const getCandidateThumbnail = (): string => {
+    if (thumbnailUrl && thumbnailUrl.trim().length > 0) {
+      return thumbnailUrl.trim();
+    }
+    if (parsedVideoId) {
+      return `https://img.youtube.com/vi/${parsedVideoId}/hqdefault.jpg`;
+    }
+    return '';
+  };
 
-  if (isPlaying && videoId) {
+  const [currentSrc, setCurrentSrc] = useState<string>(getCandidateThumbnail);
+
+  useEffect(() => {
+    setIsPlaying(false);
+    setCurrentSrc(getCandidateThumbnail());
+  }, [parsedVideoId, thumbnailUrl]);
+
+  if (isPlaying && parsedVideoId) {
     return (
       <div className={`relative aspect-video w-full h-full bg-black rounded-lg overflow-hidden border border-outline-variant shadow-sm ${className}`}>
         <iframe
           width="100%"
           height="100%"
-          src={`https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1`}
+          src={`https://www.youtube.com/embed/${parsedVideoId}?rel=0&autoplay=1`}
           title={title}
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -37,15 +60,32 @@ export default function LiteYouTube({ videoId, title, className = '' }: LiteYouT
       className={`relative aspect-video w-full h-full bg-surface-container-high rounded-lg overflow-hidden border border-outline-variant shadow-sm cursor-pointer group select-none ${className}`}
       onClick={() => setIsPlaying(true)}
     >
-      {videoId ? (
+      {parsedVideoId ? (
         <>
           <img
-            src={thumbnailUrl}
+            src={currentSrc}
             alt={title}
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
-            onError={(e) => {
-              // Fallback to hqdefault in case maxresdefault is not available on YouTube
-              (e.currentTarget as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            onLoad={(e) => {
+              const img = e.currentTarget as HTMLImageElement;
+              // YouTube returns a 120x90 placeholder image if maxresdefault or custom resolution is missing
+              if (img.naturalWidth <= 120 && parsedVideoId) {
+                const hqUrl = `https://img.youtube.com/vi/${parsedVideoId}/hqdefault.jpg`;
+                if (currentSrc !== hqUrl) {
+                  setCurrentSrc(hqUrl);
+                }
+              }
+            }}
+            onError={() => {
+              if (parsedVideoId) {
+                const hqUrl = `https://img.youtube.com/vi/${parsedVideoId}/hqdefault.jpg`;
+                const mqUrl = `https://img.youtube.com/vi/${parsedVideoId}/mqdefault.jpg`;
+                if (currentSrc !== hqUrl) {
+                  setCurrentSrc(hqUrl);
+                } else if (currentSrc !== mqUrl) {
+                  setCurrentSrc(mqUrl);
+                }
+              }
             }}
             referrerPolicy="no-referrer"
           />
