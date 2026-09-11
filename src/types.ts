@@ -111,6 +111,11 @@ export interface ProgrammeVideo {
   sortDate?: string;
   hiddenFromPublic?: boolean;
   needsUrl?: boolean;
+  viewCount?: number;
+  downloadCount?: number;
+  shareCount?: number;
+  allowDownload?: boolean;
+  allowSharing?: boolean;
 }
 
 export interface Explainer {
@@ -213,6 +218,26 @@ export interface Briefing {
   whatHappened?: string;
   whyItMatters?: string;
   whatToWatchNext?: string;
+  viewCount?: number;
+  downloadCount?: number;
+  shareCount?: number;
+  allowDownload?: boolean;
+  allowSharing?: boolean;
+}
+
+export interface ElectionMattersPublication {
+  id: string;
+  title: string;
+  description?: string;
+  publishedAt: string;
+  pdfUrl: string;
+  viewCount?: number;
+  downloadCount?: number;
+  shareCount?: number;
+  allowDownload?: boolean;
+  allowSharing?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SiteSettings {
@@ -391,4 +416,9 @@ export interface ClearPathDailyArticle {
   
   status: 'draft' | 'published' | 'archived';
   isFeatured: boolean;
+  viewCount?: number;
+  downloadCount?: number;
+  shareCount?: number;
+  allowDownload?: boolean;
+  allowSharing?: boolean;
 }

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { db, collection, addDoc } from './_db.js';
+import { db, collection, addDoc, updateDoc, doc, increment } from './_db.js';
 
 const NIGERIAN_STATES = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
@@ -124,6 +124,8 @@ export default async function trackHandler(req: Request, res: Response) {
       programmeName = '',
       videoId = '',
       videoTitle = '',
+      publicationId = '',
+      publicationTitle = '',
       buttonLocation = '',
       errorMessage = ''
     } = body;
@@ -135,20 +137,29 @@ export default async function trackHandler(req: Request, res: Response) {
     const state = await resolveNigerianState(rawIp.trim(), clientState);
     const { timestamp, dateWAT, dayOfWeek, hourWAT } = getWATTime();
 
+    const allowedEventTypes = [
+      'page_view', 'watch_now_click', 'copy_weblink_click', 'copy_weblink_failure',
+      'programme_page_click', 'programme_page_load', 'programme_page_failed',
+      'video_view', 'video_download', 'publication_view', 'publication_download',
+      'briefing_view', 'briefing_download'
+    ];
+
     // Store in Firestore collection `audience_analytics_events` asynchronously
     const eventRecord = {
       visitorId: String(visitorId).substring(0, 64),
       sessionId: String(sessionId).substring(0, 64),
       path: String(path).substring(0, 256),
       pageTitle: String(pageTitle).substring(0, 256),
-      eventType: ['page_view', 'watch_now_click', 'copy_weblink_click', 'copy_weblink_failure', 'programme_page_click', 'programme_page_load', 'programme_page_failed'].includes(eventType) ? eventType : 'page_view',
+      eventType: allowedEventTypes.includes(eventType) ? eventType : 'page_view',
       programmeId: String(programmeId).substring(0, 100),
       programmeName: String(programmeName).substring(0, 200),
       videoId: String(videoId).substring(0, 100),
       videoTitle: String(videoTitle).substring(0, 200),
+      publicationId: String(publicationId).substring(0, 100),
+      publicationTitle: String(publicationTitle).substring(0, 200),
       buttonLocation: String(buttonLocation).substring(0, 100),
       errorMessage: String(errorMessage).substring(0, 256),
-      contentType: ['programme', 'explainer', 'briefing', 'news', 'home', 'other'].includes(contentType) ? contentType : 'other',
+      contentType: ['programme', 'explainer', 'briefing', 'news', 'publication', 'home', 'other'].includes(contentType) ? contentType : 'other',
       trafficSource: ['direct', 'google', 'social', 'referral', 'other'].includes(trafficSource) ? trafficSource : 'other',
       deviceType: ['mobile', 'tablet', 'desktop'].includes(deviceType) ? deviceType : 'desktop',
       state,
@@ -163,6 +174,27 @@ export default async function trackHandler(req: Request, res: Response) {
     addDoc(collection(db, 'audience_analytics_events'), eventRecord).catch(err => {
       console.warn('Failed to save audience analytics event to Firestore:', err);
     });
+
+    // Increment counters atomically on the target document
+    if (videoId) {
+      const isView = eventType === 'video_view' || eventType === 'watch_now_click';
+      const isDownload = eventType === 'video_download';
+      if (isView) {
+        updateDoc(doc(db, 'programmeVideos', videoId), { viewCount: increment(1) }).catch(() => {});
+      } else if (isDownload) {
+        updateDoc(doc(db, 'programmeVideos', videoId), { downloadCount: increment(1) }).catch(() => {});
+      }
+    }
+
+    if (publicationId) {
+      const isPubView = eventType === 'publication_view';
+      const isPubDownload = eventType === 'publication_download';
+      if (isPubView) {
+        updateDoc(doc(db, 'electionMattersWeekly', publicationId), { viewCount: increment(1) }).catch(() => {});
+      } else if (isPubDownload) {
+        updateDoc(doc(db, 'electionMattersWeekly', publicationId), { downloadCount: increment(1) }).catch(() => {});
+      }
+    }
 
     res.status(200).json({
       success: true,

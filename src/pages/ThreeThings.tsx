@@ -1,4 +1,4 @@
-import { Play, ArrowRight, Filter, Search, Clock, Users, Share2, Check } from 'lucide-react';
+import { Play, ArrowRight, Filter, Search, Clock, Users, Share2, Check, Download } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -17,6 +17,7 @@ import ZohoSignupEmbed from '../components/ZohoSignupEmbed';
 import LiteYouTube, { extractYouTubeId } from '../components/LiteYouTube';
 import CheckEmailModal from '../components/CheckEmailModal';
 import { audienceTracker } from '../services/audienceTracker';
+import { trackVideoView, trackVideoDownload, trackVideoShare } from '../services/metricsTracker';
 
 function CompactSubscribeForm({ 
   title, 
@@ -176,15 +177,26 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
   // Clipboard copy state
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const handleCopyLink = (youtubeVideoId: string) => {
+  const handleCopyLink = (youtubeVideoId: string, videoItem?: any) => {
+    const currentVid = videoItem || activeVideo;
+    if (currentVid && currentVid.allowSharing === false) {
+      return; // Sharing not permitted for this video
+    }
+
     const shareUrl = `${window.location.origin}${window.location.pathname}?v=${youtubeVideoId}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopiedId(youtubeVideoId);
+      
+      // Track share count in Firestore and beacon
+      if (currentVid?.id) {
+        trackVideoShare(currentVid.id, currentVid.title, programme?.id);
+      }
+
       audienceTracker.trackCopyWeblinkSuccess({
         programmeId: programme?.id || '',
         programmeName: programme?.title || '',
         videoId: youtubeVideoId,
-        videoTitle: activeTitle,
+        videoTitle: currentVid?.title || activeTitle,
         path: window.location.pathname
       });
       setTimeout(() => {
@@ -196,11 +208,47 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
         programmeId: programme?.id || '',
         programmeName: programme?.title || '',
         videoId: youtubeVideoId,
-        videoTitle: activeTitle,
+        videoTitle: currentVid?.title || activeTitle,
         path: window.location.pathname,
         errorMessage: String(err)
       });
     });
+  };
+
+  const handleDownloadVideo = (videoItem: any) => {
+    if (!videoItem || videoItem.allowDownload !== true) return;
+    
+    // Track download metric
+    if (videoItem.id) {
+      trackVideoDownload(videoItem.id, videoItem.title, programme?.id);
+    }
+    
+    // Handle download action
+    if (videoItem.downloadUrl) {
+      window.open(videoItem.downloadUrl, '_blank');
+    } else {
+      // Generate dispatch summary document download
+      const content = `ClearPath Media - Policy & Governance Video Dispatch\n` +
+        `=======================================================\n\n` +
+        `Title: ${videoItem.title || 'Video Dispatch'}\n` +
+        `Programme: ${programme?.title || 'ClearPath'}\n` +
+        `Release Date: ${videoItem.publishedAtLabel || videoItem.publishedAt || 'Recent'}\n` +
+        `Video Stream: ${videoItem.youtubeUrl || ('https://youtube.com/watch?v=' + (videoItem.youtubeVideoId || ''))}\n\n` +
+        `Overview / Key Insight:\n${videoItem.shortSummary || videoItem.fullDescription || 'No overview text provided.'}\n\n` +
+        (videoItem.keyPoints ? `Key Points:\n${videoItem.keyPoints}\n\n` : '') +
+        (videoItem.sourceLinks ? `Source Links & Public Record:\n${videoItem.sourceLinks}\n\n` : '') +
+        `Downloaded from ClearPath Media (${window.location.href})\n`;
+      
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(videoItem.slug || 'clearpath-video').toLowerCase()}-brief.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   useEffect(() => {
@@ -321,9 +369,14 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
     }
   }, [searchParams, videos]);
 
-  const selectEpisodeForPlayback = (vidId: string, titleName: string) => {
+  const selectEpisodeForPlayback = (vidId: string, titleName: string, videoItem?: any) => {
     setActiveVideoId(vidId);
     setActiveTitle(titleName);
+
+    const matched = videoItem || (videos || []).find(v => v.youtubeVideoId === vidId || v.id === vidId);
+    if (matched?.id) {
+      trackVideoView(matched.id, matched.title, programme?.id);
+    }
 
     audienceTracker.trackWatchNowClick({
       programmeId: programme?.id || '',
@@ -354,6 +407,15 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
         (v.youtubeUrl && extractYouTubeId(v.youtubeUrl) === cleanId)
     ) || null;
   }, [videos, activeVideoId]);
+
+  // Track view metric for active video once on load
+  const hasTrackedInitialView = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeVideo?.id && hasTrackedInitialView.current !== activeVideo.id) {
+      hasTrackedInitialView.current = activeVideo.id;
+      trackVideoView(activeVideo.id, activeVideo.title, programme?.id);
+    }
+  }, [activeVideo?.id, programme?.id]);
 
   const filteredEpisodes = (Array.isArray(videos) ? videos : []).filter(v => 
     (v.title || '').toLowerCase().includes((searchTerm || '').toLowerCase()) || 
@@ -439,25 +501,28 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
               <div className="mt-4 bg-white p-4 border rounded-lg shadow-xs font-sans">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
                   <h2 className="font-semibold text-lg text-primary leading-tight">{activeTitle || 'No Video Available'}</h2>
-                  {activeVideoId && (
-                    <button
-                      onClick={() => handleCopyLink(activeVideoId)}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 border border-outline hover:border-primary text-primary hover:bg-surface-container-low transition-all text-xs font-bold rounded self-start sm:self-center uppercase tracking-wider cursor-pointer min-w-[130px]"
-                      title="Copy link to this specific video on the website"
-                    >
-                      {copiedId === activeVideoId ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-green-600" />
-                          <span className="text-green-600">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Share2 className="w-3.5 h-3.5" />
-                          <span>Copy Web Link</span>
-                        </>
-                      )}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2 self-start sm:self-center">
+                    {/* Share Button - Only rendered if video permits sharing (allowSharing !== false) */}
+                    {activeVideoId && activeVideo?.allowSharing !== false && (
+                      <button
+                        onClick={() => handleCopyLink(activeVideoId, activeVideo)}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 border border-outline hover:border-primary text-primary hover:bg-surface-container-low transition-all text-xs font-bold rounded uppercase tracking-wider cursor-pointer min-w-[130px]"
+                        title="Copy link to this specific video on the website"
+                      >
+                        {copiedId === activeVideoId ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-green-600" />
+                            <span className="text-green-600">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="w-3.5 h-3.5" />
+                            <span>Copy Web Link</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 
                 {(activeVideo?.fullDescription || activeVideo?.shortSummary) && (
@@ -579,28 +644,45 @@ export default function ThreeThings({ forcedSlug }: ThreeThingsProps = {}) {
                     <span className="font-label-sm text-label-sm text-outline font-mono text-xs">
                       {item.publishedAtLabel || formatFirestoreDate(item.publishedAt || item.createdAt, 'Recent')}
                     </span>
-                    {item.youtubeVideoId && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopyLink(item.youtubeVideoId);
-                        }}
-                        className="p-1.5 rounded-full text-outline hover:text-primary hover:bg-surface-container-low transition-all cursor-pointer flex items-center justify-center"
-                        title="Copy shareable web link for this video"
-                      >
-                        {copiedId === item.youtubeVideoId ? (
-                          <Check className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Share2 className="w-4 h-4" />
-                        )}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {/* Download button if privilege is enabled */}
+                      {item.allowDownload === true && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownloadVideo(item);
+                          }}
+                          className="p-1.5 rounded-full text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-all cursor-pointer flex items-center justify-center"
+                          title="Download video resource"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      {/* Share button if privilege is enabled */}
+                      {item.youtubeVideoId && item.allowSharing !== false && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyLink(item.youtubeVideoId, item);
+                          }}
+                          className="p-1.5 rounded-full text-outline hover:text-primary hover:bg-surface-container-low transition-all cursor-pointer flex items-center justify-center"
+                          title="Copy shareable web link for this video"
+                        >
+                          {copiedId === item.youtubeVideoId ? (
+                            <Check className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <Share2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <h4 className="font-headline-md text-xl font-semibold text-primary mb-2 group-hover:text-primary-container transition-colors leading-snug">{item.title}</h4>
                   <p className="font-label-md text-label-md text-secondary mb-unit-md flex items-center gap-1.5 text-xs font-semibold"><Users className="w-3.5 h-3.5" /> {item.presenters || 'OsitaInsight'}</p>
                   <p className="font-body-md text-body-md text-on-surface-variant line-clamp-3 mb-unit-lg flex-grow leading-relaxed">{item.shortSummary}</p>
                   <button 
-                    onClick={() => selectEpisodeForPlayback(item.youtubeVideoId || '3H95x0BV9nA', item.title)}
+                    onClick={() => selectEpisodeForPlayback(item.youtubeVideoId || '3H95x0BV9nA', item.title, item)}
                     className="w-full bg-primary text-white py-unit-sm font-label-md text-label-md flex items-center justify-center gap-unit-sm hover:bg-primary-container transition-colors uppercase tracking-wide cursor-pointer font-bold rounded text-xs py-3 mt-2"
                   >
                     WATCH VIDEO <ArrowRight className="w-4 h-4" />

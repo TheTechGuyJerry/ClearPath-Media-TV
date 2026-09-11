@@ -1,13 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, Share2, Check, ExternalLink } from 'lucide-react';
 import SEO from '../components/SEO';
 import { db } from '../lib/firebase';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { getDownloadablePdfUrl } from '../utils/urlUtils';
+import { trackPublicationDownload, trackPublicationView, trackPublicationShare } from '../services/metricsTracker';
 
 export default function ElectionMattersWeekly() {
   const [publications, setPublications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleShare = (pub: any) => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}#${pub.id}`;
+    if (navigator.share) {
+      navigator.share({
+        title: pub.title,
+        text: pub.description || `Read "${pub.title}" on ClearPath Media TV`,
+        url: shareUrl
+      }).catch(() => {
+        // user cancelled
+      });
+    } else {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        setCopiedId(pub.id);
+        setTimeout(() => setCopiedId(null), 2500);
+      });
+    }
+    trackPublicationShare(pub.id, pub.title);
+  };
 
   useEffect(() => {
     const fetchPubs = async () => {
@@ -80,16 +101,51 @@ export default function ElectionMattersWeekly() {
                       {pub.description}
                     </p>
                  </div>
-                 <div className="mt-auto pt-4 border-t border-outline-variant/50">
-                    <a 
-                      href={getDownloadablePdfUrl(pub.pdfUrl)} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors w-full justify-center"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download PDF
-                    </a>
+                 <div className="mt-auto pt-4 border-t border-outline-variant/50 flex flex-col sm:flex-row gap-2">
+                    {pub.allowDownload ? (
+                      <a 
+                        href={getDownloadablePdfUrl(pub.pdfUrl)} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={() => trackPublicationDownload(pub.id, pub.title)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors flex-1 justify-center"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download PDF
+                      </a>
+                    ) : (
+                      <a 
+                        href={getDownloadablePdfUrl(pub.pdfUrl)} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={() => trackPublicationView(pub.id, pub.title)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-surface-container-high text-primary hover:bg-primary hover:text-white rounded-lg font-bold text-sm transition-colors flex-1 justify-center border border-outline-variant"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Read Online
+                      </a>
+                    )}
+
+                    {pub.allowSharing !== false && (
+                      <button
+                        type="button"
+                        onClick={() => handleShare(pub)}
+                        title="Share Publication"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-surface-container-low hover:bg-surface-container text-on-surface rounded-lg font-medium text-xs border border-outline-variant transition-colors cursor-pointer"
+                      >
+                        {copiedId === pub.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="text-emerald-700 font-bold">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="w-3.5 h-3.5 text-primary" />
+                            <span>Share</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                  </div>
               </div>
             ))}

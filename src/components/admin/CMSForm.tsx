@@ -511,6 +511,69 @@ export default function CMSForm({
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Manual Display Date (displayDate)</label>
               <input type="text" value={data.displayDate || ''} onChange={(e) => setField('displayDate', e.target.value)} placeholder="e.g. Oct 24, 2023" className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
             </div>
+            {/* Privilege and Counter Allotment Configuration */}
+            <div className="md:col-span-2 bg-gray-50/80 border border-outline-variant p-4 rounded-lg space-y-3">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-outline-variant/60 pb-2.5">
+                <div>
+                  <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Access Privileges & Counter Allotment</h4>
+                  <p className="text-[11px] text-on-surface-variant font-medium">Configure video sharing permissions and track video performance metrics.</p>
+                </div>
+                <div className="flex items-center gap-4 shrink-0">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={data.allowSharing !== false}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        onChange({
+                          ...data,
+                          allowSharing: enabled,
+                          shareCount: enabled ? (Number(data.shareCount) || 0) : 0
+                        });
+                      }}
+                      className="rounded text-primary focus:ring-primary h-4 w-4"
+                    />
+                    <span>Permit Sharing</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-on-surface-variant mb-1">
+                    Views Count (Allotted)
+                  </label>
+                  <input 
+                    type="number" 
+                    min={0} 
+                    value={data.viewCount ?? 0} 
+                    onChange={(e) => setField('viewCount', Math.max(0, parseInt(e.target.value) || 0))} 
+                    className="w-full px-3 py-2 border border-outline rounded text-sm bg-white font-mono" 
+                  />
+                  <span className="text-[10px] text-gray-500 block mt-0.5">Always tracked & allotted</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-on-surface-variant mb-1">
+                    Shares Count {data.allowSharing !== false ? '(Allotted)' : '(Disabled)'}
+                  </label>
+                  {data.allowSharing !== false ? (
+                    <input 
+                      type="number" 
+                      min={0} 
+                      value={data.shareCount ?? 0} 
+                      onChange={(e) => setField('shareCount', Math.max(0, parseInt(e.target.value) || 0))} 
+                      className="w-full px-3 py-2 border border-indigo-300 rounded text-sm bg-white font-mono" 
+                    />
+                  ) : (
+                    <div className="w-full px-3 py-2 border border-dashed border-gray-300 rounded text-xs text-gray-400 bg-gray-100 font-mono italic">
+                      Not allotted (Sharing disabled)
+                    </div>
+                  )}
+                  <span className="text-[10px] text-gray-500 block mt-0.5">Requires 'Permit Sharing'</span>
+                </div>
+              </div>
+            </div>
             <div className="md:col-span-2 border-t border-outline-variant pt-3 mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">SEO Title</label>
@@ -728,6 +791,105 @@ export default function CMSForm({
             <div>
               <label className="block text-xs uppercase font-bold text-on-surface-variant mb-1">Published At Date</label>
               <input type="date" value={data.publishedAt || ''} onChange={(e) => setField('publishedAt', e.target.value)} className="w-full px-3 py-2 border border-outline rounded text-sm bg-transparent" />
+            </div>
+            {/* Privilege and Counter Allotment Configuration */}
+            <div className="md:col-span-2 bg-gray-50/80 border border-outline-variant p-4 rounded-lg space-y-3">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-outline-variant/60 pb-2.5">
+                <div>
+                  <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Access Privileges & Counter Allotment</h4>
+                  <p className="text-[11px] text-on-surface-variant">Configure whether downloads and sharing are permitted for this publication. Counters are allotted strictly according to granted privileges.</p>
+                </div>
+                <div className="flex items-center gap-4 shrink-0">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={Boolean(data.allowDownload)}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        onChange({
+                          ...data,
+                          allowDownload: enabled,
+                          downloadCount: enabled ? (Number(data.downloadCount) || 0) : 0
+                        });
+                      }}
+                      className="rounded text-primary focus:ring-primary h-4 w-4"
+                    />
+                    <span>Permit Download</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={data.allowSharing !== false}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        onChange({
+                          ...data,
+                          allowSharing: enabled,
+                          shareCount: enabled ? (Number(data.shareCount) || 0) : 0
+                        });
+                      }}
+                      className="rounded text-primary focus:ring-primary h-4 w-4"
+                    />
+                    <span>Permit Sharing</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-on-surface-variant mb-1">
+                    Views Count (Allotted)
+                  </label>
+                  <input 
+                    type="number" 
+                    min={0} 
+                    value={data.viewCount ?? 0} 
+                    onChange={(e) => setField('viewCount', Math.max(0, parseInt(e.target.value) || 0))} 
+                    className="w-full px-3 py-2 border border-outline rounded text-sm bg-white font-mono" 
+                  />
+                  <span className="text-[10px] text-gray-500 block mt-0.5">Always tracked & allotted</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-on-surface-variant mb-1">
+                    Downloads Count {data.allowDownload ? '(Allotted)' : '(Disabled)'}
+                  </label>
+                  {data.allowDownload ? (
+                    <input 
+                      type="number" 
+                      min={0} 
+                      value={data.downloadCount ?? 0} 
+                      onChange={(e) => setField('downloadCount', Math.max(0, parseInt(e.target.value) || 0))} 
+                      className="w-full px-3 py-2 border border-emerald-300 rounded text-sm bg-white font-mono" 
+                    />
+                  ) : (
+                    <div className="w-full px-3 py-2 border border-dashed border-gray-300 rounded text-xs text-gray-400 bg-gray-100 font-mono italic">
+                      Not allotted (Download disabled)
+                    </div>
+                  )}
+                  <span className="text-[10px] text-gray-500 block mt-0.5">Requires 'Permit Download'</span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-on-surface-variant mb-1">
+                    Shares Count {data.allowSharing !== false ? '(Allotted)' : '(Disabled)'}
+                  </label>
+                  {data.allowSharing !== false ? (
+                    <input 
+                      type="number" 
+                      min={0} 
+                      value={data.shareCount ?? 0} 
+                      onChange={(e) => setField('shareCount', Math.max(0, parseInt(e.target.value) || 0))} 
+                      className="w-full px-3 py-2 border border-indigo-300 rounded text-sm bg-white font-mono" 
+                    />
+                  ) : (
+                    <div className="w-full px-3 py-2 border border-dashed border-gray-300 rounded text-xs text-gray-400 bg-gray-100 font-mono italic">
+                      Not allotted (Sharing disabled)
+                    </div>
+                  )}
+                  <span className="text-[10px] text-gray-500 block mt-0.5">Requires 'Permit Sharing'</span>
+                </div>
+              </div>
             </div>
           </div>
         )}

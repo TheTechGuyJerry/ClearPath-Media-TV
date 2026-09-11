@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc, limit } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc, limit, increment } from 'firebase/firestore';
 import config from '../firebase-applet-config.json' with { type: 'json' };
 
 // Initialize Firebase App for server environment
@@ -13,4 +13,4 @@ const firebaseApp = getApps().length === 0 ? initializeApp({
 }) : getApp();
 
 export const db = getFirestore(firebaseApp, config.firestoreDatabaseId || 'default');
-export { collection, query, where, getDocs, addDoc, updateDoc, doc, limit };
+export { collection, query, where, getDocs, addDoc, updateDoc, doc, limit, increment };

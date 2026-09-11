@@ -20,13 +20,16 @@ import {
   TrendingDown,
   Layers,
   Search,
-  Filter
+  Filter,
+  Share2,
+  Download
 } from 'lucide-react';
 import LiteYouTube from '../components/LiteYouTube';
 import SEO from '../components/SEO';
 import { motion } from 'motion/react';
 import { formatFirestoreDate } from '../utils/formatters';
 import { RichContentRenderer } from '../components/common/RichContentRenderer';
+import { trackBriefingView, trackBriefingDownload, trackBriefingShare } from '../services/metricsTracker';
 
 // =========================================================================
 // HIGH-SIGNAL REALISTIC FALLBACK BRIEFINGS (WEST AFRICAN MACROECONOMIC EXAMPLES)
@@ -234,10 +237,65 @@ export default function Briefing() {
     navigate('/briefing');
   };
 
+  const [copiedShareSlug, setCopiedShareSlug] = useState<string | null>(null);
+  const currentArticle = slug ? briefings.find(b => b.slug === slug) : null;
+
+  // Track view when viewing a standalone briefing article
+  const hasTrackedArticleView = React.useRef<string | null>(null);
+  useEffect(() => {
+    if (slug && currentArticle?.id && hasTrackedArticleView.current !== currentArticle.id) {
+      hasTrackedArticleView.current = currentArticle.id;
+      trackBriefingView(currentArticle.id, currentArticle.title);
+    }
+  }, [slug, currentArticle?.id]);
+
+  const handleShareBriefing = (article: BriefingType, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (article.allowSharing === false) return;
+
+    const shareUrl = `${window.location.origin}/briefing/${article.slug}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopiedShareSlug(article.slug);
+      if (article.id) {
+        trackBriefingShare(article.id, article.title);
+      }
+      setTimeout(() => setCopiedShareSlug(null), 2000);
+    }).catch(err => console.error('Failed to copy share link:', err));
+  };
+
+  const handleDownloadBriefing = (article: BriefingType, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (article.allowDownload !== true) return;
+
+    if (article.id) {
+      trackBriefingDownload(article.id, article.title);
+    }
+
+    const text = `ClearPath Media - Policy & Governance Briefing\n` +
+      `=======================================================\n\n` +
+      `Title: ${article.title}\n` +
+      `Classification: ${(article.briefingType || 'Daily Briefing').toUpperCase()}\n` +
+      `Release Date: ${article.publishedAtLabel || article.publishedAt || 'Recent'}\n` +
+      `Lead Analyst / Presenter: ${article.presenter || 'ClearPath Research Desk'}\n\n` +
+      `EXECUTIVE SUMMARY:\n${article.excerpt || 'No excerpt available.'}\n\n` +
+      `FULL BRIEFING CONTENT:\n${article.content || ''}\n\n` +
+      (article.keyPoints ? `CORE POINTS:\n${article.keyPoints}\n\n` : '') +
+      (article.sourceLinks ? `OFFICIAL SOURCES & DOCUMENTATION:\n${article.sourceLinks}\n\n` : '') +
+      `Downloaded from ClearPath Media (${window.location.href})\n`;
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(article.slug || 'clearpath-briefing').toLowerCase()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // 1. Standalone Article Mode
   if (slug) {
-    const currentArticle = briefings.find(b => b.slug === slug);
-    
     // Show spinner if still loading
     if (loading) {
       return (
@@ -284,17 +342,54 @@ export default function Briefing() {
             {/* Clean Premium Standalone Article Header */}
             <article className="bg-white border border-outline-variant rounded-lg p-6 md:p-10 shadow-xs space-y-6">
               <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-[10px] font-mono font-black text-primary uppercase bg-primary/10 px-2.5 py-1 rounded-xs tracking-widest">
-                    {currentArticle.briefingType || 'daily article'}
-                  </span>
-                  <span className="text-xs text-on-surface-variant font-semibold flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" /> 
-                    {currentArticle.publishedAtLabel || formatFirestoreDate(currentArticle.publishedAt || currentArticle.createdAt)}
-                  </span>
-                  <span className="text-xs text-on-surface-variant/80 font-medium flex items-center gap-1 font-mono">
-                    <Clock className="w-3.5 h-3.5" /> 5 min read
-                  </span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-[10px] font-mono font-black text-primary uppercase bg-primary/10 px-2.5 py-1 rounded-xs tracking-widest">
+                      {currentArticle.briefingType || 'daily article'}
+                    </span>
+                    <span className="text-xs text-on-surface-variant font-semibold flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5" /> 
+                      {currentArticle.publishedAtLabel || formatFirestoreDate(currentArticle.publishedAt || currentArticle.createdAt)}
+                    </span>
+                    <span className="text-xs text-on-surface-variant/80 font-medium flex items-center gap-1 font-mono">
+                      <Clock className="w-3.5 h-3.5" /> 5 min read
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Share action if permitted */}
+                    {currentArticle.allowSharing !== false && (
+                      <button
+                        onClick={() => handleShareBriefing(currentArticle)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-outline hover:border-primary text-primary hover:bg-surface-container-low transition-all text-xs font-bold rounded uppercase tracking-wider cursor-pointer"
+                        title="Share briefing web link"
+                      >
+                        {copiedShareSlug === currentArticle.slug ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-green-600" />
+                            <span className="text-green-600">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="w-3.5 h-3.5" />
+                            <span>Share</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Download action if permitted */}
+                    {currentArticle.allowDownload === true && (
+                      <button
+                        onClick={() => handleDownloadBriefing(currentArticle)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-300 hover:border-emerald-600 text-emerald-800 hover:bg-emerald-100 transition-all text-xs font-bold rounded uppercase tracking-wider cursor-pointer"
+                        title="Download policy document"
+                      >
+                        <Download className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>Download</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <h1 className="font-display font-black text-2xl md:text-3xl lg:text-4xl text-on-surface leading-tight tracking-tight">
@@ -517,17 +612,48 @@ export default function Briefing() {
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-between border-t border-outline-variant/60 pt-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-outline-variant/60 pt-4 gap-3">
                         <span className="text-xs text-on-surface-variant font-bold flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" /> 
                           {latestArticle.publishedAtLabel || formatFirestoreDate(latestArticle.publishedAt || latestArticle.createdAt)}
                         </span>
-                        <Link 
-                          to={`/briefing/${latestArticle.slug}`}
-                          className="inline-flex items-center gap-1 bg-primary text-white font-bold uppercase tracking-wider hover:bg-primary/95 transition-all text-xs px-4 py-2.5 rounded-[3px] shadow-sm"
-                        >
-                          Read Full Article <ChevronRight className="w-4 h-4" />
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          {latestArticle.allowDownload === true && (
+                            <button
+                              onClick={(e) => handleDownloadBriefing(latestArticle, e)}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 border border-emerald-300 hover:border-emerald-600 text-emerald-800 hover:bg-emerald-100 transition-all text-xs font-bold rounded uppercase tracking-wider cursor-pointer"
+                              title="Download briefing"
+                            >
+                              <Download className="w-3.5 h-3.5 text-emerald-700" />
+                              <span>Download</span>
+                            </button>
+                          )}
+                          {latestArticle.allowSharing !== false && (
+                            <button
+                              onClick={(e) => handleShareBriefing(latestArticle, e)}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-outline hover:border-primary text-primary hover:bg-surface-container-low transition-all text-xs font-bold rounded uppercase tracking-wider cursor-pointer"
+                              title="Share briefing"
+                            >
+                              {copiedShareSlug === latestArticle.slug ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-green-600" />
+                                  <span className="text-green-600">Copied</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Share2 className="w-3.5 h-3.5" />
+                                  <span>Share</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                          <Link 
+                            to={`/briefing/${latestArticle.slug}`}
+                            className="inline-flex items-center gap-1 bg-primary text-white font-bold uppercase tracking-wider hover:bg-primary/95 transition-all text-xs px-4 py-2 rounded-[3px] shadow-sm"
+                          >
+                            Read Full Article <ChevronRight className="w-4 h-4" />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </section>

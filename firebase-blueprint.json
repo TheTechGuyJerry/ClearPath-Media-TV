@@ -79,7 +79,12 @@
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" },
         "seoTitle": { "type": "string" },
-        "seoDescription": { "type": "string" }
+        "seoDescription": { "type": "string" },
+        "viewCount": { "type": "number", "description": "Total views counter." },
+        "downloadCount": { "type": "number", "description": "Total downloads counter." },
+        "shareCount": { "type": "number", "description": "Total shares counter." },
+        "allowDownload": { "type": "boolean", "description": "Whether direct download is permitted for this video." },
+        "allowSharing": { "type": "boolean", "description": "Whether sharing is permitted for this video." }
       },
       "required": ["programmeId", "title", "slug", "youtubeVideoId", "status"]
     },
@@ -164,9 +169,33 @@
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" },
         "seoTitle": { "type": "string" },
-        "seoDescription": { "type": "string" }
+        "seoDescription": { "type": "string" },
+        "viewCount": { "type": "number", "description": "Total views counter." },
+        "downloadCount": { "type": "number", "description": "Total downloads counter." },
+        "shareCount": { "type": "number", "description": "Total shares counter." },
+        "allowDownload": { "type": "boolean", "description": "Whether direct download is permitted for this briefing." },
+        "allowSharing": { "type": "boolean", "description": "Whether sharing is permitted for this briefing." }
       },
       "required": ["title", "slug", "status"]
+    },
+    "electionMattersPublication": {
+      "title": "Election Matters Weekly Publication",
+      "description": "Weekly governance and constitutional research PDF publications.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "publishedAt": { "type": "string" },
+        "pdfUrl": { "type": "string" },
+        "viewCount": { "type": "number", "description": "Total views counter." },
+        "downloadCount": { "type": "number", "description": "Total downloads counter." },
+        "shareCount": { "type": "number", "description": "Total shares counter." },
+        "allowDownload": { "type": "boolean", "description": "Whether PDF download is permitted for this publication." },
+        "allowSharing": { "type": "boolean", "description": "Whether sharing is permitted for this publication." },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "publishedAt", "pdfUrl"]
     },
     "siteSettings": {
       "title": "SiteSettings",
@@ -314,6 +343,7 @@
     "newsletterSubscribers": { "schema": "newsletterSubscriber", "description": "Mailing list subscribers." },
     "contactMessages": { "schema": "contactMessage", "description": "Reach-out contact messages." },
     "adminAuditLogs": { "schema": "adminAuditLog", "description": "Administrator activity and security audit trail logs." },
-    "audience_analytics_events": { "schema": "audienceAnalyticsEvent", "description": "Collection of anonymized audience activity records for CMS analytics." }
+    "audience_analytics_events": { "schema": "audienceAnalyticsEvent", "description": "Collection of anonymized audience activity records for CMS analytics." },
+    "electionMattersWeekly": { "schema": "electionMattersPublication", "description": "Weekly governance and constitutional research PDF publications." }
   }
 }

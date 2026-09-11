@@ -30,8 +30,8 @@ export function useClearPathArticles(categorySlug?: string, limitCount?: number)
           ...doc.data()
         })) as ClearPathDailyArticle[];
 
-        // Exclude archived only
-        let validArticles = rawArticles.filter(a => a.status !== 'archived');
+        // Exclude drafts only
+        let validArticles = rawArticles.filter(a => a.status !== 'draft');
 
         const normalizedReqCategory = categorySlug ? slugify(categorySlug) : undefined;
         const isWeeklyReq = normalizedReqCategory && WEEKLY_CATEGORY_SLUGS.includes(normalizedReqCategory);

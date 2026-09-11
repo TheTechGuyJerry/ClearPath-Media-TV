@@ -105,7 +105,7 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
           </div>
           
           {mainAnalysis && (
-            <div className="pt-4 border-t border-slate-100 dark:border-outline-variant/40 mt-auto">
+            <div className="pt-2 mt-auto">
               <Link
                 to={getArticleUrl(mainAnalysis as any, 'todays-brief')}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#001e40] hover:bg-[#00142b] dark:bg-primary dark:hover:bg-primary/90 text-white dark:text-on-primary font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all group/btn"
@@ -113,6 +113,7 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
                 <span>Read Analysis</span>
                 <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
               </Link>
+              <div className="border-b border-slate-200/80 dark:border-outline-variant/60 pt-6" />
             </div>
           )}
         </div>

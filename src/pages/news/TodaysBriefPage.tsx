@@ -114,7 +114,7 @@ export default function TodaysBriefPage() {
                         </h2>
                       </div>
                       <Link
-                        to="/archive"
+                        to="/archive?category=todays-brief"
                         className="text-xs font-bold text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
                       >
                         All ClearPath Daily Archive <ArrowRight className="w-3.5 h-3.5" />

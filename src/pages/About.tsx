@@ -1,6 +1,6 @@
 import React from 'react';
 import SEO from '../components/SEO';
-import { User, Shield, Info, ArrowUpRight } from 'lucide-react';
+import { User, Shield, Info, ArrowUpRight, ExternalLink } from 'lucide-react';
 
 export default function About() {
   const principles = [
@@ -32,7 +32,7 @@ export default function About() {
       title: 'Presenter, Daily Brief with Annabel',
       role: 'Daily Briefing Host',
       bio: 'Annabel Orji hosts ClearPath Media’s signature weekday briefing series, delivering calm, highly structured overviews of primary policy developments, geopolitical, and economic updates.',
-      tag: 'DAILY BREIFINGS'
+      tag: 'DAILY BRIEFINGS'
     },
     {
       name: 'Osita Chidoka',
@@ -40,6 +40,14 @@ export default function About() {
       role: 'Governance Commentator',
       bio: 'Osita Chidoka deconstructs governance, electoral frameworks, public sector performance, and institutions of accountability, drawing from decades of public leadership.',
       tag: 'GOVERNANCE'
+    },
+    {
+      name: 'Nneka Chidoka Outreach Programme (NCOP)',
+      title: 'Nneka Chidoka Outreach Programme',
+      role: 'Civic & Healthcare Initiative',
+      bio: 'The Nneka Chidoka Outreach Programme (NCOP) advances community health interventions, medical outreaches, cancer awareness, and civic empowerment across Nigeria.',
+      tag: 'OUTREACH INITIATIVE',
+      url: 'https://ncop.ng/'
     },
     {
       name: 'ClearPath Elections Desk',
@@ -143,9 +151,21 @@ export default function About() {
               </div>
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
                 <span className="font-semibold text-slate-400">{person.role}</span>
-                <span className="text-primary font-bold flex items-center gap-1 group-hover:underline">
-                  ClearPath Profile <ArrowUpRight className="w-3.5 h-3.5" />
-                </span>
+                {person.url ? (
+                  <a 
+                    href={person.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-white bg-primary hover:bg-primary/90 font-bold px-3 py-1.5 rounded flex items-center gap-1 transition-colors shadow-xs"
+                  >
+                    <span>Visit Site</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                ) : (
+                  <span className="text-primary font-bold flex items-center gap-1 group-hover:underline">
+                    ClearPath Profile <ArrowUpRight className="w-3.5 h-3.5" />
+                  </span>
+                )}
               </div>
             </div>
           ))}

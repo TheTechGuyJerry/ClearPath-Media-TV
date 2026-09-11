@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAdmin } from './AdminContext';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Download } from 'lucide-react';
 import { RichTextEditor } from '../../components/admin/RichTextEditor';
 import { EditorErrorBoundary } from '../../components/admin/EditorErrorBoundary';
 import { ClearPathDailyArticle } from '../../types';
@@ -449,13 +449,15 @@ export default function AdminClearPathDaily() {
               <th className="p-4">Title / ID</th>
               <th className="p-4">Status</th>
               <th className="p-4">Date</th>
+              <th className="p-4 text-center">Views</th>
+              <th className="p-4 text-center">Downloads</th>
               <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentCategoryArticles.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-on-surface-variant">
+                <td colSpan={6} className="p-8 text-center text-on-surface-variant">
                   No articles found for this category.
                 </td>
               </tr>
@@ -480,6 +482,18 @@ export default function AdminClearPathDaily() {
                   </td>
                   <td className="p-4">
                     <span className="text-sm text-on-surface-variant">{article.publishedAt || article.signalDateOrDay}</span>
+                  </td>
+                  <td className="p-4 text-center">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-blue-50 text-blue-800 border border-blue-100 font-mono font-bold text-xs" title="Views">
+                      <Eye className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      {(Number(article.viewCount) || 0).toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="p-4 text-center">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-100 font-mono font-bold text-xs" title="Downloads">
+                      <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      {(Number(article.downloadCount) || 0).toLocaleString()}
+                    </span>
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">

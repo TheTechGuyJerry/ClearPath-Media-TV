@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAdmin } from './AdminContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import CMSForm from '../../components/admin/CMSForm';
-import { Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Eye, Download } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { doc, updateDoc, setDoc } from 'firebase/firestore';
 import { Programme } from '../../types';
@@ -183,6 +183,8 @@ export default function AdminProgrammeDetail() {
                   <th className="p-3">Video Title</th>
                   <th className="p-3">Presenters/Guests</th>
                   <th className="p-3">Link/Slug</th>
+                  <th className="p-3 text-center">Views</th>
+                  <th className="p-3 text-center">Downloads</th>
                   <th className="p-3">Status</th>
                   <th className="p-3 text-right">Actions</th>
                 </tr>
@@ -257,6 +259,18 @@ export default function AdminProgrammeDetail() {
                         <p className="text-[10px] text-gray-500">{v.guests || v.guestNames}</p>
                       </td>
                       <td className="p-3 text-[11px] font-mono text-gray-550">/{v.slug}</td>
+                      <td className="p-3 text-center">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-100 font-mono font-bold text-[10px]" title="Views">
+                          <Eye className="w-3 h-3 text-blue-600 shrink-0" />
+                          {(Number(v.viewCount) || 0).toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="p-3 text-center">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-100 font-mono font-bold text-[10px]" title="Downloads">
+                          <Download className="w-3 h-3 text-emerald-600 shrink-0" />
+                          {(Number(v.downloadCount) || 0).toLocaleString()}
+                        </span>
+                      </td>
                       <td className="p-3">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
                           v.status === 'published' ? 'bg-green-100 text-green-800' : 
@@ -312,7 +326,7 @@ export default function AdminProgrammeDetail() {
                 })}
                 {filteredVideos.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-on-surface-variant italic">No videos have been added to this dynamic programme yet.</td>
+                    <td colSpan={8} className="p-8 text-center text-on-surface-variant italic">No videos have been added to this dynamic programme yet.</td>
                   </tr>
                 )}
               </tbody>

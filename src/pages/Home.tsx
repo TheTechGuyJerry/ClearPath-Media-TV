@@ -108,7 +108,7 @@ export default function Home() {
         getActiveExplainers(),
         getPublishedProgrammeVideos(),
         getDocs(collection(db, 'briefings')),
-        getDocs(query(collection(db, 'clearpath_daily_articles'), where('status', '==', 'published'), limit(50))),
+        getDocs(collection(db, 'clearpath_daily_articles')),
         getDocs(collection(db, 'electionMattersWeekly'))
       ]);
 
@@ -238,7 +238,9 @@ export default function Home() {
       // 5. Briefings result (Client-side fail-safe logic skipped for Featured display)
       // 6. ClearPath Daily Articles
       if (results[5].status === 'fulfilled') {
-        let cpDocs = results[5].value.docs.map((d) => ({ id: d.id, ...d.data() } as ClearPathDailyArticle));
+        let cpDocs = results[5].value.docs
+          .map((d) => ({ id: d.id, ...d.data() } as ClearPathDailyArticle))
+          .filter(a => a.status !== 'draft');
         cpDocs.sort((a, b) => {
           const tA = new Date(a.publishedAt || a.createdAt || 0).getTime();
           const tB = new Date(b.publishedAt || b.createdAt || 0).getTime();
@@ -575,17 +577,31 @@ export default function Home() {
               date: latestWeeklyUpdate.publishedAt
             }] : []),
             ...(['in-focus', 'the-indicator', 'the-public-record', 'clearpath-lens', 'signals-to-watch', 'weekly-features']
-              .map(slug => cpArticles.find(a => a.categorySlug === slug || (slug === 'weekly-features' && a.categorySlug === 'weekly-feature')))
+              .map(slug => {
+                const found = cpArticles.find(a => a.categorySlug === slug || (slug === 'weekly-features' && a.categorySlug === 'weekly-feature'));
+                if (found) return found;
+                if (slug === 'the-public-record') {
+                  return {
+                    id: 'the-public-record-default',
+                    categorySlug: 'the-public-record',
+                    category: 'THE PUBLIC RECORD',
+                    title: 'We stand with him and deeply appreciate his resolute commitment to a stronger, more prosperous, safer and more united Nigeria.',
+                    quote: 'We stand with him and deeply appreciate his resolute commitment to a stronger, more prosperous, safer and more united Nigeria.',
+                    publishedAt: 'September 11, 2026'
+                  } as ClearPathDailyArticle;
+                }
+                return null;
+              })
               .filter(Boolean)
               .map(a => ({ 
-                id: a.id, 
-                category: a.category || (a.categorySlug === 'weekly-features' ? 'WEEKLY FEATURES' : 'ClearPath Daily'), 
-                title: a.categorySlug === 'the-indicator' ? (a.indicatorNumber || 'View Indicator') : a.categorySlug === 'the-public-record' ? (a.title || a.quote || 'The Public Record') : (a.title || 'Read ' + a.category), 
-                link: getArticleUrl(a, a.categorySlug), 
-                date: a.publishedAt 
+                id: a!.id, 
+                category: a!.category || (a!.categorySlug === 'weekly-features' ? 'WEEKLY FEATURES' : (a!.categorySlug === 'the-public-record' ? 'THE PUBLIC RECORD' : 'ClearPath Daily')), 
+                title: a!.categorySlug === 'the-indicator' ? (a!.indicatorNumber || 'View Indicator') : a!.categorySlug === 'the-public-record' ? (a!.title || a!.quote || 'The Public Record') : (a!.title || 'Read ' + a!.category), 
+                link: getArticleUrl(a!, a!.categorySlug), 
+                date: a!.publishedAt 
               }))
             )
-          ].slice(0, 5)}
+          ]}
           videoFeed={renderedFeedList}
         />
       </div>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ExternalLink } from 'lucide-react';
 import clearpathLogo from '../assets/clearpath-logo.png';
 
 export default function Footer() {
@@ -27,10 +28,14 @@ export default function Footer() {
             © 2026 ClearPath Media. Explaining power, policy, and society.
           </p>
         </div>
-        <nav className="flex flex-wrap gap-unit-md md:gap-unit-lg py-unit-sm opacity-80 hover:opacity-100 transition-opacity">
+        <nav className="flex flex-wrap items-center gap-unit-md md:gap-unit-lg py-unit-sm opacity-80 hover:opacity-100 transition-opacity">
           <Link to="/" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Newsletter</Link>
           <a href="https://www.youtube.com/@ClearPathMediaTV" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">YouTube</a>
           <a href="https://www.youtube.com/@ClearPathMediaTV" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Podcasts</a>
+          <a href="https://ncop.ng/" target="_blank" rel="noopener noreferrer" className="font-label-sm text-label-sm text-primary font-bold hover:underline inline-flex items-center gap-1 bg-primary/10 px-2 py-1 rounded">
+            <span>NCOP (Visit Site)</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
           <Link to="/partner" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Contact</Link>
           <Link to="/about" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Editorial Policy</Link>
           <Link to="/privacy-policy" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hover:underline decoration-primary">Privacy Policy</Link>
