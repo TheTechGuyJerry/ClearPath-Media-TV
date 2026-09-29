@@ -55,7 +55,7 @@ export default function AdminVideos() {
 
   const [videoSearchTerm, setVideoSearchTerm] = useState('');
   const [videoSelectedProgId, setVideoSelectedProgId] = useState('all');
-  const [videoSortBy, setVideoSortBy] = useState<'default' | 'most-views' | 'most-shares' | 'newest'>('default');
+  const [videoSortBy, setVideoSortBy] = useState<'default' | 'most-views' | 'most-downloads' | 'most-shares' | 'newest'>('default');
 
   // Inline Editing States
   const [videoInlineEditId, setVideoInlineEditId] = useState<string | null>(null);

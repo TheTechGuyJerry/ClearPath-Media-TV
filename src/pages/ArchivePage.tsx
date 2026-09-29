@@ -265,7 +265,7 @@ export default function ArchivePage() {
                       )}
 
                       <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3">
-                        {article.excerpt || article.quote || article.summary || article.content}
+                        {article.excerpt || article.quote || (article as any).summary || article.content}
                       </p>
                     </div>
                   </div>

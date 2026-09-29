@@ -61,7 +61,7 @@ export const InFocusSection: React.FC<InFocusSectionProps> = ({ stories }) => {
                 {/* Content */}
                 <div className="p-6">
                   <h3 className="text-xl font-bold font-serif text-on-surface leading-tight mb-2.5 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                    <Link to={getArticleUrl(article, 'in-focus')}>
+                    <Link to={`${getArticleUrl(article, 'in-focus')}#story-${goldNumber}`}>
                       {article.title}
                     </Link>
                   </h3>
@@ -88,7 +88,7 @@ export const InFocusSection: React.FC<InFocusSectionProps> = ({ stories }) => {
                   {article.publishedAt}
                 </span>
                 <Link
-                  to={getArticleUrl(article, 'in-focus')}
+                  to={`${getArticleUrl(article, 'in-focus')}#story-${goldNumber}`}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 uppercase tracking-wider group/link"
                 >
                   <span>Read More</span>

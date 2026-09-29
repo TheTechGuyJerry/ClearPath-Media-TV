@@ -100,7 +100,7 @@ export default function InFocusPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
                   {/* Focus Item 1 */}
                   <Link
-                    to={getArticleUrl(latestDoc, 'in-focus')}
+                    to={`${getArticleUrl(latestDoc, 'in-focus')}#story-1`}
                     className="flex items-start gap-4 p-5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors border border-outline-variant/50 group/item"
                   >
                     <div className="bg-[#1e293b] text-[#facc15] font-serif font-black text-xl w-10 h-10 flex items-center justify-center rounded-lg shrink-0 shadow-inner">
@@ -119,7 +119,7 @@ export default function InFocusPage() {
                   {/* Focus Item 2 (if available) */}
                   {latestDoc.title2 ? (
                     <Link
-                      to={getArticleUrl(latestDoc, 'in-focus')}
+                      to={`${getArticleUrl(latestDoc, 'in-focus')}#story-2`}
                       className="flex items-start gap-4 p-5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors border border-outline-variant/50 group/item"
                     >
                       <div className="bg-[#1e293b] text-[#facc15] font-serif font-black text-xl w-10 h-10 flex items-center justify-center rounded-lg shrink-0 shadow-inner">
@@ -143,7 +143,7 @@ export default function InFocusPage() {
 
                 <div className="flex justify-end pt-2 border-t border-outline-variant/40">
                   <Link
-                    to={getArticleUrl(latestDoc, 'in-focus')}
+                    to={`${getArticleUrl(latestDoc, 'in-focus')}#story-1`}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer"
                   >
                     <span>Read Story</span>

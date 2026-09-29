@@ -16,6 +16,8 @@ export default function ArticlePage() {
   const [article, setArticle] = useState<ClearPathDailyArticle | null>(null);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedStory1, setCopiedStory1] = useState(false);
+  const [copiedStory2, setCopiedStory2] = useState(false);
   const [loading, setLoading] = useState(true);
   const currentUrl = window.location.href;
 
@@ -24,6 +26,32 @@ export default function ArticlePage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
+
+  const handleCopyStoryLink = (storyId: string, isStory2 = false) => {
+    const url = `${window.location.origin}${window.location.pathname}#${storyId}`;
+    navigator.clipboard.writeText(url);
+    if (isStory2) {
+      setCopiedStory2(true);
+      setTimeout(() => setCopiedStory2(false), 2500);
+    } else {
+      setCopiedStory1(true);
+      setTimeout(() => setCopiedStory1(false), 2500);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading && article) {
+      const hash = window.location.hash;
+      if (hash) {
+        const el = document.getElementById(hash.replace('#', ''));
+        if (el) {
+          setTimeout(() => {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
+        }
+      }
+    }
+  }, [loading, article]);
 
   useEffect(() => {
     async function fetchArticle() {
@@ -350,15 +378,25 @@ export default function ArticlePage() {
             {article.categorySlug === 'in-focus' && (article.title1 || article.content1) ? (
               <div className="space-y-12">
                 {/* Focus Story 1 */}
-                <section className="space-y-4">
+                <section id="story-1" className="space-y-4 scroll-mt-24">
                   {article.title1 && (
-                    <div className="flex items-start gap-3">
-                      <span className="shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary font-mono font-bold text-sm flex items-center justify-center">
-                        01
-                      </span>
-                      <h2 className="text-2xl sm:text-3xl font-bold font-serif text-on-surface">
-                        {article.title1}
-                      </h2>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary font-mono font-bold text-sm flex items-center justify-center">
+                          01
+                        </span>
+                        <h2 className="text-2xl sm:text-3xl font-bold font-serif text-on-surface">
+                          {article.title1}
+                        </h2>
+                      </div>
+                      <button
+                        onClick={() => handleCopyStoryLink('story-1', false)}
+                        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg transition-colors border border-outline-variant/60 cursor-pointer"
+                        title="Copy direct link to Story 01"
+                      >
+                        {copiedStory1 ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-primary" />}
+                        <span>{copiedStory1 ? 'Copied Link' : 'Share Story'}</span>
+                      </button>
                     </div>
                   )}
                   {article.excerpt1 && (
@@ -373,15 +411,25 @@ export default function ArticlePage() {
 
                 {/* Focus Story 2 */}
                 {(article.title2 || article.content2) && (
-                  <section className="space-y-4 pt-8 border-t border-outline-variant/60">
+                  <section id="story-2" className="space-y-4 pt-8 border-t border-outline-variant/60 scroll-mt-24">
                     {article.title2 && (
-                      <div className="flex items-start gap-3">
-                        <span className="shrink-0 w-8 h-8 rounded-full bg-secondary/10 text-secondary font-mono font-bold text-sm flex items-center justify-center">
-                          02
-                        </span>
-                        <h2 className="text-2xl sm:text-3xl font-bold font-serif text-on-surface">
-                          {article.title2}
-                        </h2>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <span className="shrink-0 w-8 h-8 rounded-full bg-secondary/10 text-secondary font-mono font-bold text-sm flex items-center justify-center">
+                            02
+                          </span>
+                          <h2 className="text-2xl sm:text-3xl font-bold font-serif text-on-surface">
+                            {article.title2}
+                          </h2>
+                        </div>
+                        <button
+                          onClick={() => handleCopyStoryLink('story-2', true)}
+                          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg transition-colors border border-outline-variant/60 cursor-pointer"
+                          title="Copy direct link to Story 02"
+                        >
+                          {copiedStory2 ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-secondary" />}
+                          <span>{copiedStory2 ? 'Copied Link' : 'Share Story'}</span>
+                        </button>
                       </div>
                     )}
                     {article.excerpt2 && (
