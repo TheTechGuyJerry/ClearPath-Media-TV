@@ -6,7 +6,7 @@ import { Play, Clock, ArrowRight } from 'lucide-react';
 import { ClearPathDailyArticle } from '../../types';
 import { ProgrammeVideo } from '../../types';
 import { slugify } from '../../services/publicContentService';
-import { calculateReadTime } from '../../utils/formatters';
+import { calculateReadTime, stripHtml } from '../../utils/formatters';
 
 interface LatestStoryItem {
   id: string;
@@ -70,7 +70,7 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-extrabold text-[#17181a] dark:text-on-surface leading-tight text-balance group-hover:text-primary transition-colors">
               <Link to={mainAnalysis ? getArticleUrl(mainAnalysis as any, 'todays-brief') : '#'}>
-                {mainAnalysis?.title || 'No Featured Analysis available.'}
+                {stripHtml(mainAnalysis?.title || 'No Featured Analysis available.')}
               </Link>
             </h2>
 
@@ -79,7 +79,7 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
                 <Link to={mainAnalysis ? getArticleUrl(mainAnalysis as any, 'todays-brief') : '#'}>
                   <img
                     src={mainAnalysis.coverImage}
-                    alt={mainAnalysis?.title || 'Placeholder'}
+                    alt={stripHtml(mainAnalysis?.title || 'Placeholder')}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                     loading="lazy"
                   />
@@ -87,7 +87,7 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
               </div>
             )}
             <p className="text-sm sm:text-base text-slate-600 dark:text-on-surface-variant leading-relaxed max-w-3xl line-clamp-3">
-              {mainAnalysis?.excerpt || 'No featured analysis is available at the moment.'}
+              {stripHtml(mainAnalysis?.excerpt || mainAnalysis?.content || 'No featured analysis is available at the moment.')}
             </p>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-slate-500 dark:text-on-surface-variant mb-5">

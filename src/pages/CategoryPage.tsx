@@ -1,4 +1,5 @@
 import { getArticleUrl } from '../utils/urlUtils';
+import { stripHtml } from '../utils/formatters';
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FolderOpen, Search, ArrowRight, Calendar, User } from 'lucide-react';
@@ -100,11 +101,11 @@ export default function CategoryPage() {
                   <div className="p-6">
                     <h3 className="text-xl font-bold font-serif text-on-surface leading-tight mb-2 group-hover:text-primary transition-colors">
                       <Link to={getArticleUrl(article)}>
-                        {article.title}
+                        {stripHtml(article.title)}
                       </Link>
                     </h3>
                     <p className="text-sm text-on-surface-variant leading-relaxed mb-4">
-                      {article.excerpt}
+                      {stripHtml(article.excerpt || (article as any).content)}
                     </p>
                   </div>
                 </div>

@@ -10,6 +10,7 @@ import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, limit, doc, getDoc } from 'firebase/firestore';
 import { ClearPathDailyArticle } from '../types';
 import { matchesArticle, slugify } from '../utils/slugUtils';
+import { stripHtml } from '../utils/formatters';
 
 export default function ArticlePage() {
   const { slug, menuSlug } = useParams<{ slug: string; menuSlug?: string }>();
@@ -324,7 +325,7 @@ export default function ArticlePage() {
                   Executive Summary
                 </span>
                 <p className="text-base sm:text-lg text-on-surface font-serif font-medium leading-relaxed italic">
-                  "{article.excerpt}"
+                  "{stripHtml(article.excerpt)}"
                 </p>
               </div>
             )}
@@ -401,7 +402,7 @@ export default function ArticlePage() {
                   )}
                   {article.excerpt1 && (
                     <p className="text-base sm:text-lg text-on-surface-variant font-medium leading-relaxed italic pl-0 sm:pl-11">
-                      {article.excerpt1}
+                      {stripHtml(article.excerpt1)}
                     </p>
                   )}
                   <div className="pt-2">
@@ -434,7 +435,7 @@ export default function ArticlePage() {
                     )}
                     {article.excerpt2 && (
                       <p className="text-base sm:text-lg text-on-surface-variant font-medium leading-relaxed italic pl-0 sm:pl-11">
-                        {article.excerpt2}
+                        {stripHtml(article.excerpt2)}
                       </p>
                     )}
                     <div className="pt-2">

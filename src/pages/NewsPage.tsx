@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronRight, ArrowLeft, Calendar, User, Share2, Clock, Mail } from 'lucide-react';
 import SEO from '../components/SEO';
 import { PUBLICATIONS_DATA, NewsArticle } from '../data/news_articles';
+import { stripHtml } from '../utils/formatters';
 
 export default function NewsPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -174,7 +175,7 @@ export default function NewsPage() {
 
                       {/* Article Excerpt */}
                       <p className="text-on-surface-variant text-sm sm:text-base leading-relaxed mb-4">
-                        {article.excerpt}
+                        {stripHtml(article.excerpt || article.content)}
                       </p>
 
                       {/* Action Links */}

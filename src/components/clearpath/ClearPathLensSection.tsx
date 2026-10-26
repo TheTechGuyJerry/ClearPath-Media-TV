@@ -32,7 +32,7 @@ export const ClearPathLensSection: React.FC<ClearPathLensSectionProps> = ({ lens
           to="/clearpath-lens"
           className="text-xs font-bold text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
         >
-          Explore ClearPath Lens Archive <ArrowRight className="w-3.5 h-3.5" />
+          Explore The Lens <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 

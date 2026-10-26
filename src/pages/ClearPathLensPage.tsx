@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ExternalLink, ArrowRight, BookOpen, Layers, Clock } from 'lucide-react';
+import { Search, ExternalLink, ArrowRight, BookOpen, Layers, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import SEO from '../components/SEO';
 import { AthenaEvidenceCard } from '../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../components/clearpath/ClearPathDailySidebar';
@@ -8,9 +8,11 @@ import { SubscriptionSection } from '../components/clearpath/SubscriptionSection
 import { RichContentRenderer } from '../components/common/RichContentRenderer';
 import { useClearPathArticles } from '../hooks/useClearPathArticles';
 import { getArticleUrl } from '../utils/urlUtils';
+import { stripHtml } from '../utils/formatters';
 
 export default function ClearPathLensPage() {
   const { articles, loading } = useClearPathArticles('clearpath-lens');
+  const [isOpenMore, setIsOpenMore] = useState(false);
 
   if (loading) {
     return (
@@ -148,19 +150,13 @@ export default function ClearPathLensPage() {
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-primary" />
                     <h2 className="text-xl font-bold font-serif text-on-surface uppercase tracking-wide">
-                      The Lens Archive
+                      Previous Lens Briefings
                     </h2>
                   </div>
-                  <Link
-                    to="/archive?category=clearpath-lens"
-                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
-                  >
-                    Full Archive <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {previousLenses.map((item) => (
+                  {(isOpenMore ? previousLenses : previousLenses.slice(0, 5)).map((item) => (
                     <div key={item.id} className="group bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/60 rounded-xl p-5 transition-all flex flex-col justify-between">
                       <div>
                         <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider mb-1.5 block">
@@ -168,12 +164,12 @@ export default function ClearPathLensPage() {
                         </span>
                         <h3 className="font-serif font-bold text-base text-on-surface leading-snug mb-3 group-hover:text-primary transition-colors">
                           <Link to={getArticleUrl(item, 'clearpath-lens')}>
-                            {item.title}
+                            {stripHtml(item.title)}
                           </Link>
                         </h3>
                         {item.excerpt && (
                           <p className="text-xs text-on-surface-variant line-clamp-2 mb-4 leading-relaxed">
-                            {item.excerpt}
+                            {stripHtml(item.excerpt || item.content)}
                           </p>
                         )}
                       </div>
@@ -186,6 +182,19 @@ export default function ClearPathLensPage() {
                     </div>
                   ))}
                 </div>
+
+                {previousLenses.length > 5 && (
+                  <div className="mt-8 text-center pt-4 border-t border-outline-variant/40">
+                    <button
+                      type="button"
+                      onClick={() => setIsOpenMore(!isOpenMore)}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer border border-outline-variant/60 active:scale-95"
+                    >
+                      <span>{isOpenMore ? 'Show Less' : 'Open More'}</span>
+                      {isOpenMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
               </section>
             )}
           </>

@@ -27,7 +27,7 @@ import {
 import LiteYouTube from '../components/LiteYouTube';
 import SEO from '../components/SEO';
 import { motion } from 'motion/react';
-import { formatFirestoreDate } from '../utils/formatters';
+import { formatFirestoreDate, stripHtml } from '../utils/formatters';
 import { RichContentRenderer } from '../components/common/RichContentRenderer';
 import { trackBriefingView, trackBriefingDownload, trackBriefingShare } from '../services/metricsTracker';
 
@@ -608,7 +608,7 @@ export default function Briefing() {
                         </h2>
                         
                         <p className="text-on-surface-variant text-sm md:text-base leading-relaxed">
-                          {latestArticle.excerpt}
+                          {stripHtml(latestArticle.excerpt || latestArticle.content)}
                         </p>
                       </div>
 
@@ -708,7 +708,7 @@ export default function Briefing() {
                                 {b.title}
                               </h4>
                               <p className="text-xs text-on-surface-variant line-clamp-4 leading-relaxed font-semibold">
-                                {b.excerpt}
+                                {stripHtml(b.excerpt || b.content)}
                               </p>
                             </div>
                             <div className="flex items-center justify-between pt-2 border-t border-outline-variant/60">

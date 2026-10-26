@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Quote, ExternalLink, ArrowRight, BookOpen, UserCheck, Shield, MapPin, Landmark } from 'lucide-react';
+import { Quote, ExternalLink, ArrowRight, BookOpen, UserCheck, Shield, MapPin, Landmark, ChevronDown, ChevronUp } from 'lucide-react';
 import SEO from '../../components/SEO';
 import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDailySidebar';
@@ -11,6 +11,7 @@ import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 
 export default function ThePublicRecordPage() {
   const { articles, loading } = useClearPathArticles('the-public-record');
+  const [isOpenMore, setIsOpenMore] = useState(false);
 
   if (loading) {
     return (
@@ -173,16 +174,10 @@ export default function ThePublicRecordPage() {
                           Public Record Ledger
                         </h2>
                       </div>
-                      <Link
-                        to="/archive?category=the-public-record"
-                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
-                      >
-                        Ledger Archive <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
                     </div>
 
                     <div className="space-y-6">
-                      {previousRecords.map((item) => (
+                      {(isOpenMore ? previousRecords : previousRecords.slice(0, 5)).map((item) => (
                         <div key={item.id} className="group bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/60 rounded-xl p-5 transition-all relative overflow-hidden">
                           <Quote className="absolute top-4 right-4 w-12 h-12 text-surface-container-high rotate-12 -z-0" />
                           
@@ -217,6 +212,19 @@ export default function ThePublicRecordPage() {
                         </div>
                       ))}
                     </div>
+
+                    {previousRecords.length > 5 && (
+                      <div className="mt-8 text-center pt-4 border-t border-outline-variant/40">
+                        <button
+                          type="button"
+                          onClick={() => setIsOpenMore(!isOpenMore)}
+                          className="inline-flex items-center gap-2 px-6 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer border border-outline-variant/60 active:scale-95"
+                        >
+                          <span>{isOpenMore ? 'Show Less' : 'Open More'}</span>
+                          {isOpenMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    )}
                   </section>
                 )}
               </div>

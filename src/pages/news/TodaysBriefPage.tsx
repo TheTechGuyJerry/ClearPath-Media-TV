@@ -1,9 +1,9 @@
-import { calculateReadTime } from '../../utils/formatters';
+import { calculateReadTime, stripHtml } from '../../utils/formatters';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { getArticleUrl } from '../../utils/urlUtils';
 import { Link } from 'react-router-dom';
-import { Newspaper, Calendar, Clock, ArrowRight, ShieldAlert, Sparkles, BookOpen, Share2 } from 'lucide-react';
+import { Newspaper, Calendar, Clock, ArrowRight, ShieldAlert, Sparkles, BookOpen, Share2, ChevronDown, ChevronUp } from 'lucide-react';
 import SEO from '../../components/SEO';
 import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDailySidebar';
@@ -12,6 +12,7 @@ import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 
 export default function TodaysBriefPage() {
   const { articles, loading } = useClearPathArticles('todays-brief');
+  const [isOpenMore, setIsOpenMore] = useState(false);
   
   if (loading) {
     return (
@@ -113,16 +114,10 @@ export default function TodaysBriefPage() {
                           Latest from ClearPath Daily
                         </h2>
                       </div>
-                      <Link
-                        to="/archive?category=todays-brief"
-                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
-                      >
-                        All ClearPath Daily Archive <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {previousBriefs.map((item) => (
+                      {(isOpenMore ? previousBriefs : previousBriefs.slice(0, 5)).map((item) => (
                         <div
                           key={item.id}
                           className="bg-surface-container-low hover:bg-surface-container border border-outline-variant/60 rounded-xl p-5 flex flex-col justify-between transition-all group"
@@ -136,11 +131,11 @@ export default function TodaysBriefPage() {
                             </div>
                             <h3 className="font-serif font-bold text-base text-on-surface group-hover:text-primary transition-colors leading-snug mb-2">
                               <Link to={getArticleUrl(item, item.categorySlug)}>
-                                {item.title}
+                                {stripHtml(item.title)}
                               </Link>
                             </h3>
                             <p className="text-xs text-on-surface-variant line-clamp-3 leading-relaxed">
-                              {item.excerpt}
+                              {stripHtml(item.excerpt || item.content)}
                             </p>
                           </div>
                           <div className="pt-4 mt-4 border-t border-outline-variant/40 flex items-center justify-between">
@@ -154,6 +149,19 @@ export default function TodaysBriefPage() {
                         </div>
                       ))}
                     </div>
+
+                    {previousBriefs.length > 5 && (
+                      <div className="mt-8 text-center pt-4 border-t border-outline-variant/40">
+                        <button
+                          type="button"
+                          onClick={() => setIsOpenMore(!isOpenMore)}
+                          className="inline-flex items-center gap-2 px-6 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer border border-outline-variant/60 active:scale-95"
+                        >
+                          <span>{isOpenMore ? 'Show Less' : 'Open More'}</span>
+                          {isOpenMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    )}
                   </section>
                 )}
               </div>

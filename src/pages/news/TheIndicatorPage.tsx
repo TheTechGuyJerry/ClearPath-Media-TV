@@ -1,15 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, TrendingUp, ExternalLink, ArrowRight, BookOpen, Database } from 'lucide-react';
+import { BarChart3, TrendingUp, ExternalLink, ArrowRight, BookOpen, Database, ChevronDown, ChevronUp } from 'lucide-react';
 import SEO from '../../components/SEO';
 import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDailySidebar';
 import { SubscriptionSection } from '../../components/clearpath/SubscriptionSection';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
+import { stripHtml } from '../../utils/formatters';
 
 export default function TheIndicatorPage() {
   const { articles, loading } = useClearPathArticles('the-indicator');
+  const [isOpenMore, setIsOpenMore] = useState(false);
 
   if (loading) {
     return (
@@ -79,7 +81,7 @@ export default function TheIndicatorPage() {
                 <div className="lg:col-span-7 space-y-6 flex flex-col justify-center">
                   <div>
                     <p className="text-base sm:text-lg text-on-surface-variant font-medium leading-relaxed">
-                      {currentIndicator.excerpt}
+                      {stripHtml(currentIndicator.excerpt || currentIndicator.content)}
                     </p>
                   </div>
                 </div>
@@ -99,16 +101,10 @@ export default function TheIndicatorPage() {
                           Indicator Log
                         </h2>
                       </div>
-                      <Link
-                        to="/archive?category=the-indicator"
-                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
-                      >
-                        Full Data Archive <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
                     </div>
 
                     <div className="space-y-6">
-                      {previousIndicators.map((item) => (
+                      {(isOpenMore ? previousIndicators : previousIndicators.slice(0, 5)).map((item) => (
                         <div key={item.id} className="group bg-surface-container-low hover:bg-surface-container border border-outline-variant/60 rounded-2xl p-5 sm:p-6 transition-all flex flex-col sm:flex-row gap-6 sm:items-center">
                           {/* Number Bubble */}
                           <div className="shrink-0 flex items-center justify-center bg-white border-2 border-emerald-100 rounded-xl w-24 h-24 sm:w-28 sm:h-28 shadow-sm group-hover:border-emerald-300 transition-colors">
@@ -125,18 +121,31 @@ export default function TheIndicatorPage() {
                               </span>
                             </div>
                             <h3 className="font-serif font-bold text-lg text-on-surface leading-tight">
-                              {item.title}
+                              {stripHtml(item.title)}
                             </h3>
                             <p className="text-xs text-on-surface-variant leading-relaxed">
-                              {item.excerpt}
+                              {stripHtml(item.excerpt || item.content)}
                             </p>
                             <p className="text-xs font-medium text-emerald-800 leading-relaxed mt-2 pt-2 border-t border-outline-variant/40">
-                              <span className="font-bold">Impact:</span> {item.whyItMatters}
+                              <span className="font-bold">Impact:</span> {stripHtml(item.whyItMatters)}
                             </p>
                           </div>
                         </div>
                       ))}
                     </div>
+
+                    {previousIndicators.length > 5 && (
+                      <div className="mt-8 text-center pt-4 border-t border-outline-variant/40">
+                        <button
+                          type="button"
+                          onClick={() => setIsOpenMore(!isOpenMore)}
+                          className="inline-flex items-center gap-2 px-6 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer border border-outline-variant/60 active:scale-95"
+                        >
+                          <span>{isOpenMore ? 'Show Less' : 'Open More'}</span>
+                          {isOpenMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    )}
                   </section>
                 )}
               </div>

@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Radio, ArrowRight, BookOpen, Calendar, AlertCircle } from 'lucide-react';
+import { Radio, ArrowRight, BookOpen, Calendar, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import SEO from '../../components/SEO';
 import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDailySidebar';
@@ -10,6 +10,7 @@ import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 
 export default function SignalsToWatchPage() {
   const { articles, loading } = useClearPathArticles('signals-to-watch');
+  const [isOpenMore, setIsOpenMore] = useState(false);
 
   if (loading) {
     return (
@@ -55,7 +56,7 @@ export default function SignalsToWatchPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Main Content Column */}
               <div className="lg:col-span-8 space-y-6">
-                {articles.map((item, index) => (
+                {(isOpenMore ? articles : articles.slice(0, 5)).map((item, index) => (
                   <section 
                     key={item.id} 
                     className={`bg-surface-bright border ${index === 0 ? 'border-indigo-200 shadow-md' : 'border-outline-variant shadow-sm'} rounded-2xl p-6 sm:p-8 relative overflow-hidden transition-all hover:border-indigo-300 group space-y-8`}
@@ -135,6 +136,19 @@ export default function SignalsToWatchPage() {
                     )}
                   </section>
                 ))}
+
+                {articles.length > 5 && (
+                  <div className="mt-8 text-center pt-4 border-t border-outline-variant/40">
+                    <button
+                      type="button"
+                      onClick={() => setIsOpenMore(!isOpenMore)}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer border border-outline-variant/60 active:scale-95"
+                    >
+                      <span>{isOpenMore ? 'Show Less' : 'Open More'}</span>
+                      {isOpenMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Sidebar Column */}

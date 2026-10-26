@@ -1,5 +1,5 @@
-import React from 'react';
-import { Archive, Filter, ArrowRight, Calendar, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Archive, Filter, ArrowRight, Calendar, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { getArticleUrl } from '../utils/urlUtils';
 import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '../components/SEO';
@@ -7,10 +7,16 @@ import { PAST_DAILY_EDITIONS, SAMPLE_DAILY_ARTICLES, ALL_CATEGORIES } from '../d
 import { SubscriptionSection } from '../components/clearpath/SubscriptionSection';
 import { useClearPathArticles } from '../hooks/useClearPathArticles';
 import { ClearPathDailyArticle } from '../types';
+import { stripHtml } from '../utils/formatters';
 
 export default function ArchivePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCategory = searchParams.get('category') || 'all';
+  const [isOpenMore, setIsOpenMore] = useState(false);
+
+  useEffect(() => {
+    setIsOpenMore(false);
+  }, [selectedCategory]);
 
   // Fetch real articles from Firestore
   const { articles: dbArticles, loading } = useClearPathArticles(
@@ -212,80 +218,95 @@ export default function ArchivePage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {displayArticles.map((article: ClearPathDailyArticle) => {
-              const artCategorySlug = article.categorySlug || selectedCategory;
-              const articleUrl = getArticleUrl(article, artCategorySlug);
-              const displayDate = article.publishedAt || article.signalDateOrDay || 'Published';
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {(isOpenMore ? displayArticles : displayArticles.slice(0, 5)).map((article: ClearPathDailyArticle) => {
+                const artCategorySlug = article.categorySlug || selectedCategory;
+                const articleUrl = getArticleUrl(article, artCategorySlug);
+                const displayDate = article.publishedAt || article.signalDateOrDay || 'Published';
 
-              return (
-                <div
-                  key={article.id}
-                  className="bg-surface-bright border border-outline-variant rounded-2xl overflow-hidden shadow-2xs flex flex-col justify-between hover:border-primary/40 transition-all group"
-                >
-                  <div>
-                    {article.coverImage ? (
-                      <div className="relative h-48 overflow-hidden bg-surface-container">
-                        <img
-                          src={article.coverImage}
-                          alt={article.title || 'Publication Cover'}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                        <div className="absolute top-3 left-3 bg-surface-bright/90 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider text-primary shadow-xs">
-                          {article.category || currentMeta.badge.replace(' ARCHIVE', '')}
+                return (
+                  <div
+                    key={article.id}
+                    className="bg-surface-bright border border-outline-variant rounded-2xl overflow-hidden shadow-2xs flex flex-col justify-between hover:border-primary/40 transition-all group"
+                  >
+                    <div>
+                      {article.coverImage ? (
+                        <div className="relative h-48 overflow-hidden bg-surface-container">
+                          <img
+                            src={article.coverImage}
+                            alt={article.title || 'Publication Cover'}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                          <div className="absolute top-3 left-3 bg-surface-bright/90 backdrop-blur-md px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider text-primary shadow-xs">
+                            {article.category || currentMeta.badge.replace(' ARCHIVE', '')}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="px-6 pt-5 flex items-center justify-between border-b border-outline-variant/40 pb-3">
-                        <span className="bg-primary/10 text-primary px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
-                          {article.category || currentMeta.badge.replace(' ARCHIVE', '')}
-                        </span>
-                        <span className="text-[11px] font-mono text-on-surface-variant">{displayDate}</span>
-                      </div>
-                    )}
-
-                    <div className="p-6 space-y-2">
-                      {article.coverImage && (
-                        <div className="text-[11px] font-mono text-on-surface-variant">
-                          {displayDate}
+                      ) : (
+                        <div className="px-6 pt-5 flex items-center justify-between border-b border-outline-variant/40 pb-3">
+                          <span className="bg-primary/10 text-primary px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
+                            {article.category || currentMeta.badge.replace(' ARCHIVE', '')}
+                          </span>
+                          <span className="text-[11px] font-mono text-on-surface-variant">{displayDate}</span>
                         </div>
                       )}
-                      
-                      <h3 className="text-xl font-bold font-serif text-on-surface leading-tight group-hover:text-primary transition-colors">
-                        <Link to={articleUrl}>
-                          {article.indicatorNumber ? `Indicator: ${article.indicatorNumber}` : (article.title || article.quote || 'Untitled Publication')}
-                        </Link>
-                      </h3>
 
-                      {article.speakerName && (
-                        <p className="text-xs font-semibold text-primary">
-                          — {article.speakerName} {article.speakerTitle ? `(${article.speakerTitle})` : ''}
+                      <div className="p-6 space-y-2">
+                        {article.coverImage && (
+                          <div className="text-[11px] font-mono text-on-surface-variant">
+                            {displayDate}
+                          </div>
+                        )}
+                        
+                        <h3 className="text-xl font-bold font-serif text-on-surface leading-tight group-hover:text-primary transition-colors">
+                          <Link to={articleUrl}>
+                            {article.indicatorNumber ? `Indicator: ${stripHtml(article.indicatorNumber)}` : stripHtml(article.title || article.quote || 'Untitled Publication')}
+                          </Link>
+                        </h3>
+
+                        {article.speakerName && (
+                          <p className="text-xs font-semibold text-primary">
+                            — {stripHtml(article.speakerName)} {article.speakerTitle ? `(${stripHtml(article.speakerTitle)})` : ''}
+                          </p>
+                        )}
+
+                        <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3">
+                          {stripHtml(article.excerpt || article.quote || (article as any).summary || article.content)}
                         </p>
-                      )}
+                      </div>
+                    </div>
 
-                      <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3">
-                        {article.excerpt || article.quote || (article as any).summary || article.content}
-                      </p>
+                    <div className="px-6 pb-6 pt-4 mt-auto flex items-center justify-between border-t border-outline-variant/40 text-xs text-on-surface-variant">
+                      <span className="font-mono text-[11px]">
+                        {article.readingTime || (article.status === 'archived' ? 'Archived Record' : 'Verified Entry')}
+                      </span>
+                      <Link
+                        to={articleUrl}
+                        className="inline-flex items-center gap-1 font-bold text-primary uppercase tracking-wider hover:underline"
+                      >
+                        <span>Read Analysis</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  <div className="px-6 pb-6 pt-4 mt-auto flex items-center justify-between border-t border-outline-variant/40 text-xs text-on-surface-variant">
-                    <span className="font-mono text-[11px]">
-                      {article.readingTime || (article.status === 'archived' ? 'Archived Record' : 'Verified Entry')}
-                    </span>
-                    <Link
-                      to={articleUrl}
-                      className="inline-flex items-center gap-1 font-bold text-primary uppercase tracking-wider hover:underline"
-                    >
-                      <span>Read Analysis</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+            {displayArticles.length > 5 && (
+              <div className="mt-8 text-center pt-4 border-t border-outline-variant/40">
+                <button
+                  type="button"
+                  onClick={() => setIsOpenMore(!isOpenMore)}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer border border-outline-variant/60 active:scale-95"
+                >
+                  <span>{isOpenMore ? 'Show Less' : 'Open More'}</span>
+                  {isOpenMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         <SubscriptionSection />

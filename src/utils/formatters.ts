@@ -105,9 +105,45 @@ export function adjustObjectFormatting<T>(obj: T): T {
   return copy as T;
 }
 
+export function stripHtml(input: any): string {
+  if (input === null || input === undefined) return '';
+  const str = String(input);
+  if (!str.includes('<') && !str.includes('&')) {
+    return str.trim();
+  }
+
+  // Insert space after block-level closing tags or break tags to avoid glued words
+  const spaced = str
+    .replace(/<\/(p|div|h[1-6]|li|blockquote|tr|td|section|article)>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, ' ');
+
+  if (typeof DOMParser !== 'undefined') {
+    try {
+      const doc = new DOMParser().parseFromString(spaced, 'text/html');
+      const text = doc.body.textContent || '';
+      return text.replace(/\s+/g, ' ').trim();
+    } catch {
+      // Fallback below
+    }
+  }
+
+  return spaced
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function calculateReadTime(text: string = ''): string {
   if (!text) return '3 mins read';
-  const words = text.trim().split(/\s+/).length;
+  const clean = stripHtml(text);
+  const words = clean.trim().split(/\s+/).filter(Boolean).length;
   const mins = Math.max(1, Math.ceil(words / 200));
   return `${mins} mins read`;
 }
+

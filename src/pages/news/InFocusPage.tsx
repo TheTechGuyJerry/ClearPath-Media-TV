@@ -1,16 +1,18 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { getArticleUrl } from '../../utils/urlUtils';
 import { Link } from 'react-router-dom';
-import { Target, Clock, ArrowRight, BookOpen, Layers, Sparkles } from 'lucide-react';
+import { Target, Clock, ArrowRight, BookOpen, Layers, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import SEO from '../../components/SEO';
 import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCard';
 import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDailySidebar';
 import { SubscriptionSection } from '../../components/clearpath/SubscriptionSection';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
+import { stripHtml } from '../../utils/formatters';
 
 export default function InFocusPage() {
   const { articles, loading } = useClearPathArticles('in-focus');
+  const [isOpenMore, setIsOpenMore] = useState(false);
 
   if (loading) {
     return (
@@ -166,16 +168,10 @@ export default function InFocusPage() {
                           More Deep Dives
                         </h2>
                       </div>
-                      <Link
-                        to="/archive?category=in-focus"
-                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
-                      >
-                        In Focus Archive <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
                     </div>
 
                     <div className="space-y-6">
-                      {previousInFocus.map((item) => (
+                      {(isOpenMore ? previousInFocus : previousInFocus.slice(0, 5)).map((item) => (
                         <div key={item.id} className="flex flex-col sm:flex-row gap-5 pb-6 border-b border-outline-variant/60 last:border-0 last:pb-0 group">
                           {item.coverImage && (
                             <div className="w-full sm:w-1/3 aspect-[4/3] rounded-xl overflow-hidden shrink-0 border border-outline-variant">
@@ -194,11 +190,11 @@ export default function InFocusPage() {
                             </div>
                             <h3 className="font-serif font-bold text-lg text-on-surface leading-tight mb-2 group-hover:text-primary transition-colors">
                               <Link to={getArticleUrl(item, 'in-focus')}>
-                                {item.title}
+                                {stripHtml(item.title)}
                               </Link>
                             </h3>
                             <p className="text-sm text-on-surface-variant line-clamp-2 leading-relaxed mb-3">
-                              {item.excerpt}
+                              {stripHtml(item.excerpt || item.content)}
                             </p>
                             <Link
                               to={getArticleUrl(item, 'in-focus')}
@@ -210,6 +206,19 @@ export default function InFocusPage() {
                         </div>
                       ))}
                     </div>
+
+                    {previousInFocus.length > 5 && (
+                      <div className="mt-8 text-center pt-4 border-t border-outline-variant/40">
+                        <button
+                          type="button"
+                          onClick={() => setIsOpenMore(!isOpenMore)}
+                          className="inline-flex items-center gap-2 px-6 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer border border-outline-variant/60 active:scale-95"
+                        >
+                          <span>{isOpenMore ? 'Show Less' : 'Open More'}</span>
+                          {isOpenMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    )}
                   </section>
                 )}
               </div>

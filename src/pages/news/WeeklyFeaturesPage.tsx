@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   BookmarkCheck, 
@@ -8,7 +8,9 @@ import {
   BookOpen, 
   Lightbulb, 
   Eye,
-  Share2
+  Share2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import SEO from '../../components/SEO';
 import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCard';
@@ -17,12 +19,13 @@ import { SubscriptionSection } from '../../components/clearpath/SubscriptionSect
 import { RichContentRenderer } from '../../components/common/RichContentRenderer';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 import { getArticleUrl } from '../../utils/urlUtils';
-import { calculateReadTime } from '../../utils/formatters';
+import { calculateReadTime, stripHtml } from '../../utils/formatters';
 import { matchesArticle, slugify } from '../../utils/slugUtils';
 
 export default function WeeklyFeaturesPage() {
   const { slug } = useParams<{ slug?: string }>();
   const { articles, loading } = useClearPathArticles('weekly-features');
+  const [isOpenMore, setIsOpenMore] = useState(false);
 
   if (loading) {
     return (
@@ -260,19 +263,13 @@ export default function WeeklyFeaturesPage() {
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-primary" />
                     <h2 className="text-xl font-bold font-serif text-on-surface uppercase tracking-wide">
-                      Weekly Features Archive
+                      Previous Weekly Features
                     </h2>
                   </div>
-                  <Link
-                    to="/archive?category=weekly-features"
-                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1 uppercase tracking-wider"
-                  >
-                    Full Archive <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {previousFeatures.map((feature) => (
+                  {(isOpenMore ? previousFeatures : previousFeatures.slice(0, 5)).map((feature) => (
                     <article
                       key={feature.id}
                       className="bg-surface-container-low border border-outline-variant hover:border-primary/40 rounded-xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
@@ -310,11 +307,11 @@ export default function WeeklyFeaturesPage() {
                           </div>
                           <h3 className="text-lg font-bold font-serif text-on-surface group-hover:text-primary transition-colors leading-tight mb-2">
                             <Link to={getArticleUrl(feature, 'weekly-features')}>
-                              {feature.title}
+                              {stripHtml(feature.title)}
                             </Link>
                           </h3>
                           <p className="text-xs text-on-surface-variant line-clamp-3 leading-relaxed">
-                            {feature.executiveSummary || feature.excerpt}
+                            {stripHtml(feature.executiveSummary || feature.excerpt || feature.content)}
                           </p>
                         </div>
                       </div>
@@ -333,6 +330,19 @@ export default function WeeklyFeaturesPage() {
                     </article>
                   ))}
                 </div>
+
+                {previousFeatures.length > 5 && (
+                  <div className="mt-8 text-center pt-4 border-t border-outline-variant/40">
+                    <button
+                      type="button"
+                      onClick={() => setIsOpenMore(!isOpenMore)}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer border border-outline-variant/60 active:scale-95"
+                    >
+                      <span>{isOpenMore ? 'Show Less' : 'Open More'}</span>
+                      {isOpenMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
               </section>
             )}
           </>

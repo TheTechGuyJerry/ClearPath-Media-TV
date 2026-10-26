@@ -3,6 +3,7 @@ import { getArticleUrl } from '../../utils/urlUtils';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Layers } from 'lucide-react';
 import { InFocusStory } from '../../data/clearpath_daily_data';
+import { stripHtml } from '../../utils/formatters';
 
 interface InFocusSectionProps {
   stories: [InFocusStory, InFocusStory];
@@ -62,12 +63,12 @@ export const InFocusSection: React.FC<InFocusSectionProps> = ({ stories }) => {
                 <div className="p-6">
                   <h3 className="text-xl font-bold font-serif text-on-surface leading-tight mb-2.5 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                     <Link to={`${getArticleUrl(article, 'in-focus')}#story-${goldNumber}`}>
-                      {article.title}
+                      {stripHtml(article.title)}
                     </Link>
                   </h3>
 
                   <p className="text-sm text-on-surface-variant leading-relaxed mb-4">
-                    {article.excerpt}
+                    {stripHtml(article.excerpt || article.content)}
                   </p>
 
                   {/* Why it matters */}
@@ -76,7 +77,7 @@ export const InFocusSection: React.FC<InFocusSectionProps> = ({ stories }) => {
                       WHY THIS MATTERS:
                     </span>
                     <span className="text-on-surface font-medium leading-snug">
-                      {article.whyItMatters}
+                      {stripHtml(article.whyItMatters)}
                     </span>
                   </div>
                 </div>

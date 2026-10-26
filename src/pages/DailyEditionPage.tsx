@@ -46,12 +46,6 @@ export default function DailyEditionPage() {
             >
               Read Latest Edition
             </Link>
-            <Link
-              to="/archive?category=daily-editions"
-              className="px-5 py-2.5 bg-surface-container border border-outline-variant text-on-surface font-bold text-xs uppercase tracking-wider rounded-lg"
-            >
-              View Full Archive
-            </Link>
           </div>
         </div>
       </div>
