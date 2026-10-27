@@ -9,6 +9,7 @@ import { RichContentRenderer } from '../components/common/RichContentRenderer';
 import { useClearPathArticles } from '../hooks/useClearPathArticles';
 import { getArticleUrl } from '../utils/urlUtils';
 import { stripHtml } from '../utils/formatters';
+import { ShareButton } from '../components/common/ShareButton';
 
 export default function ClearPathLensPage() {
   const { articles, loading } = useClearPathArticles('clearpath-lens');
@@ -62,15 +63,22 @@ export default function ClearPathLensPage() {
             <article className="bg-surface-bright border border-outline-variant rounded-2xl shadow-sm overflow-hidden">
               {/* Editorial Header (Text & Typography Focus - No Image) */}
               <div className="bg-gradient-to-br from-[#18181b] via-[#232328] to-[#121215] text-white p-6 sm:p-10 md:p-12 border-b border-zinc-800">
-                <div className="flex flex-wrap items-center gap-3 mb-5">
-                  <span className="text-xs font-mono font-bold text-zinc-200 uppercase tracking-wider bg-zinc-800/90 px-3 py-1 rounded-full border border-zinc-700">
-                    CLEARPATH LENS • {currentLens.publishedAt}
-                  </span>
-                  {currentLens.readingTime && (
-                    <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-zinc-400" /> {currentLens.readingTime}
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xs font-mono font-bold text-zinc-200 uppercase tracking-wider bg-zinc-800/90 px-3 py-1 rounded-full border border-zinc-700">
+                      CLEARPATH LENS • {currentLens.publishedAt}
                     </span>
-                  )}
+                    {currentLens.readingTime && (
+                      <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-zinc-400" /> {currentLens.readingTime}
+                      </span>
+                    )}
+                  </div>
+                  <ShareButton
+                    url={getArticleUrl(currentLens, 'clearpath-lens')}
+                    title={currentLens.title}
+                    variant="pill"
+                  />
                 </div>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif text-white leading-tight max-w-4xl text-balance">
                   {currentLens.title}
@@ -173,12 +181,19 @@ export default function ClearPathLensPage() {
                           </p>
                         )}
                       </div>
-                      <Link
-                        to={getArticleUrl(item, 'clearpath-lens')}
-                        className="text-xs font-bold text-secondary hover:text-primary transition-colors inline-flex items-center gap-1 pt-2 border-t border-outline-variant/40"
-                      >
-                        Read Analysis <ArrowRight className="w-3 h-3" />
-                      </Link>
+                      <div className="flex items-center justify-between pt-2 border-t border-outline-variant/40 mt-auto">
+                        <Link
+                          to={getArticleUrl(item, 'clearpath-lens')}
+                          className="text-xs font-bold text-secondary hover:text-primary transition-colors inline-flex items-center gap-1"
+                        >
+                          Read Analysis <ArrowRight className="w-3 h-3" />
+                        </Link>
+                        <ShareButton
+                          url={getArticleUrl(item, 'clearpath-lens')}
+                          title={item.title}
+                          variant="compact"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

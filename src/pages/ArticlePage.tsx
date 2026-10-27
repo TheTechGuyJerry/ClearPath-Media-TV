@@ -11,6 +11,7 @@ import { collection, query, where, getDocs, limit, doc, getDoc } from 'firebase/
 import { ClearPathDailyArticle } from '../types';
 import { matchesArticle, slugify } from '../utils/slugUtils';
 import { stripHtml } from '../utils/formatters';
+import { SAMPLE_DAILY_ARTICLES } from '../data/clearpath_daily_data';
 
 export default function ArticlePage() {
   const { slug, menuSlug } = useParams<{ slug: string; menuSlug?: string }>();
@@ -22,15 +23,40 @@ export default function ArticlePage() {
   const [loading, setLoading] = useState(true);
   const currentUrl = window.location.href;
 
+  const copyText = (text: string) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  };
+
+  const fallbackCopy = (text: string) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    } catch {
+      // silent
+    }
+  };
+
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(currentUrl);
+    copyText(currentUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
   const handleCopyStoryLink = (storyId: string, isStory2 = false) => {
     const url = `${window.location.origin}${window.location.pathname}#${storyId}`;
-    navigator.clipboard.writeText(url);
+    copyText(url);
     if (isStory2) {
       setCopiedStory2(true);
       setTimeout(() => setCopiedStory2(false), 2500);
@@ -139,6 +165,16 @@ export default function ArticlePage() {
             return;
           }
         } catch {}
+
+        // 5. Check SAMPLE_DAILY_ARTICLES fallback
+        const sampleMatch = SAMPLE_DAILY_ARTICLES.find(
+          (a) => matchesArticle(a, slug) || (cleanSlug ? matchesArticle(a, cleanSlug) : false)
+        );
+        if (sampleMatch) {
+          setArticle(sampleMatch as unknown as ClearPathDailyArticle);
+          setLoading(false);
+          return;
+        }
 
         setArticle(null);
       } catch (e) {
@@ -472,6 +508,62 @@ export default function ArticlePage() {
                   <section className="pt-6 border-t border-outline-variant/60">
                     <RichContentRenderer content={article.content} />
                   </section>
+                )}
+              </div>
+            ) : (article.categorySlug === 'signals-to-watch' || article.signalEvent1) ? (
+              <div className="space-y-8">
+                {/* Event 1 */}
+                <div className="bg-surface-container-low border border-indigo-200/60 rounded-2xl p-6 sm:p-8 space-y-4">
+                  <div className="flex items-center gap-3 text-indigo-900 dark:text-indigo-300 font-mono text-xs font-bold uppercase tracking-wider">
+                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+                    <span>{article.signalDateOrDay1 || article.publishedAt}</span>
+                  </div>
+                  <h2 className="text-2xl font-bold font-serif text-on-surface">
+                    {article.signalEvent1 || article.title}
+                  </h2>
+                  {article.relatedLinkUrl1 && (
+                    <div className="pt-2">
+                      <a
+                        href={article.relatedLinkUrl1}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                      >
+                        {article.relatedLinkTitle1 || 'Read Background Document'} <ArrowRight className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* Event 2 */}
+                {(article.signalEvent2 || article.signalDateOrDay2) && (
+                  <div className="bg-surface-container-low border border-outline-variant/60 rounded-2xl p-6 sm:p-8 space-y-4">
+                    <div className="flex items-center gap-3 text-on-surface-variant font-mono text-xs font-bold uppercase tracking-wider">
+                      <span className="w-2.5 h-2.5 rounded-full bg-secondary" />
+                      <span>{article.signalDateOrDay2}</span>
+                    </div>
+                    <h2 className="text-2xl font-bold font-serif text-on-surface">
+                      {article.signalEvent2}
+                    </h2>
+                    {article.relatedLinkUrl2 && (
+                      <div className="pt-2">
+                        <a
+                          href={article.relatedLinkUrl2}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                        >
+                          {article.relatedLinkTitle2 || 'Read Background Document'} <ArrowRight className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {article.content && (
+                  <div className="pt-4">
+                    <RichContentRenderer content={article.content} />
+                  </div>
                 )}
               </div>
             ) : (

@@ -8,6 +8,7 @@ import { SubscriptionSection } from '../components/clearpath/SubscriptionSection
 import { useClearPathArticles } from '../hooks/useClearPathArticles';
 import { ClearPathDailyArticle } from '../types';
 import { stripHtml } from '../utils/formatters';
+import { ShareButton } from '../components/common/ShareButton';
 
 export default function ArchivePage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -281,13 +282,20 @@ export default function ArchivePage() {
                       <span className="font-mono text-[11px]">
                         {article.readingTime || (article.status === 'archived' ? 'Archived Record' : 'Verified Entry')}
                       </span>
-                      <Link
-                        to={articleUrl}
-                        className="inline-flex items-center gap-1 font-bold text-primary uppercase tracking-wider hover:underline"
-                      >
-                        <span>Read Analysis</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <ShareButton
+                          url={articleUrl}
+                          title={article.title || article.quote || 'ClearPath Article'}
+                          variant="compact"
+                        />
+                        <Link
+                          to={articleUrl}
+                          className="inline-flex items-center gap-1 font-bold text-primary uppercase tracking-wider hover:underline"
+                        >
+                          <span>Read</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );

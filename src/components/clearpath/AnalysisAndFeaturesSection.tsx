@@ -7,6 +7,7 @@ import { ClearPathDailyArticle } from '../../types';
 import { ProgrammeVideo } from '../../types';
 import { slugify } from '../../services/publicContentService';
 import { calculateReadTime, stripHtml } from '../../utils/formatters';
+import { ShareButton } from '../common/ShareButton';
 
 interface LatestStoryItem {
   id: string;
@@ -106,13 +107,20 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
           
           {mainAnalysis && (
             <div className="pt-2 mt-auto">
-              <Link
-                to={getArticleUrl(mainAnalysis as any, 'todays-brief')}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#001e40] hover:bg-[#00142b] dark:bg-primary dark:hover:bg-primary/90 text-white dark:text-on-primary font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all group/btn"
-              >
-                <span>Read Analysis</span>
-                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link
+                  to={getArticleUrl(mainAnalysis as any, 'todays-brief')}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#001e40] hover:bg-[#00142b] dark:bg-primary dark:hover:bg-primary/90 text-white dark:text-on-primary font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all group/btn"
+                >
+                  <span>Read Analysis</span>
+                  <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                </Link>
+                <ShareButton
+                  url={getArticleUrl(mainAnalysis as any, 'todays-brief')}
+                  title={mainAnalysis.title}
+                  variant="button"
+                />
+              </div>
               <div className="border-b border-slate-200/80 dark:border-outline-variant/60 pt-6" />
             </div>
           )}
@@ -138,9 +146,16 @@ export const AnalysisAndFeaturesSection: React.FC<AnalysisAndFeaturesSectionProp
                   key={story.id + idx} 
                   className="pb-3.5 border-b border-slate-200/80 dark:border-outline-variant/40 last:border-0 last:pb-0 group"
                 >
-                  <span className="block text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-[#001e40] dark:text-primary mb-1">
-                    {story.category}
-                  </span>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="block text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-[#001e40] dark:text-primary">
+                      {story.category}
+                    </span>
+                    <ShareButton
+                      url={story.link}
+                      title={story.title}
+                      variant="compact"
+                    />
+                  </div>
                   <Link 
                     to={story.link} 
                     className="font-serif font-bold text-sm sm:text-[15px] text-[#17181a] dark:text-on-surface group-hover:text-[#001e40] dark:group-hover:text-primary transition-colors leading-snug line-clamp-2 block"

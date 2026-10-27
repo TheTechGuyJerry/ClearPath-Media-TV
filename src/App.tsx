@@ -160,9 +160,15 @@ function AppRoutes() {
             <Route path="/daily/:year/:month/:day/:slug" element={<ArticlePage />} />
             <Route path="/article/:slug" element={<ArticlePage />} />
             <Route path="/clearpath-daily/:menuSlug/:slug" element={<ArticlePage />} />
-            <Route path="/clearpath-lens" element={<Navigate to="/clearpath-daily/clearpath-lens" replace />} />
             <Route path="/clearpath-daily/clearpath-lens" element={<ClearPathLensPage />} />
+            <Route path="/clearpath-daily/clearpath-lens/:slug" element={<ArticlePage />} />
             <Route path="/news/clearpath-lens" element={<Navigate to="/clearpath-daily/clearpath-lens" replace />} />
+            <Route path="/clearpath-lens/:slug" element={<ArticlePage />} />
+            <Route path="/todays-brief/:slug" element={<ArticlePage />} />
+            <Route path="/in-focus/:slug" element={<ArticlePage />} />
+            <Route path="/the-indicator/:slug" element={<ArticlePage />} />
+            <Route path="/the-public-record/:slug" element={<ArticlePage />} />
+            <Route path="/signals-to-watch/:slug" element={<ArticlePage />} />
             <Route path="/weekly-feature/:slug" element={<WeeklyFeaturePage />} />
             <Route path="/category/:slug" element={<CategoryPage />} />
             <Route path="/topic/:slug" element={<TopicPage />} />

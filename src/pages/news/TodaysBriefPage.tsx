@@ -9,6 +9,7 @@ import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCar
 import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDailySidebar';
 import { SubscriptionSection } from '../../components/clearpath/SubscriptionSection';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
+import { ShareButton } from '../../components/common/ShareButton';
 
 export default function TodaysBriefPage() {
   const { articles, loading } = useClearPathArticles('todays-brief');
@@ -80,7 +81,7 @@ export default function TodaysBriefPage() {
                       {brief.subtitle}
                     </p>
                   )}
-                  <div className="pt-2 flex items-center gap-4">
+                  <div className="pt-2 flex flex-wrap items-center gap-3">
                     <Link
                       to={getArticleUrl(brief, 'todays-brief')}
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
@@ -88,6 +89,11 @@ export default function TodaysBriefPage() {
                       <span>Read Full Briefing</span>
                       <ArrowRight className="w-4 h-4" />
                     </Link>
+                    <ShareButton
+                      url={getArticleUrl(brief, 'todays-brief')}
+                      title={brief.title}
+                      variant="button"
+                    />
                   </div>
                 </div>
 
@@ -145,6 +151,11 @@ export default function TodaysBriefPage() {
                             >
                               Read Edition <ArrowRight className="w-3 h-3" />
                             </Link>
+                            <ShareButton
+                              url={getArticleUrl(item, item.categorySlug || 'todays-brief')}
+                              title={item.title}
+                              variant="compact"
+                            />
                           </div>
                         </div>
                       ))}

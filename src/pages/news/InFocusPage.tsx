@@ -9,6 +9,7 @@ import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDaily
 import { SubscriptionSection } from '../../components/clearpath/SubscriptionSection';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 import { stripHtml } from '../../utils/formatters';
+import { ShareButton } from '../../components/common/ShareButton';
 
 export default function InFocusPage() {
   const { articles, loading } = useClearPathArticles('in-focus');
@@ -143,7 +144,12 @@ export default function InFocusPage() {
                   )}
                 </div>
 
-                <div className="flex justify-end pt-2 border-t border-outline-variant/40">
+                <div className="flex items-center justify-between pt-4 border-t border-outline-variant/40">
+                  <ShareButton
+                    url={getArticleUrl(latestDoc, 'in-focus')}
+                    title={latestDoc.title}
+                    variant="button"
+                  />
                   <Link
                     to={`${getArticleUrl(latestDoc, 'in-focus')}#story-1`}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer"
@@ -196,12 +202,19 @@ export default function InFocusPage() {
                             <p className="text-sm text-on-surface-variant line-clamp-2 leading-relaxed mb-3">
                               {stripHtml(item.excerpt || item.content)}
                             </p>
-                            <Link
-                              to={getArticleUrl(item, 'in-focus')}
-                              className="text-xs font-bold text-secondary hover:text-primary transition-colors inline-flex items-center gap-1 mt-auto"
-                            >
-                              Read Full Analysis <ArrowRight className="w-3 h-3" />
-                            </Link>
+                            <div className="flex items-center justify-between mt-auto pt-2">
+                              <Link
+                                to={getArticleUrl(item, 'in-focus')}
+                                className="text-xs font-bold text-secondary hover:text-primary transition-colors inline-flex items-center gap-1"
+                              >
+                                Read Full Analysis <ArrowRight className="w-3 h-3" />
+                              </Link>
+                              <ShareButton
+                                url={getArticleUrl(item, 'in-focus')}
+                                title={item.title}
+                                variant="compact"
+                              />
+                            </div>
                           </div>
                         </div>
                       ))}

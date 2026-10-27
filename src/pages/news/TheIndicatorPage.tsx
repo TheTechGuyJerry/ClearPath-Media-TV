@@ -8,6 +8,8 @@ import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDaily
 import { SubscriptionSection } from '../../components/clearpath/SubscriptionSection';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 import { stripHtml } from '../../utils/formatters';
+import { getArticleUrl } from '../../utils/urlUtils';
+import { ShareButton } from '../../components/common/ShareButton';
 
 export default function TheIndicatorPage() {
   const { articles, loading } = useClearPathArticles('the-indicator');
@@ -80,9 +82,28 @@ export default function TheIndicatorPage() {
                 {/* Context Column */}
                 <div className="lg:col-span-7 space-y-6 flex flex-col justify-center">
                   <div>
+                    <h2 className="text-xl sm:text-2xl font-serif font-bold text-on-surface mb-3 leading-snug">
+                      <Link to={getArticleUrl(currentIndicator, 'the-indicator')} className="hover:text-primary transition-colors">
+                        {stripHtml(currentIndicator.title)}
+                      </Link>
+                    </h2>
                     <p className="text-base sm:text-lg text-on-surface-variant font-medium leading-relaxed">
                       {stripHtml(currentIndicator.excerpt || currentIndicator.content)}
                     </p>
+                  </div>
+                  <div className="flex items-center justify-between pt-4 border-t border-outline-variant/40">
+                    <ShareButton
+                      url={getArticleUrl(currentIndicator, 'the-indicator')}
+                      title={currentIndicator.title}
+                      variant="button"
+                    />
+                    <Link
+                      to={getArticleUrl(currentIndicator, 'the-indicator')}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs"
+                    >
+                      <span>View Indicator</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -121,7 +142,9 @@ export default function TheIndicatorPage() {
                               </span>
                             </div>
                             <h3 className="font-serif font-bold text-lg text-on-surface leading-tight">
-                              {stripHtml(item.title)}
+                              <Link to={getArticleUrl(item, 'the-indicator')} className="hover:text-primary transition-colors">
+                                {stripHtml(item.title)}
+                              </Link>
                             </h3>
                             <p className="text-xs text-on-surface-variant leading-relaxed">
                               {stripHtml(item.excerpt || item.content)}
@@ -129,6 +152,19 @@ export default function TheIndicatorPage() {
                             <p className="text-xs font-medium text-emerald-800 leading-relaxed mt-2 pt-2 border-t border-outline-variant/40">
                               <span className="font-bold">Impact:</span> {stripHtml(item.whyItMatters)}
                             </p>
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-outline-variant/40">
+                              <Link
+                                to={getArticleUrl(item, 'the-indicator')}
+                                className="text-xs font-bold text-emerald-800 hover:text-emerald-950 transition-colors inline-flex items-center gap-1"
+                              >
+                                View Indicator <ArrowRight className="w-3 h-3" />
+                              </Link>
+                              <ShareButton
+                                url={getArticleUrl(item, 'the-indicator')}
+                                title={item.title}
+                                variant="compact"
+                              />
+                            </div>
                           </div>
                         </div>
                       ))}

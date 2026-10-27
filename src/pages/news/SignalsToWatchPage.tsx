@@ -7,6 +7,8 @@ import { AthenaEvidenceCard } from '../../components/clearpath/AthenaEvidenceCar
 import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDailySidebar';
 import { SubscriptionSection } from '../../components/clearpath/SubscriptionSection';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
+import { getArticleUrl } from '../../utils/urlUtils';
+import { ShareButton } from '../../components/common/ShareButton';
 
 export default function SignalsToWatchPage() {
   const { articles, loading } = useClearPathArticles('signals-to-watch');
@@ -81,7 +83,9 @@ export default function SignalsToWatchPage() {
                       <div className="flex-grow space-y-4 pt-2">
                         <div>
                           <h2 className="text-xl sm:text-2xl font-extrabold font-serif text-on-surface leading-tight mb-2">
-                            {item.signalEvent1 || item.title}
+                            <Link to={getArticleUrl(item, 'signals-to-watch')} className="hover:text-primary transition-colors">
+                              {item.signalEvent1 || item.title}
+                            </Link>
                           </h2>
                         </div>
                         
@@ -134,6 +138,22 @@ export default function SignalsToWatchPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Footer Share & Link Action */}
+                    <div className="flex items-center justify-between pt-4 border-t border-outline-variant/50">
+                      <ShareButton
+                        url={getArticleUrl(item, 'signals-to-watch')}
+                        title={item.title || item.signalEvent1}
+                        variant="pill"
+                      />
+                      <Link
+                        to={getArticleUrl(item, 'signals-to-watch')}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-900 hover:text-primary transition-colors"
+                      >
+                        <span>View Signal Details</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
                   </section>
                 ))}
 

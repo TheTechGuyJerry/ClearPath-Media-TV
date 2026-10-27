@@ -21,6 +21,7 @@ import { useClearPathArticles } from '../../hooks/useClearPathArticles';
 import { getArticleUrl } from '../../utils/urlUtils';
 import { calculateReadTime, stripHtml } from '../../utils/formatters';
 import { matchesArticle, slugify } from '../../utils/slugUtils';
+import { ShareButton } from '../../components/common/ShareButton';
 
 export default function WeeklyFeaturesPage() {
   const { slug } = useParams<{ slug?: string }>();
@@ -157,24 +158,11 @@ export default function WeeklyFeaturesPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => {
-                        if (navigator.share) {
-                          navigator.share({
-                            title: currentFeature.title,
-                            url: window.location.href
-                          }).catch(() => {});
-                        } else {
-                          navigator.clipboard.writeText(window.location.href);
-                          alert('Article URL copied to clipboard!');
-                        }
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-lg border border-outline-variant/60 transition-colors"
-                      title="Share this article"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>Share</span>
-                    </button>
+                    <ShareButton
+                      url={getArticleUrl(currentFeature, 'weekly-features')}
+                      title={currentFeature.title}
+                      variant="button"
+                    />
                   </div>
                 </div>
               </div>
@@ -317,15 +305,17 @@ export default function WeeklyFeaturesPage() {
                       </div>
 
                       <div className="p-5 pt-0 mt-auto border-t border-outline-variant/40 pt-3 flex items-center justify-between">
-                        <span className="text-xs font-medium text-on-surface-variant truncate max-w-[150px]">
-                          {feature.authorName}
-                        </span>
                         <Link
                           to={getArticleUrl(feature, 'weekly-features')}
                           className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
                         >
                           Read Feature <ArrowRight className="w-3 h-3" />
                         </Link>
+                        <ShareButton
+                          url={getArticleUrl(feature, 'weekly-features')}
+                          title={feature.title}
+                          variant="compact"
+                        />
                       </div>
                     </article>
                   ))}

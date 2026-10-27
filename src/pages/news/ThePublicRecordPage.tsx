@@ -8,6 +8,8 @@ import { ClearPathDailySidebar } from '../../components/clearpath/ClearPathDaily
 import { SubscriptionSection } from '../../components/clearpath/SubscriptionSection';
 import { RichContentRenderer } from '../../components/common/RichContentRenderer';
 import { useClearPathArticles } from '../../hooks/useClearPathArticles';
+import { getArticleUrl } from '../../utils/urlUtils';
+import { ShareButton } from '../../components/common/ShareButton';
 
 export default function ThePublicRecordPage() {
   const { articles, loading } = useClearPathArticles('the-public-record');
@@ -155,6 +157,21 @@ export default function ThePublicRecordPage() {
                           </a>
                         </div>
                       )}
+
+                      <div className="flex items-center justify-between pt-4 mt-2 border-t border-outline-variant/40">
+                        <ShareButton
+                          url={getArticleUrl(currentRecord, 'the-public-record')}
+                          title={currentRecord.title || currentRecord.quote}
+                          variant="button"
+                        />
+                        <Link
+                          to={getArticleUrl(currentRecord, 'the-public-record')}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-950 hover:bg-orange-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-xs"
+                        >
+                          <span>View Full Record</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -194,9 +211,11 @@ export default function ThePublicRecordPage() {
                             </div>
                             
                             <blockquote className="mb-4">
-                              <p className="text-base sm:text-lg font-serif font-bold text-on-surface leading-snug group-hover:text-orange-950 transition-colors">
-                                "{item.quote}"
-                              </p>
+                              <Link to={getArticleUrl(item, 'the-public-record')} className="block group/quote">
+                                <p className="text-base sm:text-lg font-serif font-bold text-on-surface leading-snug group-hover/quote:text-orange-950 transition-colors">
+                                  "{item.quote}"
+                                </p>
+                              </Link>
                             </blockquote>
 
                             <div className="flex items-center gap-3 mt-4">
@@ -207,6 +226,20 @@ export default function ThePublicRecordPage() {
                                 <p className="font-bold text-on-surface text-sm leading-none">{item.speakerName}</p>
                                 <p className="text-[11px] text-on-surface-variant mt-0.5">{item.speakerTitle || item.speakerPosition}</p>
                               </div>
+                            </div>
+
+                            <div className="flex items-center justify-between mt-4 pt-3 border-t border-outline-variant/40">
+                              <Link
+                                to={getArticleUrl(item, 'the-public-record')}
+                                className="text-xs font-bold text-orange-950 hover:text-primary transition-colors inline-flex items-center gap-1"
+                              >
+                                View Record <ArrowRight className="w-3 h-3" />
+                              </Link>
+                              <ShareButton
+                                url={getArticleUrl(item, 'the-public-record')}
+                                title={item.title || item.quote}
+                                variant="compact"
+                              />
                             </div>
                           </div>
                         </div>

@@ -3,6 +3,7 @@ import { getArticleUrl } from '../../utils/urlUtils';
 import { Link } from 'react-router-dom';
 import { Eye, ArrowRight, ExternalLink, ShieldAlert, BookOpen } from 'lucide-react';
 import { ClearPathLensStory } from '../../data/clearpath_daily_data';
+import { ShareButton } from '../common/ShareButton';
 
 interface ClearPathLensSectionProps {
   lens: ClearPathLensStory;
@@ -69,7 +70,7 @@ export const ClearPathLensSection: React.FC<ClearPathLensSectionProps> = ({ lens
             </div>
           </div>
 
-          <div>
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               to={`/clearpath-lens/${lens.slug}`}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-on-primary font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm hover:bg-primary/90 transition-all group"
@@ -77,6 +78,11 @@ export const ClearPathLensSection: React.FC<ClearPathLensSectionProps> = ({ lens
               <span>Read Full Institutional Analysis</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
+            <ShareButton
+              url={`/clearpath-lens/${lens.slug}`}
+              title={lens.headline}
+              variant="button"
+            />
           </div>
         </div>
 

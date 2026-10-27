@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Layers } from 'lucide-react';
 import { InFocusStory } from '../../data/clearpath_daily_data';
 import { stripHtml } from '../../utils/formatters';
+import { ShareButton } from '../common/ShareButton';
 
 interface InFocusSectionProps {
   stories: [InFocusStory, InFocusStory];
@@ -88,13 +89,20 @@ export const InFocusSection: React.FC<InFocusSectionProps> = ({ stories }) => {
                 <span className="text-xs font-medium text-on-surface-variant">
                   {article.publishedAt}
                 </span>
-                <Link
-                  to={`${getArticleUrl(article, 'in-focus')}#story-${goldNumber}`}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 uppercase tracking-wider group/link"
-                >
-                  <span>Read More</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" />
-                </Link>
+                <div className="flex items-center gap-2">
+                  <ShareButton
+                    url={`${getArticleUrl(article, 'in-focus')}#story-${goldNumber}`}
+                    title={article.title}
+                    variant="compact"
+                  />
+                  <Link
+                    to={`${getArticleUrl(article, 'in-focus')}#story-${goldNumber}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 hover:text-amber-800 uppercase tracking-wider group/link"
+                  >
+                    <span>Read More</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" />
+                  </Link>
+                </div>
               </div>
             </div>
           );
